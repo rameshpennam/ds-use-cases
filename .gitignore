@@ -10,6 +10,9 @@
 # Internal reference material — not needed to execute the use cases on the Mac
 reference_screenshots/
 
+# Claude Code session/resume context — internal planning notes, not a client deliverable
+CLAUDE.md
+
 # Python
 __pycache__/
 *.pyc
