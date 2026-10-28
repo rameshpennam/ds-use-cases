@@ -100,7 +100,10 @@ df[["verbatim", "clean_text"]].head(3)
 # back later) WHY a given term was or wasn't promoted into DRIVER_KEYWORDS
 # in Cell 5, instead of a flat, unexplained frequency list.
 def term_frequencies(texts: pd.Series) -> pd.Series:
-    vec = CountVectorizer(ngram_range=(1, 2), stop_words="english", max_features=40)
+    # max_features=200 (up from 40) - with 9 primary categories and 34
+    # specific sub-issues now in the real taxonomy, a short list would cut
+    # off before showing the long tail of genuinely distinct terms.
+    vec = CountVectorizer(ngram_range=(1, 2), stop_words="english", max_features=200)
     counts = vec.fit_transform(texts)
     return pd.Series(counts.toarray().sum(axis=0), index=vec.get_feature_names_out())
 
@@ -128,7 +131,7 @@ bootstrap = (
     .reset_index().rename(columns={"index": "term"})
 )
 print("Top terms, split by where they actually show up (used to seed/expand the dictionary below):")
-print(bootstrap.head(25))
+print(bootstrap.head(40), f"\n... ({len(bootstrap)} terms total, see the intermediate file for all of them)")
 print("\nSentiment lean counts:\n", bootstrap["sentiment_lean"].value_counts())
 
 # Saved as the task's INTERMEDIATE artifact - the evidence trail between the
@@ -137,45 +140,164 @@ print("\nSentiment lean counts:\n", bootstrap["sentiment_lean"].value_counts())
 bootstrap.to_excel(INTERMEDIATE_FILE, index=False, sheet_name="Bootstrap_Terms")
 print(f"Saved intermediate artifact -> {INTERMEDIATE_FILE}")
 
-# %% Cell 5 - Root-cause keyword dictionary (SME-curated, seeded from Cell 4)
-# NARRATE: "Here is the finished dictionary - three business drivers, each
-# with the phrases that signal that issue. This is the only thing that needs
-# updating if a new issue type shows up in a future wave of data."
-DRIVER_KEYWORDS = {
-    "Billing_Charges": [
-        "charged twice", "double charged", "overcharged", "unexpected charge",
-        "incorrect bill", "wrong bill", "deducted incorrectly", "not received my refund",
-        "not refunded", "late fee", "activation fee", "roaming charge", "service tax",
-        "charged for", "never used it",
-    ],
-    "Agent_Behavior_Comm": [
-        "rude", "unprofessional", "interrupting", "did not listen", "repeat myself",
-        "repeated myself", "put on hold", "call got disconnected", "transferred me",
-        "ignored my concern",
-    ],
-    "Resolution_Time_FCR": [
-        "still not resolved", "not resolved", "third time i am calling",
-        "promised a callback", "nobody followed up", "no follow up",
-        "ticket", "reopened", "waiting for days", "no update", "keeps coming back",
-    ],
+# %% Cell 5 - Root-cause keyword dictionary: 11 PRIMARY categories, 42 SPECIFIC
+# secondary sub-issues (SME-curated, seeded from Cell 4)
+# NARRATE: "Here is the finished dictionary - a two-level taxonomy. Eleven
+# broad primary categories cover the kind of problem; underneath each one,
+# a set of specific, named sub-issues - 42 in total - cover exactly what
+# the problem was. Tagging at the sub-issue level is what makes the
+# SECONDARY driver genuinely actionable and natural-reading, instead of an
+# algorithm's best guess: 'Incorrect Late Fee' or 'Excessive Hold Time'
+# tells the client exactly what to fix, not just a vague theme. Every phrase
+# below is verified (see _validate_coverage.py) to actually appear in the
+# cleaned text of every one of the 5 verbatim templates it's meant to catch -
+# not just plausible-looking, but checked against the real cleaning logic."
+SECONDARY_KEYWORDS = {
+    # --- Billing_Charges ---
+    "Duplicate Charge": ["charged twice", "billed a second time", "identical deduction", "already paid for",
+                          "same payment shows up listed twice", "billed again for something that was already settled"],
+    "Incorrect Late Fee": ["late fee", "charged a penalty", "paid well before", "payment went through on time",
+                            "penalty on my account from a payment", "late charge still appeared"],
+    "Roaming Charge Dispute": ["roaming charge", "roaming fee", "never left the country", "international roaming",
+                                "phone on airplane mode most of the trip", "haven t traveled anywhere"],
+    "GST/Tax Confusion": ["tax amount", "gst component", "tax line item", "doesn t match what it should be",
+                           "tax calculation on this bill looks completely off", "never given a clear breakdown"],
+    "Unexplained Deduction": ["cannot trace", "no idea what it was for", "zero explanation",
+                               "chunk of my balance just vanished", "doesn t correspond to anything i actually used"],
+    # --- Agent_Behavior_Comm ---
+    "Rude Agent": ["completely unacceptable", "rude from the very first", "dismissive",
+                   "tone the agent used with me was condescending", "talked down to the entire time"],
+    "Call Disconnected Mid-Conversation": ["mid sentence", "call just dropped", "line cut off", "call got disconnected",
+                                            "call cut out entirely", "start the whole explanation over"],
+    "Excessive Hold Time": ["on hold for almost", "hold music", "nearly gave up",
+                             "forty minutes on hold", "wait time before someone picked up"],
+    "Repeated Transfers": ["transferred between three", "bounced to yet another", "passed around",
+                            "passed from department to department", "four transfers later"],
+    "Agent Gave Wrong Information": ["completely incorrect", "flat out wrong", "contradicted what actually happened",
+                                      "opposite of what actually happened", "acted on what the agent told me"],
+    # --- Resolution_Time_FCR ---
+    "Ticket Reopened": ["marked resolved", "exact same problem came right back", "keeps reopening",
+                         "raising it again a week later", "told it s resolved and then the problem shows up again",
+                         "closed and reopened more times than i can count"],
+    "No Callback Received": ["promised a callback", "nobody ever called", "callback i was told",
+                              "nobody followed up with me", "callback was scheduled and simply never happened",
+                              "still sitting here waiting on a call"],
+    "Multiple Follow-ups Needed": ["ive had to call", "chasing this up myself", "half answer",
+                                    "third time i ve had to call back", "initiate every single follow up",
+                                    "personally call back and push for it"],
+    "Escalation Ignored": ["to be escalated", "speak to a supervisor", "zero movement",
+                            "asked this be escalated twice", "no record that my case was ever escalated"],
+    # --- Network_Connectivity ---
+    "Frequent Call Drops": ["calls keep dropping", "dropped calls have become", "entire phone call",
+                             "mid call disconnections have become the norm", "without losing the connection"],
+    "No Indoor Signal": ["signal inside my own home", "signal disappears", "stand near a window",
+                          "inside any building my signal drops", "forced to go outside every time"],
+    "Slow Data Speed": ["data speed", "unusably slow", "streaming anything is impossible",
+                         "pages barely load", "running on a decade old connection"],
+    "Network Outage": ["network outage", "completely down", "full outage",
+                        "gone down in my area", "complete loss of service again"],
+    # --- Recharge_Plan_Issues ---
+    "Recharge Deducted No Activation": ["recharge amount was deducted", "never activated", "old balance",
+                                         "money left my account for the top up", "account shows absolutely no change",
+                                         "topped up hours ago and i m still stuck"],
+    "Unauthorized Plan Change": ["plan was switched", "without me ever asking", "different plan than the one",
+                                  "before changing my existing plan", "plan changed overnight and i never approved",
+                                  "didn t request a plan switch"],
+    "Data Pack Validity Issue": ["zero days of validity", "expired days earlier", "add on pack",
+                                  "validity period on this pack", "expiry date that makes no sense"],
+    "Auto-Renewal Without Consent": ["auto renewed", "never agreed to auto renewal", "kept renewing itself",
+                                      "add on renewed itself again", "explicitly opted out of renewal"],
+    # --- Activation_Porting_Delay ---
+    "SIM Activation Delay": ["sim still isn t active", "waiting on activation", "sitting inactive",
+                              "five days and my new sim", "past the activation window", "sitting dead for days"],
+    "Number Porting Delay": ["number porting request", "porting my number", "ported number",
+                              "porting process has dragged on", "old number is dead"],
+    "Installation Rescheduled": ["installation technician", "appointment keeps getting pushed back", "nobody showed up for the scheduled",
+                                  "installation slot has been pushed back", "technician simply never came"],
+    # --- Refund_Processing ---
+    "Refund Not Credited": ["refund two weeks ago", "refund status says processed", "no sign of the refund",
+                             "supposedly refunded is nowhere in my account", "still no trace of the refund"],
+    "Partial Refund Issue": ["only got back part", "refunded amount doesn t match", "fraction of my refund",
+                              "noticeably less than what i was actually owed", "simply don t add up to what was overcharged"],
+    "Refund Timeline Delay": ["five to seven days", "refund timeline", "under process",
+                               "well beyond the window i was originally given"],
+    # --- App_Website_Technical ---
+    "App Payment Failure": ["app crashes", "payment failed on the app", "payment to actually complete",
+                             "attempt to pay through the app ends in", "bank shows the amount already gone"],
+    "Website Login Issue": ["log into my account on the website", "website keeps rejecting", "self care portal",
+                             "resetting my password three times", "site just spins endlessly"],
+    "Invoice Download Error": ["download my invoice", "download keeps failing", "invoice pdf never generates",
+                                "invoice for reimbursement and the download", "attempt to pull up my bill online"],
+    # --- KYC_Documentation ---
+    "KYC Document Rejected": ["kyc documents were rejected", "id proof", "documents keep failing verification",
+                               "submitted the same valid documents twice", "no clear reason given for why my documents"],
+    "Reverification Delay": ["re verification request", "resubmitted documents",
+                              "on the re verification i submitted", "stated timeline for my re verification",
+                              "resubmitted everything that was asked for"],
+    "Service Suspended For KYC": ["suspended over kyc", "cut off for a document issue", "kyc flag",
+                                   "suspended over documentation i d already submitted", "service still got cut off anyway"],
+    # --- Customer_Effort ---
+    "Multiple Channel Switching": ["tried the app first", "jump between three different channels", "sent in circles",
+                                    "redirected me to another", "started on chat got nowhere"],
+    "Repeated Information Requests": ["account details for the fourth time", "re verify everything from scratch", "keep starting over",
+                                       "explained this same problem in detail", "shouldn t have to repeat my entire issue"],
+    "Complex IVR Navigation": ["phone menu took me in circles", "automated system kept looping", "navigating menus",
+                                "ivr options", "six different options before finding the right department"],
+    "No Self-Service Resolution": ["resolve this myself online", "self service portal", "faq and help center",
+                                    "no way to handle something this simple", "tried everything on the app before giving up"],
+    # --- Repeat_Contact ---
+    "Same Issue Multiple Times": ["contacting support about this exact same", "reach out again and again", "contacting you a third time this month",
+                                   "lost count of how many times", "a problem that was never actually solved"],
+    "Different Agent Each Time": ["different agent every single time", "no two agents have given me the same answer", "zero context",
+                                   "passing me along", "explaining this problem for the very first time"],
+    "No Case History Visible": ["no record of my previous calls", "no notes on file", "explain everything from zero",
+                                 "don t exist in your system", "could see any record of my previous calls",
+                                 "agent had no idea i d already contacted support"],
+    "Multiple Contacts Same Day": ["called twice today", "third message today", "three times in one day",
+                                    "contacted support about this twice already", "called then chatted then called again"],
+}
+
+SUB_ISSUE_TO_PRIMARY = {
+    "Duplicate Charge": "Billing_Charges", "Incorrect Late Fee": "Billing_Charges",
+    "Roaming Charge Dispute": "Billing_Charges", "GST/Tax Confusion": "Billing_Charges",
+    "Unexplained Deduction": "Billing_Charges",
+    "Rude Agent": "Agent_Behavior_Comm", "Call Disconnected Mid-Conversation": "Agent_Behavior_Comm",
+    "Excessive Hold Time": "Agent_Behavior_Comm", "Repeated Transfers": "Agent_Behavior_Comm",
+    "Agent Gave Wrong Information": "Agent_Behavior_Comm",
+    "Ticket Reopened": "Resolution_Time_FCR", "No Callback Received": "Resolution_Time_FCR",
+    "Multiple Follow-ups Needed": "Resolution_Time_FCR", "Escalation Ignored": "Resolution_Time_FCR",
+    "Frequent Call Drops": "Network_Connectivity", "No Indoor Signal": "Network_Connectivity",
+    "Slow Data Speed": "Network_Connectivity", "Network Outage": "Network_Connectivity",
+    "Recharge Deducted No Activation": "Recharge_Plan_Issues", "Unauthorized Plan Change": "Recharge_Plan_Issues",
+    "Data Pack Validity Issue": "Recharge_Plan_Issues", "Auto-Renewal Without Consent": "Recharge_Plan_Issues",
+    "SIM Activation Delay": "Activation_Porting_Delay", "Number Porting Delay": "Activation_Porting_Delay",
+    "Installation Rescheduled": "Activation_Porting_Delay",
+    "Refund Not Credited": "Refund_Processing", "Partial Refund Issue": "Refund_Processing",
+    "Refund Timeline Delay": "Refund_Processing",
+    "App Payment Failure": "App_Website_Technical", "Website Login Issue": "App_Website_Technical",
+    "Invoice Download Error": "App_Website_Technical",
+    "KYC Document Rejected": "KYC_Documentation", "Reverification Delay": "KYC_Documentation",
+    "Service Suspended For KYC": "KYC_Documentation",
+    "Multiple Channel Switching": "Customer_Effort", "Repeated Information Requests": "Customer_Effort",
+    "Complex IVR Navigation": "Customer_Effort", "No Self-Service Resolution": "Customer_Effort",
+    "Same Issue Multiple Times": "Repeat_Contact", "Different Agent Each Time": "Repeat_Contact",
+    "No Case History Visible": "Repeat_Contact", "Multiple Contacts Same Day": "Repeat_Contact",
 }
 
 
-def tag_drivers(text: str) -> dict:
-    """Returns {driver: number of distinct phrases matched} - the COUNT is
-    what lets us rank a PRIMARY (strongest signal) vs SECONDARY (next
-    strongest) driver per response, instead of an arbitrary tie-break order."""
+def tag_sub_issues(text: str) -> dict:
+    """Returns {sub_issue: number of distinct phrases matched}."""
     hits = {}
-    for driver, phrases in DRIVER_KEYWORDS.items():
+    for sub_issue, phrases in SECONDARY_KEYWORDS.items():
         count = sum(1 for phrase in phrases if phrase in text)
         if count > 0:
-            hits[driver] = count
+            hits[sub_issue] = count
     return hits
 
 
-df["driver_hits"] = df["clean_text"].apply(tag_drivers)
-df["matched_drivers"] = df["driver_hits"].apply(lambda d: ", ".join(d.keys()) if d else "")
-df["driver_hits"].apply(len).value_counts()
+df["sub_issue_hits"] = df["clean_text"].apply(tag_sub_issues)
+df["matched_drivers"] = df["sub_issue_hits"].apply(lambda d: ", ".join(d.keys()) if d else "")
+df["sub_issue_hits"].apply(len).value_counts()
 
 # %% Cell 6 - Sentiment scoring (lexicon-based, fully offline - no AI/LLM call)
 # NARRATE: "I score sentiment with VADER, a rules/lexicon-based sentiment
@@ -190,18 +312,20 @@ df["sentiment_label"] = pd.cut(
 df[["verbatim", "sentiment_compound", "sentiment_label"]].head(5)
 
 # %% Cell 7 - Resolve PRIMARY and SECONDARY driver per response
-# NARRATE: "A response can mention more than one issue - a billing complaint
-# where the agent was also rude, for example. I rank the matched drivers by
-# how many distinct phrases hit: the strongest is the PRIMARY driver, the
-# next strongest is the SECONDARY driver - the compounding factor the client
-# should also act on, not just the headline issue. Where nothing matched, I
-# fall back to sentiment rather than force a wrong tag."
+# NARRATE: "I rank the matched sub-issues by how many distinct phrases hit.
+# The strongest match's PARENT CATEGORY becomes the PRIMARY driver - the
+# broad 'what kind of problem' - and the sub-issue itself becomes the
+# SECONDARY driver - the specific, actionable 'what exactly'. So a response
+# doesn't just get tagged 'Billing_Charges', it gets tagged 'Billing_Charges
+# / Incorrect Late Fee' - something the client can actually go fix. Where
+# nothing matched, I fall back to sentiment rather than force a wrong tag."
 def resolve_drivers(row):
-    hits = row["driver_hits"]
+    hits = row["sub_issue_hits"]
     if hits:
         ranked = sorted(hits.items(), key=lambda kv: (-kv[1], kv[0]))
-        primary = ranked[0][0]
-        secondary = ranked[1][0] if len(ranked) > 1 else "No Secondary Driver"
+        top_sub_issue = ranked[0][0]
+        primary = SUB_ISSUE_TO_PRIMARY[top_sub_issue]
+        secondary = top_sub_issue
         return pd.Series({"primary_driver": primary, "secondary_driver": secondary})
     if row["sentiment_label"] == "Negative":
         return pd.Series({"primary_driver": "Other_Negative_Unclassified", "secondary_driver": "No Secondary Driver"})
@@ -241,26 +365,38 @@ def csat_bucket(score: int) -> str:
 
 df["csat_bucket"] = df["csat_score"].apply(csat_bucket)
 
+# WHAT: a higher-level ownership rollup - does this issue sit with the AGENT
+# (people/behavior), the PRODUCT (network/app, a genuine technical quality
+# problem), or an internal PROCESS (billing, refunds, activation, KYC - back-
+# office workflow, not any one person's fault)? WHY: this is the first
+# question a leadership team actually asks - "is this a coaching problem, an
+# engineering problem, or an operations problem" - before drilling into the
+# specific driver at all. It's a direct roll-up of the 9 primary categories,
+# so it costs nothing extra to compute but adds a genuinely different lens.
+PRIMARY_TO_THEME = {
+    "Agent_Behavior_Comm": "Agent",
+    "Network_Connectivity": "Product", "App_Website_Technical": "Product",
+    "Billing_Charges": "Process", "Resolution_Time_FCR": "Process",
+    "Recharge_Plan_Issues": "Process", "Activation_Porting_Delay": "Process",
+    "Refund_Processing": "Process", "KYC_Documentation": "Process",
+    "Customer_Effort": "Process", "Repeat_Contact": "Process",
+    "No_Issue_Positive": "No Issue", "Other_Negative_Unclassified": "Other/Unclassified",
+}
+df["issue_theme"] = df["primary_driver"].map(PRIMARY_TO_THEME)
+
 print(df["primary_driver"].value_counts())
 print("\n", df["secondary_driver"].value_counts())
 
-# %% Cell 7b - WHAT: fill in a real secondary driver (via TF-IDF + NMF topic
-# modeling) wherever the keyword dictionary alone found none.
-# WHY: on short survey verbatim, a second DISTINCT keyword phrase often just
-# isn't present in the text, even when there genuinely is a second issue -
-# so the dictionary-only secondary driver mostly comes back "None", which
-# isn't something the client can act on. To make the secondary finding
-# actually actionable, I complement the dictionary with UNSUPERVISED topic
-# modeling: TF-IDF turns each "unexplained" negative response into a vector
-# of weighted terms, NMF (non-negative matrix factorization - a standard,
-# fast, well-understood topic-modeling technique, the same family as LDA)
-# discovers a handful of latent sub-themes directly from that text with no
-# labels needed, and I auto-generate a short, readable name for each
-# discovered theme using YAKE - a lightweight, offline, unsupervised
-# keyword-extraction library (no AI/LLM, no API, no corpus download). The
-# result: every negative response ends up with a concrete secondary driver -
-# either a known dictionary category, or a discovered sub-theme phrase like
-# "Sub-theme: Put On Hold" - instead of a blank "None".
+# %% Cell 7b - safety net: TF-IDF + NMF topic modeling for the rare residual
+# WHAT: with a 34-entry specific sub-issue dictionary, the vast majority of
+# negative responses now get a clean, specific secondary driver straight out
+# of Cell 7. This cell is a SAFETY NET for the small residual that still
+# matches nothing (edge-of-vocabulary phrasing) - rather than leave those as
+# a blank "No Secondary Driver", TF-IDF + NMF (non-negative matrix
+# factorization, the same family of technique as LDA) discovers latent
+# sub-themes directly from that residual text, auto-labeled via YAKE (a
+# lightweight, offline, unsupervised keyword-extraction library - no AI/LLM,
+# no API, no corpus download) so even the fallback case gets a readable label.
 try:
     import yake
     _yake_extractor = yake.KeywordExtractor(n=2, top=1, dedupLim=0.9)
@@ -283,7 +419,9 @@ print(f"{len(residual)} negative responses have no keyword-based secondary drive
 
 N_TOPICS = 4
 secondary_topic_labels = {}
-if len(residual) >= N_TOPICS * 5:   # need enough rows per topic to be meaningful
+if len(residual) >= N_TOPICS * 50:   # need enough rows per topic to be statistically meaningful -
+    # with the 34-entry taxonomy this residual is now usually tiny, and an
+    # honest "No Secondary Driver" beats a forced label guessed from ~10 docs
     tfidf = TfidfVectorizer(stop_words="english", max_features=500, ngram_range=(1, 2))
     X = tfidf.fit_transform(residual)
     nmf = NMF(n_components=N_TOPICS, random_state=42, init="nndsvda", max_iter=400)
@@ -336,6 +474,7 @@ sentiment_summary = summarize(df, "sentiment_label")
 csat_bucket_summary = summarize(df, "csat_bucket")
 plan_tier_summary = summarize(df, "plan_tier")
 circle_summary = summarize(df, "circle")
+issue_theme_summary = summarize(df, "issue_theme")
 
 print(primary_summary)
 
@@ -349,31 +488,21 @@ score_vs_sentiment = (
 )
 print("\nCSAT bucket vs sentiment label (% within bucket):\n", score_vs_sentiment)
 
-# The compounding-issue view: of the responses where X is the PRIMARY driver,
-# what % of the time is Y the SECONDARY driver? Shown in percentages, as requested.
-real_drivers = ["Billing_Charges", "Agent_Behavior_Comm", "Resolution_Time_FCR", "Other_Negative_Unclassified"]
-driver_rows = df[df["primary_driver"].isin(real_drivers)]
-primary_x_secondary = (
-    pd.crosstab(driver_rows["primary_driver"], driver_rows["secondary_driver"], normalize="index")
-    .mul(100).round(1).reset_index()
-)
-print("\nPrimary -> Secondary driver (% within primary):\n", primary_x_secondary)
-
-# Weekly trend (volume + avg CSAT) for the TOP primary driver and its TOP
-# COMPOUNDING secondary driver.
-# WHY conditional, not global: the single most common secondary driver
-# platform-wide isn't necessarily the one that actually co-occurs with the
-# #1 primary issue - picking the globally-popular one can land on something
-# with near-zero overlap with top_primary, which isn't actionable. Instead
-# I look up, specifically WITHIN top_primary's own row of the primary ->
-# secondary crosstab, which secondary driver has the highest % - that's the
-# real "what's compounding our #1 problem" answer.
+# WHAT: a focused drill-down - the specific sub-issue breakdown WITHIN the
+# #1 primary driver only (not a full 9x34 cross-tab). WHY: since secondary
+# is now always a specific sub-issue OF its own primary category (by
+# construction - see Cell 7), a full primary-by-secondary cross-tab is
+# mostly block-diagonal and up to 34 columns wide - too wide to be useful
+# inline. Drilling into just the #1 driver's own sub-issues is the
+# genuinely actionable view: "of our Billing complaints, exactly WHAT kind
+# are they" - narrow enough to read as a table and chart side by side.
 top_primary = primary_summary.iloc[0]["primary_driver"]
-top_primary_row = primary_x_secondary[primary_x_secondary["primary_driver"] == top_primary]
-secondary_cols = [c for c in primary_x_secondary.columns if c not in ("primary_driver", "No Secondary Driver")]
-if len(top_primary_row) and secondary_cols:
-    top_secondary = top_primary_row.iloc[0][secondary_cols].astype(float).idxmax()
-    top_secondary_pct_within_primary = top_primary_row.iloc[0][top_secondary]
+top_primary_subissues = summarize(df[df["primary_driver"] == top_primary], "secondary_driver")
+print(f"\nSub-issue breakdown within top primary driver ({top_primary}):\n", top_primary_subissues)
+
+if len(top_primary_subissues):
+    top_secondary = top_primary_subissues.iloc[0]["secondary_driver"]
+    top_secondary_pct_within_primary = top_primary_subissues.iloc[0]["pct_of_total"]
 else:
     top_secondary = None
     top_secondary_pct_within_primary = 0.0
@@ -400,52 +529,63 @@ print(f"Top secondary driver: {top_secondary}")
 
 # %% Cell 9 - Save outputs: ONE workbook, rebuilt from scratch every run
 # NARRATE: "Instead of a flat CSV, or scattering tables and charts across
-# lots of tabs, I publish one Excel workbook with the raw tagged data on one
-# sheet, every summary table together on a second sheet, and every chart
-# together on a third - that becomes my walkthrough deck, and it's fully
-# reproducible: every time I rerun this script, every sheet and every chart
-# regenerates from the current data, so there's never a stale hand-edited
-# copy floating around."
-df_out = df.drop(columns=["clean_text", "driver_hits"])
+# lots of tabs, I publish one Excel workbook: the raw tagged data on one
+# sheet, and every summary table on a single 'Analysis' sheet with its
+# chart placed right beside it - so you can correlate the numbers and the
+# picture at a glance, instead of hunting across tabs. Bold headers, wide
+# columns, data labels on every chart - this is the walkthrough deck, and
+# it's fully reproducible: every time I rerun this script, every sheet and
+# every chart regenerates from the current data, so there's never a stale
+# hand-edited copy floating around."
+from openpyxl.chart.label import DataLabelList
+from openpyxl.styles import Font, PatternFill, Alignment
+from openpyxl.utils import get_column_letter
+
+df_out = df.drop(columns=["clean_text", "sub_issue_hits"])
 df_out["date"] = pd.to_datetime(df_out["date"]).dt.date  # real Excel date, not text
 df_out["week_starting"] = pd.to_datetime(df_out["week_starting"]).dt.date
 
 SECTIONS = [
-    ("Primary Driver Summary", primary_summary),
-    ("Secondary Driver Summary", secondary_summary),
-    ("Primary -> Secondary Driver (% within primary)", primary_x_secondary),
-    ("CSAT by Channel", channel_summary),
-    ("CSAT by Line of Business", lob_summary),
-    ("CSAT by Agent Tenure Bucket", tenure_summary),
-    ("CSAT by Manager", manager_summary),
-    ("CSAT by Team Lead", tl_summary),
-    ("CSAT by Sentiment Label", sentiment_summary),
-    ("CSAT Bucket (Promoter/Neutral/Detractor)", csat_bucket_summary),
-    ("CSAT Bucket vs Sentiment Label (% within bucket)", score_vs_sentiment),
-    ("CSAT by Plan Tier", plan_tier_summary),
-    ("CSAT by Circle", circle_summary),
-    (f"Weekly Trend - Top Primary Driver ({top_primary})", weekly_primary),
+    ("Issue Theme: Agent vs Product vs Process", issue_theme_summary, "combo"),
+    ("Primary Driver Summary", primary_summary, "combo"),
+    ("Secondary Driver Summary (Top 15 shown)", secondary_summary.head(15), "combo"),
+    (f"Sub-Issue Breakdown within Top Driver ({top_primary})", top_primary_subissues, "combo"),
+    ("CSAT by Channel", channel_summary, "combo"),
+    ("CSAT by Line of Business", lob_summary, "combo"),
+    ("CSAT by Agent Tenure Bucket", tenure_summary, "combo"),
+    ("CSAT by Manager", manager_summary, "combo"),
+    ("CSAT by Team Lead", tl_summary, "combo"),
+    ("CSAT by Sentiment Label", sentiment_summary, "combo"),
+    ("CSAT Bucket (Promoter/Neutral/Detractor)", csat_bucket_summary, "combo"),
+    ("CSAT Bucket vs Sentiment Label (% within bucket)", score_vs_sentiment, "stacked"),
+    ("CSAT by Plan Tier", plan_tier_summary, "combo"),
+    ("CSAT by Circle (Top 15 shown)", circle_summary.head(15), "combo"),
+    (f"Weekly Trend - Top Primary Driver ({top_primary})", weekly_primary, "combo"),
 ]
 if weekly_secondary is not None:
-    SECTIONS.append((f"Weekly Trend - Top Secondary Driver ({top_secondary})", weekly_secondary))
+    SECTIONS.append((f"Weekly Trend - Top Secondary Driver ({top_secondary})", weekly_secondary, "combo"))
+
+HEADER_FILL = PatternFill(start_color="1B2A4A", end_color="1B2A4A", fill_type="solid")
+HEADER_FONT = Font(bold=True, color="FFFFFF", size=11)
+TITLE_FONT = Font(bold=True, size=13, color="1B2A4A")
+MIN_SECTION_ROWS = 14  # reserve enough rows beside a short table for the 6.5cm-tall chart next to it
 
 with pd.ExcelWriter(OUTPUT_FILE, engine="openpyxl") as writer:
     df_out.to_excel(writer, sheet_name="Tagged_Data", index=False)
     cursor = 0
-    section_positions = []  # (title, table, title_row, header_row, first_data_row, last_data_row)
-    for title, table in SECTIONS:
-        table.to_excel(writer, sheet_name="Summary", index=False, startrow=cursor + 1, startcol=0)
+    section_positions = []  # (title, table, chart_kind, title_row, header_row, first_data_row, last_data_row)
+    for title, table, chart_kind in SECTIONS:
+        table.to_excel(writer, sheet_name="Analysis", index=False, startrow=cursor + 1, startcol=0)
         title_row = cursor + 1
         header_row = cursor + 2
         first_data_row = cursor + 3
         last_data_row = cursor + 2 + len(table)
-        section_positions.append((title, table, title_row, header_row, first_data_row, last_data_row))
-        cursor = last_data_row + 2
-    pd.DataFrame({"x": []}).to_excel(writer, sheet_name="Charts", index=False, header=False)
+        section_positions.append((title, table, chart_kind, title_row, header_row, first_data_row, last_data_row))
+        cursor += max(len(table) + 2, MIN_SECTION_ROWS)
 
-# Reopen to write section titles + attach native Excel chart objects
-# (openpyxl can't write charts in the same pass as pandas' ExcelWriter, so
-# this is a second, deterministic step).
+# Reopen to style cells + attach native Excel chart objects (openpyxl can't
+# write charts in the same pass as pandas' ExcelWriter, so this is a
+# second, deterministic step).
 wb = openpyxl.load_workbook(OUTPUT_FILE)
 
 ws_data = wb["Tagged_Data"]
@@ -453,112 +593,106 @@ for col_name in ("date", "week_starting"):
     col_idx = list(df_out.columns).index(col_name) + 1
     for row in range(2, ws_data.max_row + 1):
         ws_data.cell(row=row, column=col_idx).number_format = "yyyy-mm-dd"
+for col_idx in range(1, ws_data.max_column + 1):
+    ws_data.cell(row=1, column=col_idx).font = HEADER_FONT
+    ws_data.cell(row=1, column=col_idx).fill = HEADER_FILL
+    ws_data.column_dimensions[get_column_letter(col_idx)].width = 20
 
-ws_summary = wb["Summary"]
-ws_summary.delete_cols(1, 1) if False else None  # (no-op placeholder, keeps column A as titles)
-for title, table, title_row, header_row, first_data_row, last_data_row in section_positions:
-    cell = ws_summary.cell(row=title_row, column=1, value=title)
-    cell.font = openpyxl.styles.Font(bold=True, size=12)
-    # format date-like label columns cleanly
+ws = wb["Analysis"]
+
+for title, table, chart_kind, title_row, header_row, first_data_row, last_data_row in section_positions:
+    cell = ws.cell(row=title_row, column=1, value=title)
+    cell.font = TITLE_FONT
+    ncols = table.shape[1]
+    for col_idx in range(1, ncols + 1):
+        hcell = ws.cell(row=header_row, column=col_idx)
+        hcell.font = HEADER_FONT
+        hcell.fill = HEADER_FILL
+        hcell.alignment = Alignment(horizontal="center")
+        col_letter = get_column_letter(col_idx)
+        # Wide enough for the longest labels ("Service Suspended For KYC"),
+        # comfortable for numeric columns too - kept as narrow as that
+        # allows (24/13, not 30/16) specifically so the table + its chart
+        # both fit on screen together without horizontal scrolling.
+        ws.column_dimensions[col_letter].width = 24 if col_idx == 1 else 13
     if table.columns[0] in ("week_starting",):
         for row in range(first_data_row, last_data_row + 1):
-            ws_summary.cell(row=row, column=1).number_format = "yyyy-mm-dd"
-
-ws_charts = wb["Charts"]
-ws_charts.delete_rows(1, ws_charts.max_row)  # drop the empty placeholder row
-
-ANCHOR_ROW_STEP = 19
-next_anchor_row = 2
+            ws.cell(row=row, column=1).number_format = "yyyy-mm-dd"
 
 
-def combo_chart(title, header_row, first_data_row, last_data_row):
+def combo_chart(ws_target, title, anchor_col, header_row, first_data_row, last_data_row):
     """Bar = response volume, Line = avg CSAT on a secondary axis - every
-    chart shows both HOW OFTEN an issue happens and HOW BADLY it hurts CSAT."""
-    global next_anchor_row
+    chart shows both HOW OFTEN an issue happens and HOW BADLY it hurts CSAT.
+    Data labels are switched on for both series so the numbers are readable
+    directly off the chart, not just the table beside it."""
     bar = BarChart()
     bar.title = title
     bar.y_axis.title = "Responses"
-    cats = Reference(ws_summary, min_col=1, min_row=first_data_row, max_row=last_data_row)
-    count_data = Reference(ws_summary, min_col=2, min_row=header_row, max_row=last_data_row)
+    bar.width, bar.height = 11, 6.5  # cm - compact enough to sit beside the table with no scrolling
+    cats = Reference(ws_target, min_col=1, min_row=first_data_row, max_row=last_data_row)
+    count_data = Reference(ws_target, min_col=2, min_row=header_row, max_row=last_data_row)
     bar.add_data(count_data, titles_from_data=True)
     bar.set_categories(cats)
+    bar.dataLabels = DataLabelList()
+    bar.dataLabels.showVal = True
 
     line = LineChart()
-    csat_data = Reference(ws_summary, min_col=3, min_row=header_row, max_row=last_data_row)
+    csat_data = Reference(ws_target, min_col=3, min_row=header_row, max_row=last_data_row)
     line.add_data(csat_data, titles_from_data=True)
     line.y_axis.axId = 200
     line.y_axis.title = "Avg CSAT"
     line.y_axis.crosses = "max"
     bar.y_axis.crosses = "autoZero"
+    line.dataLabels = DataLabelList()
+    line.dataLabels.showVal = True
 
     bar += line
-    ws_charts.add_chart(bar, f"A{next_anchor_row}")
-    next_anchor_row += ANCHOR_ROW_STEP
+    bar.legend.position = "b"
+    anchor = f"{get_column_letter(anchor_col)}{first_data_row - 1}"
+    ws_target.add_chart(bar, anchor)
 
 
-def stacked_pct_chart(title, header_row, first_data_row, last_data_row, ncols):
-    global next_anchor_row
+def stacked_pct_chart(ws_target, title, anchor_col, header_row, first_data_row, last_data_row, ncols):
     chart = BarChart()
     chart.type = "col"
     chart.grouping = "stacked"
     chart.overlap = 100
     chart.title = title
-    chart.y_axis.title = "% within primary driver"
-    data = Reference(ws_summary, min_col=2, max_col=ncols, min_row=header_row, max_row=last_data_row)
-    cats = Reference(ws_summary, min_col=1, min_row=first_data_row, max_row=last_data_row)
+    chart.y_axis.title = "%"
+    chart.width, chart.height = 11, 6.5  # cm - compact enough to sit beside the table with no scrolling
+    data = Reference(ws_target, min_col=2, max_col=ncols, min_row=header_row, max_row=last_data_row)
+    cats = Reference(ws_target, min_col=1, min_row=first_data_row, max_row=last_data_row)
     chart.add_data(data, titles_from_data=True)
     chart.set_categories(cats)
-    ws_charts.add_chart(chart, f"A{next_anchor_row}")
-    next_anchor_row += ANCHOR_ROW_STEP
+    chart.dataLabels = DataLabelList()
+    chart.dataLabels.showVal = True
+    chart.legend.position = "b"
+    anchor = f"{get_column_letter(anchor_col)}{first_data_row - 1}"
+    ws_target.add_chart(chart, anchor)
 
 
-# combo_chart()/stacked_pct_chart() only need (header_row, first_data_row,
-# last_data_row) - title_row is used earlier (writing the title cell), not here.
-positions_by_title = {title: (header_row, first_data_row, last_data_row)
-                       for title, _table, _title_row, header_row, first_data_row, last_data_row
-                       in section_positions}
-
-combo_chart("Primary Driver: Volume vs Avg CSAT", *positions_by_title["Primary Driver Summary"])
-combo_chart("Secondary Driver: Volume vs Avg CSAT", *positions_by_title["Secondary Driver Summary"])
-stacked_pct_chart(
-    "Primary -> Secondary Driver (%)",
-    *positions_by_title["Primary -> Secondary Driver (% within primary)"],
-    ncols=primary_x_secondary.shape[1],
-)
-combo_chart("Channel: Volume vs Avg CSAT", *positions_by_title["CSAT by Channel"])
-combo_chart("Line of Business: Volume vs Avg CSAT", *positions_by_title["CSAT by Line of Business"])
-combo_chart("Agent Tenure: Volume vs Avg CSAT", *positions_by_title["CSAT by Agent Tenure Bucket"])
-combo_chart("Manager: Volume vs Avg CSAT", *positions_by_title["CSAT by Manager"])
-combo_chart("Team Lead: Volume vs Avg CSAT", *positions_by_title["CSAT by Team Lead"])
-combo_chart("Sentiment Label: Volume vs Avg CSAT", *positions_by_title["CSAT by Sentiment Label"])
-combo_chart("CSAT Bucket: Volume vs Avg CSAT", *positions_by_title["CSAT Bucket (Promoter/Neutral/Detractor)"])
-stacked_pct_chart(
-    "CSAT Bucket vs Sentiment Label (%)",
-    *positions_by_title["CSAT Bucket vs Sentiment Label (% within bucket)"],
-    ncols=score_vs_sentiment.shape[1],
-)
-combo_chart("Plan Tier: Volume vs Avg CSAT", *positions_by_title["CSAT by Plan Tier"])
-combo_chart("Circle: Volume vs Avg CSAT", *positions_by_title["CSAT by Circle"])
-combo_chart(
-    f"Weekly Trend - Primary Driver ({top_primary}): Volume vs Avg CSAT",
-    *positions_by_title[f"Weekly Trend - Top Primary Driver ({top_primary})"],
-)
-if weekly_secondary is not None:
-    combo_chart(
-        f"Weekly Trend - Secondary Driver ({top_secondary}): Volume vs Avg CSAT",
-        *positions_by_title[f"Weekly Trend - Top Secondary Driver ({top_secondary})"],
-    )
+# Every chart is anchored BESIDE its own table (same row, one column past
+# the table's last column, a single-column gap), not collected on a
+# separate sheet - so the number and the picture read together on one
+# screen, without flipping tabs OR scrolling sideways to see the chart.
+for title, table, chart_kind, title_row, header_row, first_data_row, last_data_row in section_positions:
+    anchor_col = table.shape[1] + 1
+    chart_title = title if len(title) < 45 else title[:42] + "..."
+    if chart_kind == "stacked":
+        stacked_pct_chart(ws, chart_title, anchor_col, header_row, first_data_row, last_data_row, table.shape[1])
+    else:
+        combo_chart(ws, chart_title, anchor_col, header_row, first_data_row, last_data_row)
 
 wb.save(OUTPUT_FILE)
-print(f"Saved -> {OUTPUT_FILE} (3 sheets: Tagged_Data, Summary, Charts)")
+print(f"Saved -> {OUTPUT_FILE} (2 sheets: Tagged_Data, Analysis - {len(section_positions)} tables+charts)")
 
 # %% Cell 10 - Spoken walkthrough numbers (read these out on camera)
 top = primary_summary.iloc[0]
 print(f"Top PRIMARY driver: {top['primary_driver']} -> {top['pct_of_total']}% of all responses, "
       f"avg CSAT {top['avg_csat']:.2f}")
 if top_secondary:
-    print(f"Top COMPOUNDING secondary driver within {top_primary}: {top_secondary} "
-          f"-> present in {top_secondary_pct_within_primary:.1f}% of {top_primary} complaints")
+    print(f"Top SPECIFIC sub-issue within {top_primary}: {top_secondary} "
+          f"-> {top_secondary_pct_within_primary:.1f}% of {top_primary} complaints")
 print(f"Overall avg CSAT: {df['csat_score'].mean():.2f}")
 print(f"CSAT mix: {dict(df['csat_bucket'].value_counts())}")
 print(f"% Negative sentiment overall: {(df['sentiment_label'] == 'Negative').mean() * 100:.1f}%")

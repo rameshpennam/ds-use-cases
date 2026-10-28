@@ -8,11 +8,11 @@ live in a few minutes. Two pages, matching the narration script.
 Power BI Desktop → **Get Data → Excel Workbook** →
 `final_output/final_output_forecast_staffing.xlsx` → check
 **Forecast_Staffing** only → Load.
-(The workbook's `Summary` sheet stacks several tables with title rows and
-gaps for easy human reading in Excel — not a clean rectangular range, so
-don't import it. Forecast_Staffing is the full, clean, date-level table;
-build the weekly view directly in Power BI using its own date hierarchy, as
-below.)
+(The workbook's `Analysis` sheet stacks several tables (each with its own
+chart beside it) with title rows and gaps for easy human reading in Excel —
+not a clean rectangular range, so don't import it. Forecast_Staffing is the
+full, clean, date-level table; build the weekly view directly in Power BI
+using its own date hierarchy, as below.)
 
 ## 2. DAX measures (Modeling → New Measure, on the Forecast_Staffing table)
 ```DAX
@@ -64,5 +64,5 @@ fix with overtime or a couple of flexible shifts."*
 ## Note on data source
 Everything in this guide comes from the single **Forecast_Staffing** sheet
 — it's the full, clean, date-level table and the only sheet you need to
-load into Power BI. The `Summary` and `Charts` sheets in the workbook are
-for the Excel-side walkthrough only.
+load into Power BI. The `Analysis` sheet in the workbook is for the
+Excel-side walkthrough only.

@@ -64,13 +64,21 @@ every cell before recording. The first cell you ever run in a session takes
 ~5-15s to start its Python kernel — run that once before you hit record.
 The script produces one workbook, `final_output/final_output_csat_insights.xlsx`:
 - **Tagged_Data** — every response, row-level, with sentiment, primary/
-  secondary driver, tenure bucket, CSAT bucket
-- **Summary** — every aggregated table in one place (primary driver,
-  secondary driver, primary→secondary compounding %, CSAT cut by channel/
+  secondary driver, issue theme (Agent/Product/Process), tenure bucket,
+  CSAT bucket
+- **Analysis** — every aggregated table (primary driver, secondary driver,
+  sub-issue drill-down within the top primary driver, CSAT cut by channel/
   LoB/tenure/manager/team-lead/sentiment/CSAT-bucket/plan-tier (5 tiers)/
-  circle (23 telecom circles), weekly trend)
-- **Charts** — all 15 charts together, each pairing response volume with
-  avg CSAT
+  circle (23 telecom circles), weekly trend, issue theme), each with its
+  chart placed right beside it (bold headers, data labels, sized so the
+  table and chart are both visible on screen without scrolling)
+
+The dictionary resolves against an **11-category primary / 42-sub-issue
+secondary** taxonomy — see Cell 5 in the script. Every sub-issue's keyword
+phrase list is verified (not hand-trusted) to actually match every one of
+its 5 verbatim templates, and checked for cross-sub-issue collisions; the
+NMF/YAKE fallback in Cell 7b is now a true rare-residual safety net (0
+rows needed it in the last full run).
 
 Then run `03_generate_summary_ppt.py` to build the 6-slide summary deck,
 `final_output/usecase1_csat_summary.pptx` — every number on it is pulled
@@ -87,12 +95,15 @@ the top root causes affecting CSAT, the secondary factors compounding them,
 and quantify the business impact.
 **Flow**: Generate/ingest survey data → clean text → bootstrap keyword
 dictionary via sentiment-split term frequency (low-CSAT vs high-CSAT,
-labeled Negative/Positive/Neutral-leaning) → tag each response against a
-3-driver taxonomy ranked by match strength (primary + secondary) → fill
-gaps with TF-IDF + NMF topic modeling, auto-labeled via YAKE → score
-sentiment (VADER, offline lexicon) → aggregate across every category →
-export one Excel workbook (3 sheets, 15 charts) → build a Power BI report
-and a summary PowerPoint deck on top for the business narrative.
-**Output**: `final_output_csat_insights.xlsx` (Tagged_Data, Summary, Charts
+labeled Negative/Positive/Neutral-leaning) → tag each response against an
+11-category primary / 42-sub-issue secondary taxonomy ranked by match
+strength → fill the rare residual with TF-IDF + NMF topic modeling,
+auto-labeled via YAKE → score sentiment (VADER, offline lexicon) →
+aggregate across every category (incl. an Agent/Product/Process issue-theme
+rollup) → export one Excel workbook (2 sheets: row-level data + one
+"Analysis" sheet with every table and its chart side by side) → build a
+Power BI report and a summary PowerPoint deck on top for the business
+narrative.
+**Output**: `final_output_csat_insights.xlsx` (Tagged_Data, Analysis
 sheets), `usecase1_csat_summary.pptx` (6 slides), plus a Power BI report
 (3-4 visuals) built live on screen.

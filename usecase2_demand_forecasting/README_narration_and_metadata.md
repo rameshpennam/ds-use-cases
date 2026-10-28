@@ -57,10 +57,11 @@ The script produces one workbook,
 `final_output/final_output_forecast_staffing.xlsx`:
 - **Forecast_Staffing** — date-level forecast volume, required/available
   FTE, staffing gap
-- **Summary** — model accuracy comparison, weekly rollup, monthly rollup,
-  all in one place
-- **Charts** — all 3 charts together (required-vs-available FTE, weekly
-  gap, monthly volume-vs-required-FTE combo)
+- **Analysis** — model accuracy comparison, weekly rollup, monthly rollup,
+  each with its chart placed right beside it (bold headers, data labels,
+  sized so the table and chart are both visible on screen without
+  scrolling): a single-metric MAPE bar for model accuracy, and a
+  volume-vs-staffing-gap combo chart for each rollup
 
 Then run `03_generate_summary_ppt.py` to build the 6-slide summary deck,
 `final_output/usecase2_forecast_summary.pptx` — every number on it is
@@ -94,10 +95,11 @@ baseline forecast → Holt-Winters exponential smoothing model → validate on
 a holdout (fails loud if the model doesn't beat the baseline) → forecast
 forward 6 weeks → convert to required FTE via handle time + real
 shrinkage-derived occupancy → compare to available roster hours → export
-one Excel workbook (3 sheets, 3 charts) → build a Power BI report and a
-summary PowerPoint deck for the staffing narrative.
+one Excel workbook (2 sheets: row-level forecast + one "Analysis" sheet
+with every table and its chart side by side) → build a Power BI report and
+a summary PowerPoint deck for the staffing narrative.
 **Output**: `final_output_forecast_staffing.xlsx` (Forecast_Staffing,
-Summary, Charts sheets), `usecase2_forecast_summary.pptx` (6 slides), plus
+Analysis sheets), `usecase2_forecast_summary.pptx` (6 slides), plus
 a Power BI report (3-4 visuals) built live on screen.
 
 ## Notes on scope / assumptions (say this out loud if asked)

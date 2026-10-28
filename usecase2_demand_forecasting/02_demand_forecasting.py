@@ -13,9 +13,12 @@ HOW TO RUN (VS Code):
 
 INPUTS : input/input_call_volume_history.xlsx, input/input_agent_roster.xlsx
 OUTPUT : final_output/final_output_forecast_staffing.xlsx
-         - sheet "Forecast_Staffing" : date-level forecast + FTE gap
-         - sheet "Summary"           : model accuracy, weekly rollup, monthly rollup
-         - sheet "Charts"            : every chart in one place
+         - sheet "Forecast_Staffing" : date-level forecast + FTE gap, row-level
+         - sheet "Analysis"          : every summary table (model accuracy,
+                                        weekly rollup, monthly rollup), each
+                                        with its chart placed right beside it,
+                                        bold headers, wide columns, data
+                                        labels on every chart
          NOTE: same caveat as the other use case - a native Excel
          "PivotTable" object can't be created from a script in a way that
          works on macOS Excel (that needs Windows-only COM automation), so
@@ -32,6 +35,9 @@ from statsmodels.tsa.seasonal import seasonal_decompose
 from statsmodels.tsa.holtwinters import ExponentialSmoothing
 from sklearn.metrics import mean_absolute_percentage_error
 from openpyxl.chart import LineChart, BarChart, Reference
+from openpyxl.chart.label import DataLabelList
+from openpyxl.styles import Font, PatternFill, Alignment
+from openpyxl.utils import get_column_letter
 import openpyxl
 
 VOLUME_FILE = "input/input_call_volume_history.xlsx"
@@ -166,11 +172,13 @@ staffing = pd.DataFrame({
 staffing["staffing_gap_fte"] = (staffing["required_fte"] - staffing["available_fte"]).round(1)
 staffing.head(10)
 
-# %% Cell 9 - Save output: ONE workbook, rebuilt from scratch every run
+# %% Cell 9 - Save outputs: ONE workbook, rebuilt from scratch every run
 # NARRATE: "Same idea as the other use case - one Excel workbook: the raw
-# date-level forecast on one sheet, every summary table (model accuracy,
-# weekly rollup, monthly rollup) together on a second sheet, and every
-# chart together on a third - all regenerated every time I rerun the script."
+# date-level forecast on one sheet, and every summary table (model accuracy,
+# weekly rollup, monthly rollup) together on a single 'Analysis' sheet with
+# its chart placed right beside it - so the numbers and the picture read
+# together without flipping tabs. Bold headers, wide columns, data labels on
+# every chart - fully reproducible every time I rerun the script."
 def rollup(freq_period: str) -> pd.DataFrame:
     out = (
         staffing.assign(period=staffing["date"].dt.to_period(freq_period).apply(lambda p: p.start_time))
@@ -189,91 +197,130 @@ staffing_monthly = rollup("M")
 staffing_out = staffing.copy()
 staffing_out["date"] = pd.to_datetime(staffing_out["date"]).dt.date  # real Excel date, not text
 
+# chart_kind: "bar" = single-metric bar (Model Accuracy, 1 metric column);
+# "combo" = bar (volume) + line on a secondary axis (the operational metric
+# that volume is driving) - same "how often, how bad" pairing as use case 1.
 SECTIONS = [
-    ("Model Accuracy Comparison", model_comparison),
-    ("Weekly Rollup", staffing_weekly),
-    ("Monthly Rollup", staffing_monthly),
+    ("Model Accuracy Comparison (Holdout MAPE %)", model_comparison, "bar"),
+    ("Weekly Rollup - Volume vs Staffing Gap", staffing_weekly, "combo"),
+    ("Monthly Rollup - Volume vs Staffing Gap", staffing_monthly, "combo"),
 ]
+
+HEADER_FILL = PatternFill(start_color="1B2A4A", end_color="1B2A4A", fill_type="solid")
+HEADER_FONT = Font(bold=True, color="FFFFFF", size=11)
+TITLE_FONT = Font(bold=True, size=13, color="1B2A4A")
+MIN_SECTION_ROWS = 14  # reserve enough rows beside a short table for the 6.5cm-tall chart next to it
 
 with pd.ExcelWriter(OUTPUT_FILE, engine="openpyxl") as writer:
     staffing_out.to_excel(writer, sheet_name="Forecast_Staffing", index=False)
     cursor = 0
-    section_positions = []
-    for title, table in SECTIONS:
-        table.to_excel(writer, sheet_name="Summary", index=False, startrow=cursor + 1, startcol=0)
+    section_positions = []  # (title, table, chart_kind, title_row, header_row, first_data_row, last_data_row)
+    for title, table, chart_kind in SECTIONS:
+        table.to_excel(writer, sheet_name="Analysis", index=False, startrow=cursor + 1, startcol=0)
         title_row = cursor + 1
         header_row = cursor + 2
         first_data_row = cursor + 3
         last_data_row = cursor + 2 + len(table)
-        section_positions.append((title, table, title_row, header_row, first_data_row, last_data_row))
-        cursor = last_data_row + 2
-    pd.DataFrame({"x": []}).to_excel(writer, sheet_name="Charts", index=False, header=False)
+        section_positions.append((title, table, chart_kind, title_row, header_row, first_data_row, last_data_row))
+        cursor += max(len(table) + 2, MIN_SECTION_ROWS)
 
+# Reopen to style cells + attach native Excel chart objects (openpyxl can't
+# write charts in the same pass as pandas' ExcelWriter, so this is a
+# second, deterministic step).
 wb = openpyxl.load_workbook(OUTPUT_FILE)
 
 ws_data = wb["Forecast_Staffing"]
 date_col = list(staffing_out.columns).index("date") + 1
 for row in range(2, ws_data.max_row + 1):
     ws_data.cell(row=row, column=date_col).number_format = "yyyy-mm-dd"
+for col_idx in range(1, ws_data.max_column + 1):
+    ws_data.cell(row=1, column=col_idx).font = HEADER_FONT
+    ws_data.cell(row=1, column=col_idx).fill = HEADER_FILL
+    ws_data.column_dimensions[get_column_letter(col_idx)].width = 20
 
-ws_summary = wb["Summary"]
-for title, table, title_row, header_row, first_data_row, last_data_row in section_positions:
-    cell = ws_summary.cell(row=title_row, column=1, value=title)
-    cell.font = openpyxl.styles.Font(bold=True, size=12)
+ws = wb["Analysis"]
+
+for title, table, chart_kind, title_row, header_row, first_data_row, last_data_row in section_positions:
+    cell = ws.cell(row=title_row, column=1, value=title)
+    cell.font = TITLE_FONT
+    ncols = table.shape[1]
+    for col_idx in range(1, ncols + 1):
+        hcell = ws.cell(row=header_row, column=col_idx)
+        hcell.font = HEADER_FONT
+        hcell.fill = HEADER_FILL
+        hcell.alignment = Alignment(horizontal="center")
+        col_letter = get_column_letter(col_idx)
+        # Kept narrow (24/13, not 26/16) specifically so the table + its
+        # chart both fit on screen together without horizontal scrolling.
+        ws.column_dimensions[col_letter].width = 24 if col_idx == 1 else 13
     if table.columns[0] == "period":
         for row in range(first_data_row, last_data_row + 1):
-            ws_summary.cell(row=row, column=1).number_format = "yyyy-mm-dd"
+            ws.cell(row=row, column=1).number_format = "yyyy-mm-dd"
 
-positions_by_title = {title: (header_row, first_data_row, last_data_row)
-                       for title, _table, _title_row, header_row, first_data_row, last_data_row
-                       in section_positions}
 
-ws_charts = wb["Charts"]
-ws_charts.delete_rows(1, ws_charts.max_row)
+def single_bar_chart(ws_target, title, anchor_col, header_row, first_data_row, last_data_row):
+    """One metric, one series - used for the 2-row Model Accuracy table."""
+    bar = BarChart()
+    bar.title = title
+    bar.y_axis.title = "Holdout MAPE %"
+    bar.width, bar.height = 11, 6.5  # cm - compact enough to sit beside the table with no scrolling
+    cats = Reference(ws_target, min_col=1, min_row=first_data_row, max_row=last_data_row)
+    data = Reference(ws_target, min_col=2, min_row=header_row, max_row=last_data_row)
+    bar.add_data(data, titles_from_data=True)
+    bar.set_categories(cats)
+    bar.dataLabels = DataLabelList()
+    bar.dataLabels.showVal = True
+    bar.legend = None
+    anchor = f"{get_column_letter(anchor_col)}{first_data_row - 1}"
+    ws_target.add_chart(bar, anchor)
 
-weekly_header, weekly_first, weekly_last = positions_by_title["Weekly Rollup"]
-monthly_header, monthly_first, monthly_last = positions_by_title["Monthly Rollup"]
 
-chart1 = LineChart()
-chart1.title = "Required vs Available FTE (weekly avg)"
-chart1.y_axis.title = "FTE"
-data1 = Reference(ws_summary, min_col=3, max_col=4, min_row=weekly_header, max_row=weekly_last)  # required_fte, available_fte
-cats1 = Reference(ws_summary, min_col=1, min_row=weekly_first, max_row=weekly_last)
-chart1.add_data(data1, titles_from_data=True)
-chart1.set_categories(cats1)
-ws_charts.add_chart(chart1, "A2")
+def combo_chart(ws_target, title, anchor_col, header_row, first_data_row, last_data_row):
+    """Bar = forecast volume, Line = staffing gap FTE on a secondary axis -
+    shows both HOW MUCH contact volume is coming AND HOW SHORT-STAFFED that
+    volume leaves the floor, in the same picture. Data labels on both series
+    so the numbers are readable directly off the chart, same as use case 1."""
+    bar = BarChart()
+    bar.title = title
+    bar.y_axis.title = "Forecast Volume"
+    bar.width, bar.height = 11, 6.5  # cm - compact enough to sit beside the table with no scrolling
+    cats = Reference(ws_target, min_col=1, min_row=first_data_row, max_row=last_data_row)
+    vol_data = Reference(ws_target, min_col=2, min_row=header_row, max_row=last_data_row)  # forecast_volume
+    bar.add_data(vol_data, titles_from_data=True)
+    bar.set_categories(cats)
+    bar.dataLabels = DataLabelList()
+    bar.dataLabels.showVal = True
 
-chart2 = BarChart()
-chart2.title = "Staffing Gap (weekly avg FTE, positive = short-staffed)"
-chart2.y_axis.title = "Gap (FTE)"
-data2 = Reference(ws_summary, min_col=5, max_col=5, min_row=weekly_header, max_row=weekly_last)  # staffing_gap_fte
-chart2.add_data(data2, titles_from_data=True)
-chart2.set_categories(cats1)
-ws_charts.add_chart(chart2, "A20")
+    line = LineChart()
+    gap_data = Reference(ws_target, min_col=5, min_row=header_row, max_row=last_data_row)  # staffing_gap_fte
+    line.add_data(gap_data, titles_from_data=True)
+    line.y_axis.axId = 200
+    line.y_axis.title = "Staffing Gap (FTE)"
+    line.y_axis.crosses = "max"
+    bar.y_axis.crosses = "autoZero"
+    line.dataLabels = DataLabelList()
+    line.dataLabels.showVal = True
 
-# Monthly combo: bar = volume, line = required FTE on a secondary axis -
-# same "show both volume AND the operational metric together" pattern as
-# the other use case's charts.
-chart3 = BarChart()
-chart3.title = "Monthly Forecast Volume vs Required FTE"
-chart3.y_axis.title = "Forecast Volume"
-cats3 = Reference(ws_summary, min_col=1, min_row=monthly_first, max_row=monthly_last)
-vol_data = Reference(ws_summary, min_col=2, max_col=2, min_row=monthly_header, max_row=monthly_last)
-chart3.add_data(vol_data, titles_from_data=True)
-chart3.set_categories(cats3)
+    bar += line
+    bar.legend.position = "b"
+    anchor = f"{get_column_letter(anchor_col)}{first_data_row - 1}"
+    ws_target.add_chart(bar, anchor)
 
-line3 = LineChart()
-fte_data = Reference(ws_summary, min_col=3, max_col=3, min_row=monthly_header, max_row=monthly_last)
-line3.add_data(fte_data, titles_from_data=True)
-line3.y_axis.axId = 200
-line3.y_axis.title = "Required FTE"
-line3.y_axis.crosses = "max"
-chart3.y_axis.crosses = "autoZero"
-chart3 += line3
-ws_charts.add_chart(chart3, "A38")
+
+# Every chart is anchored BESIDE its own table (same row, one column past
+# the table's last column, a single-column gap), not collected on a
+# separate sheet - so the number and the picture read together on one
+# screen, without flipping tabs OR scrolling sideways to see the chart.
+for title, table, chart_kind, title_row, header_row, first_data_row, last_data_row in section_positions:
+    anchor_col = table.shape[1] + 1
+    chart_title = title if len(title) < 45 else title[:42] + "..."
+    if chart_kind == "bar":
+        single_bar_chart(ws, chart_title, anchor_col, header_row, first_data_row, last_data_row)
+    else:
+        combo_chart(ws, chart_title, anchor_col, header_row, first_data_row, last_data_row)
 
 wb.save(OUTPUT_FILE)
-print(f"Saved -> {OUTPUT_FILE} (3 sheets: Forecast_Staffing, Summary, Charts)")
+print(f"Saved -> {OUTPUT_FILE} (2 sheets: Forecast_Staffing, Analysis - {len(section_positions)} tables+charts)")
 
 # %% Cell 10 - Spoken walkthrough numbers (read these out on camera)
 worst_day = staffing.loc[staffing["staffing_gap_fte"].idxmax()]

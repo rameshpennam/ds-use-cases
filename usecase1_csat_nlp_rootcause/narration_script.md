@@ -67,10 +67,11 @@ workflow with tools I wouldn't really reach for."
 ## 4. What the final output looks like
 
 "By the end of this walkthrough I'll have one Excel workbook —
-`final_output_csat_insights.xlsx` — with three sheets: the full row-level
-tagged data, every summary cut together on one Summary sheet, and every
-chart together on a Charts sheet. I'll also generate a short, client-ready
-PowerPoint deck summarizing the use case and the findings."
+`final_output_csat_insights.xlsx` — with two sheets: the full row-level
+tagged data, and a single Analysis sheet where every summary table sits
+right beside its own chart, so the number and the picture read together
+without flipping tabs. I'll also generate a short, client-ready PowerPoint
+deck summarizing the use case and the findings."
 
 ## 5. Main task — walking through the code
 
@@ -111,12 +112,20 @@ intermediate artifact, so there's a clear, inspectable trail for why each
 term did or didn't make it into the dictionary."
 
 ### Cell 5 — the root-cause dictionary
-"Here's the finished dictionary — three business drivers: Billing &
-Charges, Agent Behavior & Communication, and Resolution Time / First-Call
-Resolution, each with the phrases that signal that issue. This dictionary
-counts how many distinct phrases match per response, not just whether one
-did — that match strength is what lets me rank a primary versus a secondary
-driver in a few cells' time."
+"Here's the finished dictionary — a two-level taxonomy. Eleven broad
+primary categories cover the kind of problem — Billing & Charges, Agent
+Behavior & Communication, Resolution Time, Network & Connectivity,
+Recharge & Plan Issues, Activation & Porting Delay, Refund Processing,
+App & Website Technical, KYC & Documentation, Customer Effort, and Repeat
+Contact. Underneath each one, a set of specific, named sub-issues — 42 in
+total — cover exactly what the problem was: 'Incorrect Late Fee' or
+'Excessive Hold Time', not just a vague theme. This dictionary counts how
+many distinct phrases match per response at the sub-issue level, not just
+whether one did — the strongest sub-issue's PARENT category becomes the
+primary driver, and the sub-issue itself becomes the secondary driver, so
+a response doesn't just get tagged 'Billing_Charges', it gets tagged
+'Billing_Charges / Duplicate Charge' — something the client can actually
+go fix."
 
 ### Cell 6 — sentiment scoring
 "For sentiment I use VADER — a rules-and-lexicon model. Deterministic,
@@ -125,74 +134,86 @@ specifically because LLM-API usage hasn't been confirmed as permitted for
 this engagement yet."
 
 ### Cell 7 — primary and secondary driver, ranked by strength
-"A response can mention more than one issue. I rank the matched drivers by
-how many distinct phrases hit — the strongest becomes the PRIMARY driver,
-the next strongest the SECONDARY driver, the compounding factor worth
-acting on alongside the headline issue. Where nothing matched, I fall back
-to sentiment rather than force a wrong tag."
+"I rank the matched sub-issues by how many distinct phrases hit — the
+strongest match's PARENT category becomes the PRIMARY driver, and the
+sub-issue itself becomes the SECONDARY driver. Where nothing matched, I
+fall back to sentiment rather than force a wrong tag. I also roll every
+primary category up into a higher-level issue theme — Agent, Product, or
+Process — so I can tell the business right away whether this is a
+coaching problem, an engineering problem, or an operations problem, before
+drilling into the specific driver at all."
 
-### Cell 7b — making the secondary driver actually actionable
-"Here's the thing: on short survey text, a second DISTINCT keyword phrase
-often just isn't there, even when a second issue genuinely is — so the
-dictionary alone mostly comes back empty for the secondary driver, which
-isn't something a client can act on. So I complement it with unsupervised
-topic modeling: TF-IDF turns every 'unexplained' negative response into a
+### Cell 7b — the rare residual safety net
+"With a 42-entry specific sub-issue dictionary, the vast majority of
+negative responses now get a clean, specific secondary driver straight out
+of Cell 7 — in this run, essentially all of them. For the rare
+edge-of-vocabulary case that still matches nothing, I complement it with
+unsupervised topic modeling: TF-IDF turns that leftover text into a
 weighted-term vector, NMF — non-negative matrix factorization, the same
-family of technique as LDA — discovers a handful of latent sub-themes
-directly from that text with no labels needed, and I auto-generate a short,
-readable name for each discovered theme using YAKE, a lightweight, offline,
-unsupervised keyword-extraction library. No AI, no API, no corpus download.
-The result: every negative response ends up with a concrete secondary
-driver, not a blank."
+family of technique as LDA — discovers a latent sub-theme directly from
+the text with no labels needed, and I auto-generate a short, readable name
+for it using YAKE, a lightweight, offline, unsupervised keyword-extraction
+library. No AI, no API, no corpus download. The result: even that rare
+fallback case ends up with a concrete secondary driver, not a blank."
 
-### Cell 8 — CSAT across every category, plus the compounding view
+### Cell 8 — CSAT across every category, plus the drill-down view
 "I don't stop at one cut. I run the same volume-and-avg-CSAT view across
-every dimension we have — primary driver, secondary driver, channel, line
-of business, agent tenure, manager, team lead, sentiment label, a classic
-NPS-style CSAT bucket (Promoter for a 4 or 5, Neutral for a 3, Detractor
-for a 1 or 2), plan tier, and telecom circle. That's depth, not just a
-headline number — and it means I can tell the client which customer
-SEGMENTS are underperforming, not just which agents.
+every dimension we have — issue theme (Agent/Product/Process), primary
+driver, secondary driver, channel, line of business, agent tenure,
+manager, team lead, sentiment label, a classic NPS-style CSAT bucket
+(Promoter for a 4 or 5, Neutral for a 3, Detractor for a 1 or 2), plan
+tier, and telecom circle. That's depth, not just a headline number — and
+it means I can tell the client which customer SEGMENTS are
+underperforming, not just which agents.
 
-I also build the compounding-issue view — of the responses where Billing is
-the primary driver, what percent of the time is a given secondary driver
-also present — shown in percentages. And I cross-check the CSAT score
-bucket against the text sentiment label, because the two don't always agree
-— some Promoters still write negative-sounding text, which is itself a real
+I also build a drill-down view specifically within the top primary
+driver — of the responses where Billing & Charges is the issue, which
+EXACT sub-issue shows up most, and what percent of Billing's own
+complaints it accounts for. That's the specific, named thing to go fix,
+not just a broad category. And I cross-check the CSAT score bucket against
+the text sentiment label, because the two don't always agree — some
+Promoters still write negative-sounding text, which is itself a real
 finding."
 
 ### Cell 9 — saving the output
-"One Excel workbook: the raw tagged data on one sheet, every summary table
-on a second, every chart on a third — fifteen charts in this run, every
-one of them pairing response VOLUME with average CSAT so you can see both
-how often an issue happens and how badly it hurts satisfaction at the same
-time. Fully reproducible — rerun the script, everything regenerates."
+"One Excel workbook: the raw tagged data on one sheet, and every summary
+table together on a single Analysis sheet, each with its own chart placed
+right beside it — sixteen tables and charts in this run, every chart
+pairing response VOLUME with average CSAT, with data labels switched on so
+the numbers are readable straight off the chart, not just the table beside
+it. Bold headers, wide columns, and each table-plus-chart pair sized to be
+fully visible on screen without scrolling. Fully reproducible — rerun the
+script, everything regenerates."
 
 ### Cell 10 — the numbers I'll quote
 "To summarize what the data is telling us: **Billing & Charges is the top
-primary driver, at 32.4 percent of all responses**, with an average CSAT of
-2.50 — clearly the worst-performing driver. Within Billing complaints
-specifically, a discovered sub-theme around being charged shows up as the
-secondary, compounding factor 45 percent of the time — that's the specific
-thing to go investigate alongside the headline issue. Overall average CSAT
-across the dataset is 3.01 out of 5 — a real split, 38.7 percent Promoters
-against 37.7 percent Detractors, not a crisis but a genuine, fixable
-opportunity — and right around half of all responses, 50.1 percent, carry
-negative sentiment in the text itself. Cutting it by segment: Mumbai is the
-lowest-performing circle at an average CSAT of 2.83, and the Standard plan
-tier the lowest-performing tier at 2.98 — two segment-level leads worth
-investigating alongside the process fix."
+primary driver, at 20.8 percent of all responses**, with an average CSAT
+of 2.51 — clearly the worst-performing driver. Within Billing complaints
+specifically, Duplicate Charge is the single most common sub-issue,
+showing up in 21.3 percent of Billing's own complaints — that's the
+specific, named thing to go fix, not a vague theme. Overall average CSAT
+across the dataset is 2.85 out of 5 — a real split, not a crisis but a
+genuine, fixable opportunity — and 37.3 percent of all responses carry
+negative sentiment in the text itself. Cutting it by segment: North East
+is the lowest-performing circle at an average CSAT of 2.78, and the
+Standard plan tier the lowest-performing tier at 2.83 — two segment-level
+leads worth investigating alongside the process fix.
+
+[Numbers shift slightly run to run as the taxonomy/templates evolve —
+always read these off the live Cell 10 printout rather than reciting this
+script's numbers from memory.]"
 
 ## 6. Output file walkthrough
 
 *[Switch to Excel. Open `final_output/final_output_csat_insights.xlsx`.]*
 
 "Tagged_Data has every response with its sentiment score, matched drivers,
-primary and secondary driver, tenure bucket, and CSAT bucket. Summary has
-every aggregated table in one place — primary driver, secondary driver, the
-primary-to-secondary compounding percentages, CSAT cut by channel/LoB/
-tenure/manager/team-lead/sentiment/CSAT-bucket, and the weekly trend of the
-top primary and secondary driver. Charts has all thirteen charts together."
+primary and secondary driver, issue theme, tenure bucket, and CSAT bucket.
+Analysis has every aggregated table — issue theme, primary driver,
+secondary driver, the sub-issue drill-down within the top primary driver,
+CSAT cut by channel/LoB/tenure/manager/team-lead/sentiment/CSAT-bucket/
+plan-tier/circle, and the weekly trend of the top primary and secondary
+driver — each one with its own chart sitting right beside it."
 
 ## 7. The PowerPoint summary
 
@@ -216,15 +237,15 @@ the Tagged Data sheet as my source."
 *[Build the visuals per the guide, narrating each one as you add it.]*
 
 "So pulling this together: Billing & Charges is our number one CSAT driver
-by volume and severity, a billing/charge-clarity sub-theme is the specific
-compounding factor within it 45 percent of the time, newer agents
+by volume and severity, Duplicate Charge is the specific, named sub-issue
+driving it in just over a fifth of its own complaints, newer agents
 disproportionately link to Agent Behavior complaints, Voice is our
-highest-risk channel, and Mumbai and the Standard plan tier are the
+highest-risk channel, and North East and the Standard plan tier are the
 lowest-performing segments. If I were presenting this to the business, my
-recommendation would be: investigate the billing-charge clarity issue
-first, since it's the highest-volume, lowest-CSAT driver, pair it with a
-coaching initiative for agents under six months' tenure, and take a closer
-look at the Mumbai circle specifically."
+recommendation would be: investigate duplicate billing charges first,
+since it's the highest-volume, lowest-CSAT, most specific driver, pair it
+with a coaching initiative for agents under six months' tenure, and take a
+closer look at the North East circle specifically."
 
 ## 9. Close
 

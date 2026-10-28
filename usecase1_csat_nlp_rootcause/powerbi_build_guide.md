@@ -7,8 +7,9 @@ live in a few minutes. Two pages, matching the narration script.
 ## 1. Get Data
 Power BI Desktop → **Get Data → Excel Workbook** →
 `final_output/final_output_csat_insights.xlsx` → check **Tagged_Data** →
-Load. (You don't need the other three sheets in Power BI — they're the
-Excel-side pivot-equivalent views; Power BI builds its own from Tagged_Data.)
+Load. (You don't need the **Analysis** sheet in Power BI — it's the
+Excel-side pivot-equivalent view (stacked tables + charts, not a clean
+rectangular range); Power BI builds its own visuals from Tagged_Data.)
 
 ## 2. DAX measures (Modeling → New Measure, on the Tagged_Data table)
 ```DAX

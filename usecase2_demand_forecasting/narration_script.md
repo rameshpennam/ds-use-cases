@@ -56,10 +56,11 @@ for deeply technical modeling work."
 ## 4. What the final output looks like
 
 "The output is one Excel workbook, `final_output_forecast_staffing.xlsx`,
-with the date-level forecast and staffing numbers on one sheet, every
-summary table — model accuracy, weekly rollup, monthly rollup — together on
-a second sheet, and every chart together on a third. I'll also generate a
-short client-ready PowerPoint deck summarizing the use case and findings."
+with the date-level forecast and staffing numbers on one sheet, and a
+single Analysis sheet where every summary table — model accuracy, weekly
+rollup, monthly rollup — sits right beside its own chart. I'll also
+generate a short client-ready PowerPoint deck summarizing the use case and
+findings."
 
 ## 5. Main task — walking through the code
 
@@ -137,11 +138,12 @@ not a crisis."
 
 ### Cell 9 — saving the output
 "One Excel workbook, rebuilt from scratch every run: the date-level
-forecast and staffing numbers on one sheet, every summary table — model
-accuracy, weekly rollup, monthly rollup — together on a second, and three
-charts on a third: required-versus-available FTE weekly, the weekly
-staffing gap, and a monthly combo chart pairing forecast volume with
-required FTE."
+forecast and staffing numbers on one sheet, and a single Analysis sheet
+where each summary table — model accuracy, weekly rollup, monthly rollup —
+sits right beside its own chart, with data labels switched on. The weekly
+and monthly rollups each pair forecast volume (bars) with the staffing gap
+in FTE (a line on a secondary axis), so you can see both how much volume
+is coming and how short-staffed it leaves the floor, in the same picture."
 
 ### Cell 10 — the numbers I'll quote
 "To summarize: Holt-Winters improves forecast accuracy from 20.1 to 18.8
@@ -154,9 +156,9 @@ we're short-staffed on 36 of the next 42 days, peaking at a shortfall of
 
 *[Switch to Excel. Open `final_output/final_output_forecast_staffing.xlsx`.]*
 
-"Forecast_Staffing has the full date-level detail. Summary has the model
-accuracy comparison, the weekly rollup, and the monthly rollup all in one
-place. Charts has the three charts I just described."
+"Forecast_Staffing has the full date-level detail. Analysis has the model
+accuracy comparison, the weekly rollup, and the monthly rollup, each one
+sitting right beside the chart I just described for it."
 
 ## 7. The PowerPoint summary
 
