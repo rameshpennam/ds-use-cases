@@ -67,20 +67,26 @@ AGENT_ROSTER = build_agent_roster()
 LOBS = ["Postpaid Mobile", "Prepaid Mobile", "Broadband", "Billing & Payments"]
 CHANNELS = ["Voice", "Chat", "Email"]
 
-# WHAT: three more realistic categorical cuts, all customer/survey-platform
+# WHAT: two more realistic categorical cuts, both customer-master
 # attributes (not operational call-center telemetry that would need a
 # cross-system join) - the kind of fields a CSAT survey export routinely
-# carries already: plan tier and circle from the customer master record,
-# survey type from the survey platform itself (which survey trigger this
-# response came from).
-PLAN_TIER_BY_LOB = {
-    "Postpaid Mobile": ["Postpaid Standard", "Postpaid Premium"],
-    "Prepaid Mobile": ["Prepaid Basic", "Prepaid Plus"],
-    "Broadband": ["Broadband Home", "Broadband Pro"],
-    "Billing & Payments": ["Postpaid Standard", "Prepaid Basic", "Broadband Home"],
-}
-CIRCLES = ["Karnataka", "Maharashtra", "Delhi NCR", "Tamil Nadu", "West Bengal"]
-SURVEY_TYPES = ["Post-Interaction", "Periodic Relationship"]
+# carries already via a customer-ID lookup: plan tier and telecom circle.
+# 5 plan tiers, shared across every LoB (a clean, flat categorical rather
+# than LoB-specific naming).
+PLAN_TIERS = ["Basic", "Standard", "Plus", "Premium", "Elite"]
+
+# All 22 official Indian telecom "circles" (DoT-licensed service areas) -
+# this is the real industry list, and collectively covers every state/UT
+# (a few large states are split into two circles - e.g. UP East/West - and
+# four metros are carved out as their own circle - Delhi/Mumbai/Kolkata/
+# Chennai - which is exactly how real telecom operators report this field).
+CIRCLES = [
+    "Andhra Pradesh", "Assam", "Bihar", "Chennai", "Delhi", "Gujarat",
+    "Haryana", "Himachal Pradesh", "Jammu & Kashmir", "Karnataka", "Kerala",
+    "Kolkata", "Madhya Pradesh", "Maharashtra & Goa", "Mumbai", "North East",
+    "Odisha", "Punjab", "Rajasthan", "Tamil Nadu", "UP (East)", "UP (West)",
+    "West Bengal",
+]
 
 # %% Cell 2 - Root-cause vocabulary used to WRITE the synthetic verbatims
 # In the analysis script we independently build a keyword dictionary and try
@@ -185,12 +191,12 @@ def make_csat(driver: str) -> int:
     return int(np.random.choice([1, 2, 3, 4], p=[0.20, 0.30, 0.30, 0.20]))
 
 
-def make_plan_tier(lob: str) -> str:
-    """WHAT: the customer's plan tier (e.g. Postpaid Standard/Premium).
+def make_plan_tier() -> str:
+    """WHAT: the customer's plan tier (Basic/Standard/Plus/Premium/Elite).
     WHY: a genuine customer-master attribute, routinely pre-joined onto a
     CSAT survey export by the survey platform (customer ID lookup) - no
     cross-system operational join required, unlike call-center telemetry."""
-    return random.choice(PLAN_TIER_BY_LOB[lob])
+    return random.choice(PLAN_TIERS)
 
 
 def make_circle() -> str:
@@ -198,15 +204,6 @@ def make_circle() -> str:
     reporting dimension for any Indian telecom operator, and another
     customer-master field routinely present on a survey export."""
     return random.choice(CIRCLES)
-
-
-def make_survey_type() -> str:
-    """WHAT: which survey this response came from - a Post-Interaction
-    (triggered right after a chat/call/email) or a Periodic Relationship
-    survey (sent on a schedule, not tied to one specific contact). WHY:
-    this is captured natively BY THE SURVEY PLATFORM ITSELF - the single
-    most directly-realistic "extra" column of the three, no join at all."""
-    return random.choices(SURVEY_TYPES, weights=[0.7, 0.3])[0]
 
 
 def make_date(driver: str) -> datetime:
@@ -238,9 +235,8 @@ for i in range(N_RECORDS):
         "tl_name": agent["tl_name"],
         "manager_name": agent["manager_name"],
         "tenure_months": int(agent["tenure_months"]),
-        "plan_tier": make_plan_tier(lob),
+        "plan_tier": make_plan_tier(),
         "circle": make_circle(),
-        "survey_type": make_survey_type(),
     })
 
 df = pd.DataFrame(records).sort_values("date").reset_index(drop=True)
@@ -272,5 +268,4 @@ print("\nCSAT distribution:\n", df["csat_score"].value_counts().sort_index())
 print("\nAverage CSAT:", round(df["csat_score"].mean(), 2))
 print("\nPlan tier split:\n", df["plan_tier"].value_counts())
 print("\nCircle split:\n", df["circle"].value_counts())
-print("\nSurvey type split:\n", df["survey_type"].value_counts())
 print("\nSample rows:\n", df.sample(5, random_state=1)[["channel", "lob", "verbatim", "csat_score"]])

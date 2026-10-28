@@ -67,9 +67,9 @@ The script produces one workbook, `final_output/final_output_csat_insights.xlsx`
   secondary driver, tenure bucket, CSAT bucket
 - **Summary** — every aggregated table in one place (primary driver,
   secondary driver, primary→secondary compounding %, CSAT cut by channel/
-  LoB/tenure/manager/team-lead/sentiment/CSAT-bucket/plan-tier/circle/
-  survey-type, weekly trend)
-- **Charts** — all 16 charts together, each pairing response volume with
+  LoB/tenure/manager/team-lead/sentiment/CSAT-bucket/plan-tier (5 tiers)/
+  circle (23 telecom circles), weekly trend)
+- **Charts** — all 15 charts together, each pairing response volume with
   avg CSAT
 
 Then run `03_generate_summary_ppt.py` to build the 6-slide summary deck,
@@ -91,7 +91,7 @@ labeled Negative/Positive/Neutral-leaning) → tag each response against a
 3-driver taxonomy ranked by match strength (primary + secondary) → fill
 gaps with TF-IDF + NMF topic modeling, auto-labeled via YAKE → score
 sentiment (VADER, offline lexicon) → aggregate across every category →
-export one Excel workbook (3 sheets, 16 charts) → build a Power BI report
+export one Excel workbook (3 sheets, 15 charts) → build a Power BI report
 and a summary PowerPoint deck on top for the business narrative.
 **Output**: `final_output_csat_insights.xlsx` (Tagged_Data, Summary, Charts
 sheets), `usecase1_csat_summary.pptx` (6 slides), plus a Power BI report

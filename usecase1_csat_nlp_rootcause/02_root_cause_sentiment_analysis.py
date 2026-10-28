@@ -336,7 +336,6 @@ sentiment_summary = summarize(df, "sentiment_label")
 csat_bucket_summary = summarize(df, "csat_bucket")
 plan_tier_summary = summarize(df, "plan_tier")
 circle_summary = summarize(df, "circle")
-survey_type_summary = summarize(df, "survey_type")
 
 print(primary_summary)
 
@@ -425,7 +424,6 @@ SECTIONS = [
     ("CSAT Bucket vs Sentiment Label (% within bucket)", score_vs_sentiment),
     ("CSAT by Plan Tier", plan_tier_summary),
     ("CSAT by Circle", circle_summary),
-    ("CSAT by Survey Type", survey_type_summary),
     (f"Weekly Trend - Top Primary Driver ({top_primary})", weekly_primary),
 ]
 if weekly_secondary is not None:
@@ -541,7 +539,6 @@ stacked_pct_chart(
 )
 combo_chart("Plan Tier: Volume vs Avg CSAT", *positions_by_title["CSAT by Plan Tier"])
 combo_chart("Circle: Volume vs Avg CSAT", *positions_by_title["CSAT by Circle"])
-combo_chart("Survey Type: Volume vs Avg CSAT", *positions_by_title["CSAT by Survey Type"])
 combo_chart(
     f"Weekly Trend - Primary Driver ({top_primary}): Volume vs Avg CSAT",
     *positions_by_title[f"Weekly Trend - Top Primary Driver ({top_primary})"],
