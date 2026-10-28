@@ -10,10 +10,14 @@ runnable scripts, a narration script, and a Power BI build guide.
 | `usecase2_demand_forecasting/` | Contact-volume forecasting → required staffing (FTE) vs current roster |
 
 ## Per use case, in order
-1. `pip install -r requirements.txt`
-2. `python 01_generate_synthetic_data.py` — produces the `input/` files
-3. Open `02_*.py` in VS Code (Python extension), run each `# %%` cell in
-   order — produces `intermediate/` and `final_output/` files
+No virtual environment needed (dedicated single-purpose machine, nothing to
+conflict with) — just:
+1. `pip install --user -r requirements.txt` (Mac: `pip3 install --user ...`)
+2. `python 01_generate_synthetic_data.py` (Mac: `python3 ...`) — produces
+   the `input/` files
+3. Open `02_*.py` in VS Code (Python extension), run **cell by cell** —
+   click "▷ Run Cell" above each `# %%` block, or Shift+Enter to run +
+   auto-advance — produces `intermediate/` and `final_output/` files
 4. `narration_script.md` — the talk track for the recording (does not
    include a personal introduction — add your own at the start)
 5. `powerbi_build_guide.md` — exact visuals/DAX to build live in Power BI

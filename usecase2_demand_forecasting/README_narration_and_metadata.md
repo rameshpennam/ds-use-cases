@@ -28,14 +28,30 @@ usecase2_demand_forecasting/
 every run — don't hand-edit anything inside them.
 
 ## Setup (before recording — not part of the recorded take)
+No virtual environment needed — this runs on a dedicated single-purpose
+recording account, so there's nothing for package versions to conflict
+with. Just install straight into your user profile:
 ```
-pip install -r requirements.txt
+# Windows (PowerShell)
+pip install --user -r requirements.txt
 python 01_generate_synthetic_data.py
+
+# macOS (Terminal)
+pip3 install --user -r requirements.txt
+python3 01_generate_synthetic_data.py
 ```
+`--user` avoids needing admin rights. Run this once as early as possible
+(ideally the moment you get the Mac, not for the first time on recording
+day) so any network/firewall issue surfaces before you're on camera.
+
 This creates `input/input_call_volume_history.xlsx` and
 `input/input_agent_roster.xlsx`. Then open `02_demand_forecasting.py` in VS
-Code and do one silent dry run of every cell so you know what each one
-prints/plots before recording. The final cell produces one workbook,
+Code (Python extension) and run it **cell by cell** — click the "▷ Run
+Cell" link above each `# %%` block, or put your cursor in a cell and press
+**Shift+Enter** (runs it and auto-advances to the next cell). Do one silent
+dry run of every cell before recording. The first cell you ever run in a
+session takes ~5-15s to start its Python kernel — run that once before you
+hit record. The final cell produces one workbook,
 `final_output/final_output_forecast_staffing.xlsx`, with 2 sheets and 2
 embedded charts — rebuilt from scratch every time the script runs.
 
