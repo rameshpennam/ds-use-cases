@@ -190,13 +190,13 @@ script, everything regenerates."
 primary driver, at 20.8 percent of all responses**, with an average CSAT
 of 2.51 — clearly the worst-performing driver. Within Billing complaints
 specifically, Duplicate Charge is the single most common sub-issue,
-showing up in 21.3 percent of Billing's own complaints — that's the
+showing up in 22.0 percent of Billing's own complaints — that's the
 specific, named thing to go fix, not a vague theme. Overall average CSAT
-across the dataset is 2.85 out of 5 — a real split, not a crisis but a
-genuine, fixable opportunity — and 37.3 percent of all responses carry
+across the dataset is 2.86 out of 5 — a real split, not a crisis but a
+genuine, fixable opportunity — and 37.6 percent of all responses carry
 negative sentiment in the text itself. Cutting it by segment: North East
 is the lowest-performing circle at an average CSAT of 2.78, and the
-Standard plan tier the lowest-performing tier at 2.83 — two segment-level
+Elite plan tier the lowest-performing tier at 2.82 — two segment-level
 leads worth investigating alongside the process fix.
 
 [Numbers shift slightly run to run as the taxonomy/templates evolve —
@@ -240,7 +240,7 @@ the Tagged Data sheet as my source."
 by volume and severity, Duplicate Charge is the specific, named sub-issue
 driving it in just over a fifth of its own complaints, newer agents
 disproportionately link to Agent Behavior complaints, Voice is our
-highest-risk channel, and North East and the Standard plan tier are the
+highest-risk channel, and North East and the Elite plan tier are the
 lowest-performing segments. If I were presenting this to the business, my
 recommendation would be: investigate duplicate billing charges first,
 since it's the highest-volume, lowest-CSAT, most specific driver, pair it

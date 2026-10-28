@@ -39,22 +39,30 @@ TL_BY_MANAGER = {
 
 AGENT_FIRST = ["Aarav", "Vivaan", "Aditya", "Kabir", "Ishaan", "Rohan", "Karan", "Aryan",
                "Sanya", "Ananya", "Diya", "Meera", "Riya", "Neha", "Pooja", "Kavya",
-               "Farhan", "Imran", "Zoya", "Alisha"]
+               "Farhan", "Imran", "Zoya", "Alisha", "Arjun", "Rahul", "Sneha", "Priyanka",
+               "Nikhil", "Tanvi", "Yash", "Ritu", "Siddharth", "Varun"]
 AGENT_LAST = ["Verma", "Gupta", "Reddy", "Khan", "Pillai", "Shetty", "Joshi", "Mehta",
-              "Chopra", "Bose"]
+              "Chopra", "Bose", "Kapoor", "Malhotra", "Agarwal", "Bhatt", "Desai",
+              "Kulkarni", "Patel", "Yadav", "Mishra", "Pandey", "Choudhury", "Sinha",
+              "Ghosh", "Banerjee", "Saxena", "Trivedi", "Nambiar", "Rathore", "Dutta", "Kaur"]
 
 
 def build_agent_roster(n_agents=24):
+    # Sample first and last names INDEPENDENTLY without replacement, so
+    # every agent has both a unique first name AND a unique last name - no
+    # name component repeats anywhere across the roster, not just the full
+    # combination. Needs both pools to have at least n_agents entries.
+    first_names = random.sample(AGENT_FIRST, n_agents)
+    last_names = random.sample(AGENT_LAST, n_agents)
     agents = []
-    for i in range(n_agents):
+    for first, last in zip(first_names, last_names):
         manager = random.choice(MANAGERS)
         tl = random.choice(TL_BY_MANAGER[manager])
-        name = f"{random.choice(AGENT_FIRST)} {random.choice(AGENT_LAST)}"
         tenure_months = int(np.random.choice(
             [2, 4, 5, 8, 10, 14, 18, 24, 30, 36, 48, 60],
             p=[0.08, 0.08, 0.08, 0.09, 0.09, 0.09, 0.09, 0.09, 0.09, 0.08, 0.07, 0.07]))
         agents.append({
-            "agent_name": f"{name} ({i + 1})",
+            "agent_name": f"{first} {last}",
             "tl_name": tl,
             "manager_name": manager,
             "tenure_months": tenure_months,
