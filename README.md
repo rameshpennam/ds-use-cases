@@ -1,8 +1,8 @@
 # Data Science & ML — Use Case Portfolio
 
-Two self-contained, end-to-end data science use cases. Each folder is
-independent — `requirements.txt`, three runnable scripts, a full walkthrough
-script, and a Power BI build guide.
+A growing collection of self-contained, end-to-end data science use cases.
+Each folder is independent — `requirements.txt`, three runnable scripts, a
+full walkthrough script, and a Power BI build guide. Currently:
 
 | Folder | Use case |
 |---|---|
