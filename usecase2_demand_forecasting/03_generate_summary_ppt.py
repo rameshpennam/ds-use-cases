@@ -83,6 +83,13 @@ top_lob, top_lob_pct = lob_split_pct.index[0], lob_split_pct.iloc[0]
 pct_days_short = days_short / horizon_days * 100
 gap_pct_of_required = avg_gap / avg_required_fte * 100
 
+# WHAT: a genuine third, distinct fix - checked, not assumed. Is the
+# shortfall spread evenly across the week, or does the roster actually
+# have slack on one day that could cover the worst days instead?
+_gap_by_weekday = staffing.assign(weekday=staffing["date"].dt.day_name()).groupby("weekday")["staffing_gap_fte"].mean()
+best_day, best_day_gap = _gap_by_weekday.idxmin(), _gap_by_weekday.min()
+worst_weekday, worst_weekday_gap = _gap_by_weekday.idxmax(), _gap_by_weekday.max()
+
 print(f"History: {n_history_years:.1f} years | Forecast horizon: {horizon_days} days")
 print(f"MAPE: baseline {baseline_mape:.1f}% -> Holt-Winters {hw_mape:.1f}% (improved {mape_improvement:.1f}pp)")
 print(f"Avg required FTE {avg_required_fte:.1f} vs available {avg_available_fte:.1f}, "
@@ -301,7 +308,7 @@ STEP_COL1_X, STEP_COL1_W = Inches(0.65), Inches(2.7)
 STEP_COL2_X, STEP_COL2_W = Inches(3.6), Inches(5.3)
 STEP_COL3_X, STEP_COL3_W = Inches(9.15), Inches(3.53)
 STEP_BADGE_D = Inches(0.38)
-STEP_OFFSET_PER_ROW = Inches(0.07)  # each badge nudges right - a literal staircase down the slide
+STEP_OFFSET_PER_ROW = Inches(0)  # badges stay in a single straight vertical line, step 1 to step 6
 
 
 def step_badge_center(row_index, top):
@@ -334,7 +341,7 @@ def add_approach_row(slide, top, row_height, row_index, number, title, approach_
     title_x = Emu(int(badge_x) + int(STEP_BADGE_D) + Inches(0.12))
     title_w = Emu(int(STEP_COL1_X) + int(STEP_COL1_W) - int(title_x))
     add_text(slide, title_x, top + Inches(0.01), title_w, Inches(0.55), title, 14.5, NAVY, bold=True)
-    add_text(slide, STEP_COL2_X, top, STEP_COL2_W, row_height, approach_text, 12.5, DARK_TEXT)
+    add_text(slide, STEP_COL2_X, top, STEP_COL2_W, row_height, approach_text, 10.5, DARK_TEXT)
     out_box = slide.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, STEP_COL3_X, top, STEP_COL3_W, row_height - Inches(0.1))
     out_box.fill.solid()
     out_box.fill.fore_color.rgb = LIGHT_BG
@@ -452,28 +459,32 @@ STEP_CONTENT_TOP = Inches(1.92)
 STEP_ROW_H = Inches(0.84)
 steps = [
     ("Load & prepare data",
-     "Loads 3.8 years of volume history plus the agent roster, then derives occupancy from "
-     "the roster's REAL shrinkage %, not a flat assumption.",
-     "A ready-to-model daily volume series + occupancy figure"),
+     "pandas loads 3.8 years of volume history + the roster; occupancy = 1 minus the "
+     "roster's average shrinkage % (time lost to breaks/training), not a textbook 85% "
+     "assumption.",
+     "A ready-to-model daily volume series + a real occupancy figure"),
     ("Explore first",
-     "Decomposes trend and weekly/yearly seasonality, and checks day-of-week patterns "
-     "before touching any model.",
+     "statsmodels' seasonal_decompose splits the series into trend, weekly seasonality, "
+     "and residual noise, so the real weekly rhythm (e.g. the Sunday dip) is confirmed "
+     "visually before any model is trusted.",
      "Confirms the series' real shape before trusting a model"),
     ("Benchmark honestly",
-     "Benchmarks against a naive seasonal baseline (repeat last week), tested on a "
-     "60-day holdout.",
+     "The naive baseline just repeats each weekday's volume from one week back; its "
+     "holdout MAPE (mean absolute % error, scikit-learn) becomes the bar every real "
+     "model must beat.",
      "A bar every candidate model must beat before it ships"),
     ("Holt-Winters",
-     f"Models trend and weekly seasonality explicitly, then forecasts volume "
-     f"{horizon_days} days forward.",
+     f"statsmodels' ExponentialSmoothing fits separate trend and weekly-seasonal "
+     f"components, then extrapolates both forward {horizon_days} days - a transparent "
+     f"formula, not a black box.",
      f"{hw_mape:.1f}% MAPE — beats the {baseline_mape:.1f}% baseline"),
     ("Volume -> FTE",
-     "Converts volume to agent-hours via handle time, then compares required FTE to "
-     "available FTE.",
+     "required_hours = volume x handle_time / 3600; required_FTE = hours / (shift_hours "
+     "x occupancy) - then compared day-by-day against the roster's available hours.",
      "The exact day(s) staffing runs short, and by how much"),
     ("Publish",
-     "One workbook is written (forecast + Analysis sheet), then the PPT deck and Power BI "
-     "report are built on top.",
+     "openpyxl writes one workbook (forecast + an Analysis sheet with native Excel "
+     "charts); python-pptx then re-reads that SAME file to build this deck.",
      "A client-ready package, numbers always in sync"),
 ]
 centers = [step_badge_center(i, STEP_CONTENT_TOP + i * STEP_ROW_H) for i in range(len(steps))]
@@ -538,10 +549,11 @@ rec_rows = [
      f"{worst_day['staffing_gap_fte']:.1f} FTE short — forecast volume peaks that day with "
      f"no spare buffer.",
      "Proactive scheduling avoids the highest service-level-risk day in the horizon."),
-    ("Next: Extend & revisit",
-     "Extend the model per LoB/channel for sharper allocation, and revisit shrinkage "
-     "assumptions quarterly as the roster's tenure mix shifts.",
-     "Keeps the staffing plan accurate instead of going stale between reviews."),
+    ("Fix #3: Rebalance the weekly schedule",
+     f"The roster runs a surplus on {best_day} ({best_day_gap:.1f} FTE over) but is short "
+     f"every other day, worst on {worst_weekday} ({worst_weekday_gap:.1f} FTE avg) — shift "
+     f"some of that {best_day} coverage into the weekday shifts that need it.",
+     "Closes the weekday shortfall using capacity already on the roster, not new hires."),
 ]
 add_recommendation_table(slide, Inches(0.65), Inches(1.85), Inches(12.0), Inches(1.4), rec_rows)
 add_text(slide, Inches(0.65), Inches(6.95), Inches(11), Inches(0.4),

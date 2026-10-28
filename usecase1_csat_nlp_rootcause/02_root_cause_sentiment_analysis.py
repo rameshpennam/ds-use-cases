@@ -633,8 +633,11 @@ def combo_chart(ws_target, title, anchor_col, header_row, first_data_row, last_d
     count_data = Reference(ws_target, min_col=2, min_row=header_row, max_row=last_data_row)
     bar.add_data(count_data, titles_from_data=True)
     bar.set_categories(cats)
-    bar.dataLabels = DataLabelList()
-    bar.dataLabels.showVal = True
+    # Data label shows ONLY the number - the series name ("Responses") is
+    # already identified by the legend at the bottom; repeating it on every
+    # single bar is redundant clutter, not a second piece of information.
+    bar.dataLabels = DataLabelList(showVal=True, showSerName=False, showCatName=False,
+                                     showLegendKey=False, showPercent=False, showBubbleSize=False)
 
     line = LineChart()
     csat_data = Reference(ws_target, min_col=3, min_row=header_row, max_row=last_data_row)
@@ -644,8 +647,8 @@ def combo_chart(ws_target, title, anchor_col, header_row, first_data_row, last_d
     line.y_axis.crosses = "max"
     line.y_axis.majorGridlines = None
     bar.y_axis.crosses = "autoZero"
-    line.dataLabels = DataLabelList()
-    line.dataLabels.showVal = True
+    line.dataLabels = DataLabelList(showVal=True, showSerName=False, showCatName=False,
+                                      showLegendKey=False, showPercent=False, showBubbleSize=False)
 
     bar += line
     bar.legend.position = "b"
@@ -659,8 +662,7 @@ def combo_chart(ws_target, title, anchor_col, header_row, first_data_row, last_d
 # flipping tabs.
 for title, table, title_row, header_row, first_data_row, last_data_row in section_positions:
     anchor_col = table.shape[1] + 1
-    chart_title = title if len(title) < 45 else title[:42] + "..."
-    combo_chart(ws, chart_title, anchor_col, header_row, first_data_row, last_data_row)
+    combo_chart(ws, title, anchor_col, header_row, first_data_row, last_data_row)
 
 wb.save(OUTPUT_FILE)
 print(f"Saved -> {OUTPUT_FILE} (2 sheets: Tagged_Data, Analysis - {len(section_positions)} tables+charts)")

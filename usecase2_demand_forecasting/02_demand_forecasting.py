@@ -271,8 +271,8 @@ def single_bar_chart(ws_target, title, anchor_col, header_row, first_data_row, l
     data = Reference(ws_target, min_col=2, min_row=header_row, max_row=last_data_row)
     bar.add_data(data, titles_from_data=True)
     bar.set_categories(cats)
-    bar.dataLabels = DataLabelList()
-    bar.dataLabels.showVal = True
+    bar.dataLabels = DataLabelList(showVal=True, showSerName=False, showCatName=False,
+                                     showLegendKey=False, showPercent=False, showBubbleSize=False)
     bar.legend = None
     anchor = f"{get_column_letter(anchor_col)}{first_data_row - 1}"
     ws_target.add_chart(bar, anchor)
@@ -296,8 +296,11 @@ def combo_chart(ws_target, title, anchor_col, header_row, first_data_row, last_d
     vol_data = Reference(ws_target, min_col=2, min_row=header_row, max_row=last_data_row)  # forecast_volume
     bar.add_data(vol_data, titles_from_data=True)
     bar.set_categories(cats)
-    bar.dataLabels = DataLabelList()
-    bar.dataLabels.showVal = True
+    # Data label shows ONLY the number - the series name is already
+    # identified by the legend at the bottom, so repeating it on every
+    # single bar/point is redundant clutter, not extra information.
+    bar.dataLabels = DataLabelList(showVal=True, showSerName=False, showCatName=False,
+                                     showLegendKey=False, showPercent=False, showBubbleSize=False)
 
     line = LineChart()
     gap_data = Reference(ws_target, min_col=5, min_row=header_row, max_row=last_data_row)  # staffing_gap_fte
@@ -307,8 +310,8 @@ def combo_chart(ws_target, title, anchor_col, header_row, first_data_row, last_d
     line.y_axis.crosses = "max"
     line.y_axis.majorGridlines = None
     bar.y_axis.crosses = "autoZero"
-    line.dataLabels = DataLabelList()
-    line.dataLabels.showVal = True
+    line.dataLabels = DataLabelList(showVal=True, showSerName=False, showCatName=False,
+                                      showLegendKey=False, showPercent=False, showBubbleSize=False)
 
     bar += line
     bar.legend.position = "b"
@@ -322,11 +325,10 @@ def combo_chart(ws_target, title, anchor_col, header_row, first_data_row, last_d
 # screen, without flipping tabs OR scrolling sideways to see the chart.
 for title, table, chart_kind, title_row, header_row, first_data_row, last_data_row in section_positions:
     anchor_col = table.shape[1] + 1
-    chart_title = title if len(title) < 45 else title[:42] + "..."
     if chart_kind == "bar":
-        single_bar_chart(ws, chart_title, anchor_col, header_row, first_data_row, last_data_row)
+        single_bar_chart(ws, title, anchor_col, header_row, first_data_row, last_data_row)
     else:
-        combo_chart(ws, chart_title, anchor_col, header_row, first_data_row, last_data_row)
+        combo_chart(ws, title, anchor_col, header_row, first_data_row, last_data_row)
 
 wb.save(OUTPUT_FILE)
 print(f"Saved -> {OUTPUT_FILE} (2 sheets: Forecast_Staffing, Analysis - {len(section_positions)} tables+charts)")

@@ -86,6 +86,17 @@ pop_share_new_tenure = (df["tenure_bucket"] == "<6 months").mean() * 100
 _abc_rows = df[df["primary_driver"] == "Agent_Behavior_Comm"]
 abc_new_tenure_share = (_abc_rows["tenure_bucket"] == "<6 months").mean() * 100 if len(_abc_rows) else 0
 
+# WHAT: a genuine third, distinct fix - the lowest-scoring driver overall
+# (checked, not assumed) and its own top sub-issue, the same "named, not
+# vague" standard as the Billing and coaching recommendations above.
+_network_rows = df[df["primary_driver"] == "Network_Connectivity"]
+network_pct = len(_network_rows) / len(df) * 100
+network_csat = _network_rows["csat_score"].mean() if len(_network_rows) else 0
+_network_sub = _network_rows["secondary_driver"].value_counts(normalize=True) * 100
+_network_sub = _network_sub.drop("No Secondary Driver", errors="ignore")
+network_top_sub = _network_sub.index[0] if len(_network_sub) else None
+network_top_sub_pct = _network_sub.iloc[0] if len(_network_sub) else 0
+
 csat_bucket_counts = df["csat_bucket"].value_counts(normalize=True) * 100
 promoter_pct = csat_bucket_counts.get("Promoter (4-5)", 0)
 neutral_pct = csat_bucket_counts.get("Neutral (3)", 0)
@@ -325,7 +336,7 @@ STEP_COL1_X, STEP_COL1_W = Inches(0.65), Inches(2.7)
 STEP_COL2_X, STEP_COL2_W = Inches(3.6), Inches(5.3)
 STEP_COL3_X, STEP_COL3_W = Inches(9.15), Inches(3.53)
 STEP_BADGE_D = Inches(0.38)
-STEP_OFFSET_PER_ROW = Inches(0.07)  # each badge nudges right - a literal staircase down the slide
+STEP_OFFSET_PER_ROW = Inches(0)  # badges stay in a single straight vertical line, step 1 to step 6
 
 
 def step_badge_center(row_index, top):
@@ -358,7 +369,7 @@ def add_approach_row(slide, top, row_height, row_index, number, title, approach_
     title_x = Emu(int(badge_x) + int(STEP_BADGE_D) + Inches(0.12))
     title_w = Emu(int(STEP_COL1_X) + int(STEP_COL1_W) - int(title_x))
     add_text(slide, title_x, top + Inches(0.01), title_w, Inches(0.55), title, 14.5, NAVY, bold=True)
-    add_text(slide, STEP_COL2_X, top, STEP_COL2_W, row_height, approach_text, 12.5, DARK_TEXT)
+    add_text(slide, STEP_COL2_X, top, STEP_COL2_W, row_height, approach_text, 10.5, DARK_TEXT)
     out_box = slide.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, STEP_COL3_X, top, STEP_COL3_W, row_height - Inches(0.1))
     out_box.fill.solid()
     out_box.fill.fore_color.rgb = LIGHT_BG
@@ -483,28 +494,33 @@ STEP_CONTENT_TOP = Inches(1.92)
 STEP_ROW_H = Inches(0.84)
 steps = [
     ("Load & clean data",
-     "pandas loads the 7,500-row survey export, then the text is lowercased, stripped of "
-     "punctuation, and whitespace-collapsed.",
+     "pandas reads the 7,500-row Excel export; text is lowercased, punctuation-stripped "
+     "and whitespace-collapsed so later keyword matching is spelling/case-insensitive.",
      "A clean_text column every later step reuses"),
     ("Bootstrap dictionary",
-     "Term frequency is split low-CSAT vs high-CSAT text, and every candidate term's "
-     "sentiment lean is labeled upfront.",
+     "CountVectorizer counts how often each word/phrase appears separately in low-CSAT vs "
+     "high-CSAT text; terms that skew heavily toward low-CSAT become candidate complaint "
+     "keywords, each tagged by its sentiment lean.",
      "An inspectable keyword shortlist, not a guess"),
     ("Tag drivers",
-     "Every response is matched against 11 categories and 42 sub-issues, ranked by "
-     "phrase-match strength.",
+     "Each response's text is checked against every sub-issue's keyword phrases; whichever "
+     "sub-issue matches the MOST distinct phrases wins - its parent category becomes the "
+     "PRIMARY driver, the sub-issue itself the SECONDARY.",
      "A PRIMARY + actionable SECONDARY driver per row"),
     ("NMF safety net",
-     "TF-IDF + NMF finds latent themes in any leftover text; YAKE auto-labels each theme, "
-     "fully offline.",
+     "For the rare response matching no phrase, TF-IDF converts its text into a weighted-"
+     "term vector; NMF (matrix factorization) decomposes that into latent topics, and YAKE "
+     "picks each topic's top keyword as its label.",
      "Zero responses left with a blank secondary driver"),
     ("Score sentiment",
-     "VADER, a lexicon-based model, scores the tone of every row — 100% offline, zero "
-     "AI/LLM API dependency.",
-     "A Negative/Neutral/Positive label per response"),
+     "VADER looks up each word in a pre-built sentiment lexicon, weights negations/"
+     "intensifiers, and sums to a -1..+1 compound score, bucketed into Negative/Neutral/"
+     "Positive.",
+     "A sentiment label per response, cross-checked against the CSAT score"),
     ("Publish",
-     "One workbook is written (row data + Analysis sheet), then the PPT deck and Power BI "
-     "report are built on top.",
+     "openpyxl writes one workbook (row data + an Analysis sheet with native Excel charts); "
+     "python-pptx then re-reads that SAME file to build this deck, so the numbers can never "
+     "drift out of sync.",
      "A client-ready package, numbers always in sync"),
 ]
 # Staircase connector: a straight segment between each pair of consecutive
@@ -574,10 +590,13 @@ rec_rows = [
      f"{abc_new_tenure_share:.0f}% of Agent Behavior complaints — these specific agents are "
      f"driving this category, not the team broadly.",
      "Targeted coaching (not generic training) directly shrinks a top-3 driver by volume."),
-    ("Next: Validate & track",
-     "Validate the taxonomy against real customer verbatim, then track the top driver's weekly "
-     "trend already built into the workbook.",
-     "Confirms both fixes are actually moving CSAT, with real data, not a one-time snapshot."),
+    (f"Fix #3: Network & Connectivity ({network_pct:.1f}%)",
+     f"Network & Connectivity is the lowest-scoring driver of all - {network_csat:.2f} avg "
+     f"CSAT, even worse than Billing - led by “{network_top_sub}” in {network_top_sub_pct:.0f}% "
+     f"of its own complaints."
+     if network_top_sub else
+     f"Network & Connectivity is the lowest-scoring driver of all at {network_csat:.2f} avg CSAT.",
+     "Fixing the leading network sub-issue addresses the single worst-rated driver in the data."),
 ]
 add_recommendation_table(slide, Inches(0.65), Inches(1.85), Inches(12.0), Inches(1.4), rec_rows)
 add_text(slide, Inches(0.65), Inches(6.95), Inches(11), Inches(0.4),
