@@ -60,12 +60,17 @@ primary_counts = df["primary_driver"].value_counts(normalize=True) * 100
 top_primary = primary_counts.index[0]
 top_primary_pct = primary_counts.iloc[0]
 top_primary_csat = df.loc[df["primary_driver"] == top_primary, "csat_score"].mean()
+top3_primary = primary_counts.head(3)
 
 top_primary_rows = df[df["primary_driver"] == top_primary]
 secondary_within_top = top_primary_rows["secondary_driver"].value_counts(normalize=True) * 100
 secondary_within_top = secondary_within_top.drop("No Secondary Driver", errors="ignore")
 top_secondary = secondary_within_top.index[0] if len(secondary_within_top) else None
 top_secondary_pct = secondary_within_top.iloc[0] if len(secondary_within_top) else 0
+
+secondary_counts_all = df["secondary_driver"].value_counts(normalize=True) * 100
+secondary_counts_all = secondary_counts_all.drop("No Secondary Driver", errors="ignore")
+top3_secondary = secondary_counts_all.head(3)
 
 csat_bucket_counts = df["csat_bucket"].value_counts(normalize=True) * 100
 promoter_pct = csat_bucket_counts.get("Promoter (4-5)", 0)
@@ -125,21 +130,6 @@ def add_text(slide, left, top, width, height, text, size, color, bold=False,
     run.font.color.rgb = color
     run.font.name = FONT
     return box
-
-
-def add_bullets(slide, left, top, width, height, bullets, size=18, color=DARK_TEXT, space_after=12):
-    box = slide.shapes.add_textbox(left, top, width, height)
-    tf = box.text_frame
-    tf.word_wrap = True
-    for i, b in enumerate(bullets):
-        p = tf.paragraphs[0] if i == 0 else tf.add_paragraph()
-        p.alignment = PP_ALIGN.LEFT
-        p.space_after = Pt(space_after)
-        run = p.add_run()
-        run.text = f"●   {b}"
-        run.font.size = Pt(size)
-        run.font.color.rgb = color
-        run.font.name = FONT
 
 
 def add_icon_bullets(slide, left, top, width, row_height, bullets, size=17, color=DARK_TEXT, dot_color=ACCENT):
@@ -228,40 +218,11 @@ def add_stat_tile(slide, left, top, width, height, value, label, accent=ACCENT):
     r1.font.name = FONT
 
 
-def add_chip(slide, left, top, width, height, value, label, on_dark=True):
-    """Small pill used for quick facts on the title slide - a number +
-    caption packed into one compact rounded rectangle."""
-    chip = slide.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, left, top, width, height)
-    chip.fill.solid()
-    chip.fill.fore_color.rgb = NAVY_SOFT if on_dark else LIGHT_BG
-    chip.line.color.rgb = ACCENT
-    chip.line.width = Pt(1)
-    _no_shadow(chip)
-    tf = chip.text_frame
-    tf.word_wrap = True
-    tf.vertical_anchor = MSO_ANCHOR.MIDDLE
-    p0 = tf.paragraphs[0]
-    p0.alignment = PP_ALIGN.CENTER
-    r0 = p0.add_run()
-    r0.text = value
-    r0.font.size = Pt(19)
-    r0.font.bold = True
-    r0.font.color.rgb = ACCENT
-    r0.font.name = FONT
-    p1 = tf.add_paragraph()
-    p1.alignment = PP_ALIGN.CENTER
-    r1 = p1.add_run()
-    r1.text = label
-    r1.font.size = Pt(10.5)
-    r1.font.color.rgb = CHIP_TEXT_ON_NAVY if on_dark else GRAY
-    r1.font.name = FONT
-
-
 def add_proportional_bar(slide, left, top, width, height, segments):
     """segments: list of (label, pct, color). Draws one horizontal bar made
     of proportional colored blocks (a mini stacked-bar visual) with a
-    legend row beneath - used to make a mix/split genuinely visual instead
-    of a line of plain text."""
+    legend ROW beneath - fine when the bar has the full slide width to
+    itself (e.g. the Data slide's channel mix)."""
     x = left
     for label, pct, color in segments:
         seg_w = Emu(int(width * (pct / 100.0)))
@@ -287,22 +248,45 @@ def add_proportional_bar(slide, left, top, width, height, segments):
         lx += Inches(2.75)
 
 
-def add_pipeline_steps(slide, left, top, width, steps, accent=ACCENT):
-    """A horizontal numbered pipeline: step-number badge circles connected
-    by a thin line, each with a short title + one-line description beneath.
-    This is the single visual that most distinguishes 'Approach' from a
-    plain bullet list - the eye reads it as a left-to-right process."""
-    n = len(steps)
-    step_w = Emu(int(width / n))
-    badge_d = Inches(0.55)
-    line_y = top + badge_d / 2
-    line = slide.shapes.add_connector(MSO_CONNECTOR.STRAIGHT, left + badge_d / 2, line_y,
-                                        left + width - badge_d / 2, line_y)
-    line.line.color.rgb = CARD_BORDER
-    line.line.width = Pt(2)
-    for i, (title, desc) in enumerate(steps):
-        cx = Emu(int(left) + int(step_w) * i + int(step_w) // 2)
-        badge = slide.shapes.add_shape(MSO_SHAPE.OVAL, Emu(int(cx) - int(badge_d) // 2), top, badge_d, badge_d)
+def add_mix_bar_vertical_legend(slide, left, top, width, bar_height, segments):
+    """Same proportional-bar idea as add_proportional_bar, but the legend
+    stacks VERTICALLY beneath the bar instead of running in a horizontal
+    row - needed when the bar sits in a narrow column with other content
+    to its right (a horizontal legend row would run wide enough to overlap
+    that neighboring content)."""
+    x = left
+    for label, pct, color in segments:
+        seg_w = Emu(int(width * (pct / 100.0)))
+        if seg_w < Emu(1):
+            continue
+        seg = slide.shapes.add_shape(MSO_SHAPE.RECTANGLE, x, top, seg_w, bar_height)
+        seg.fill.solid()
+        seg.fill.fore_color.rgb = color
+        seg.line.color.rgb = WHITE
+        seg.line.width = Pt(1.5)
+        _no_shadow(seg)
+        x = Emu(int(x) + int(seg_w))
+    ly = top + bar_height + Inches(0.16)
+    for label, pct, color in segments:
+        dot = slide.shapes.add_shape(MSO_SHAPE.OVAL, left, ly, Inches(0.14), Inches(0.14))
+        dot.fill.solid()
+        dot.fill.fore_color.rgb = color
+        dot.line.fill.background()
+        _no_shadow(dot)
+        add_text(slide, left + Inches(0.22), ly - Inches(0.04), width - Inches(0.22), Inches(0.3),
+                  f"{label}: {pct:,.0f}%", 12.5, GRAY)
+        ly += Inches(0.34)
+    return ly
+
+
+def add_ranked_list(slide, left, top, width, heading, items, row_height=0.42, accent=ACCENT):
+    """heading + up to a few numbered rows (small badge + 'label - value'),
+    used for the Top-3-driver lists - a ranked, scannable alternative to a
+    paragraph of bullets."""
+    add_text(slide, left, top, width, Inches(0.3), heading.upper(), 12, ACCENT_DARK, bold=True)
+    y = top + Inches(0.4)
+    for i, (label, value) in enumerate(items):
+        badge = slide.shapes.add_shape(MSO_SHAPE.OVAL, left, y + Inches(0.02), Inches(0.26), Inches(0.26))
         badge.fill.solid()
         badge.fill.fore_color.rgb = accent
         badge.line.fill.background()
@@ -313,18 +297,21 @@ def add_pipeline_steps(slide, left, top, width, steps, accent=ACCENT):
         p.alignment = PP_ALIGN.CENTER
         r = p.add_run()
         r.text = str(i + 1)
-        r.font.size = Pt(18)
+        r.font.size = Pt(12)
         r.font.bold = True
         r.font.color.rgb = WHITE
         r.font.name = FONT
-        text_left = Emu(max(int(left), int(cx) - int(step_w) // 2))
-        add_text(slide, text_left, top + badge_d + Inches(0.15), step_w, Inches(0.4), title, 14.5, NAVY, bold=True, align=PP_ALIGN.CENTER)
-        add_text(slide, text_left, top + badge_d + Inches(0.58), step_w, Inches(1.5), desc, 12, GRAY, align=PP_ALIGN.CENTER)
+        add_text(slide, left + Inches(0.36), y, width - Inches(0.36), Inches(0.36),
+                  f"{label} — {value}", 13, DARK_TEXT)
+        y += Inches(row_height)
+    return y
 
 
-def add_numbered_recommendation(slide, left, top, width, row_height, number, title, desc, accent=ACCENT):
-    badge_d = Inches(0.5)
-    badge = slide.shapes.add_shape(MSO_SHAPE.OVAL, left, top, badge_d, badge_d)
+def add_approach_step(slide, left, top, width, number, title, bullets, accent=ACCENT):
+    """One pipeline step: a small numbered badge + bold title on one line,
+    then 2-4 supporting bullets beneath - enough detail to actually explain
+    HOW that step works, not just name it."""
+    badge = slide.shapes.add_shape(MSO_SHAPE.OVAL, left, top, Inches(0.32), Inches(0.32))
     badge.fill.solid()
     badge.fill.fore_color.rgb = accent
     badge.line.fill.background()
@@ -335,52 +322,62 @@ def add_numbered_recommendation(slide, left, top, width, row_height, number, tit
     p.alignment = PP_ALIGN.CENTER
     r = p.add_run()
     r.text = str(number)
-    r.font.size = Pt(18)
+    r.font.size = Pt(14)
     r.font.bold = True
-    r.font.color.rgb = NAVY
+    r.font.color.rgb = WHITE
     r.font.name = FONT
-    text_left = left + badge_d + Inches(0.25)
-    text_width = width - badge_d - Inches(0.25)
-    box = slide.shapes.add_textbox(text_left, top - Inches(0.03), text_width, row_height)
-    tf2 = box.text_frame
-    tf2.word_wrap = True
-    p0 = tf2.paragraphs[0]
-    r0 = p0.add_run()
-    r0.text = title
-    r0.font.size = Pt(18)
-    r0.font.bold = True
-    r0.font.color.rgb = WHITE
-    r0.font.name = FONT
-    p1 = tf2.add_paragraph()
-    p1.space_before = Pt(4)
-    r1 = p1.add_run()
-    r1.text = desc
-    r1.font.size = Pt(14.5)
-    r1.font.color.rgb = CHIP_TEXT_ON_NAVY
-    r1.font.name = FONT
+    add_text(slide, left + Inches(0.42), top - Inches(0.02), width - Inches(0.42), Inches(0.32),
+              title, 14.5, NAVY, bold=True)
+    y = top + Inches(0.4)
+    for b in bullets:
+        dot = slide.shapes.add_shape(MSO_SHAPE.OVAL, left + Inches(0.08), y + Inches(0.07), Inches(0.09), Inches(0.09))
+        dot.fill.solid()
+        dot.fill.fore_color.rgb = accent
+        dot.line.fill.background()
+        _no_shadow(dot)
+        add_text(slide, left + Inches(0.3), y, width - Inches(0.3), Inches(0.32), b, 11.5, DARK_TEXT)
+        y += Inches(0.34)
+    return y
 
 
-# %% Cell 3 - Slide 1: Title
+def add_recommendation_table(slide, left, top, width, row_height, rows, accent=ACCENT):
+    """A 3-column action table for the closing slide: what the
+    recommendation is, exactly what to do, and the outcome it buys -
+    clearer than a single description blob per recommendation."""
+    col_gap = Inches(0.25)
+    col_w = Emu(int((int(width) - 2 * int(col_gap)) / 3))
+    col1_x, col2_x = left, Emu(int(left) + int(col_w) + int(col_gap))
+    col3_x = Emu(int(col2_x) + int(col_w) + int(col_gap))
+    headers = ["RECOMMENDATION", "WHAT TO DO", "EXPECTED OUTCOME"]
+    for cx, h in zip([col1_x, col2_x, col3_x], headers):
+        add_text(slide, cx, top, col_w, Inches(0.3), h, 12, ACCENT, bold=True)
+    rule = slide.shapes.add_connector(MSO_CONNECTOR.STRAIGHT, left, top + Inches(0.4),
+                                        Emu(int(left) + int(width)), top + Inches(0.4))
+    rule.line.color.rgb = NAVY_SOFT
+    rule.line.width = Pt(1)
+    y = top + Inches(0.55)
+    for rec_title, what, outcome in rows:
+        add_text(slide, col1_x, y, col_w, row_height, rec_title, 15, accent, bold=True)
+        add_text(slide, col2_x, y, col_w, row_height, what, 13, WHITE)
+        add_text(slide, col3_x, y, col_w, row_height, outcome, 13, CHIP_TEXT_ON_NAVY)
+        y += row_height
+        if y < top + Inches(0.55) + row_height * len(rows):
+            rule2 = slide.shapes.add_connector(MSO_CONNECTOR.STRAIGHT, left, y - Inches(0.1),
+                                                 Emu(int(left) + int(width)), y - Inches(0.1))
+            rule2.line.color.rgb = NAVY_SOFT
+            rule2.line.width = Pt(0.5)
+
+
+# %% Cell 3 - Slide 1: Title (heading only - no stats, no subtitle, no footer)
 slide = new_slide()
 fill_bg(slide, NAVY)
-accent_line = slide.shapes.add_shape(MSO_SHAPE.RECTANGLE, Inches(0.65), Inches(2.3), Inches(1.2), Pt(5))
+accent_line = slide.shapes.add_shape(MSO_SHAPE.RECTANGLE, Inches(0.65), Inches(3.05), Inches(1.2), Pt(5))
 accent_line.fill.solid()
 accent_line.fill.fore_color.rgb = ACCENT
 accent_line.line.fill.background()
 _no_shadow(accent_line)
-add_text(slide, Inches(0.65), Inches(2.45), Inches(12), Inches(1.3),
+add_text(slide, Inches(0.65), Inches(3.2), Inches(12), Inches(1.3),
          "CSAT Root-Cause & Sentiment\nDriver Analysis", 40, WHITE, bold=True)
-add_text(slide, Inches(0.65), Inches(3.8), Inches(11), Inches(0.6),
-         "Identifying and prioritizing what's actually driving customer dissatisfaction", 18, ACCENT)
-chip_w, chip_h, chip_gap = Inches(2.9), Inches(0.95), Inches(0.25)
-chip_y = Inches(4.8)
-add_chip(slide, Inches(0.65), chip_y, chip_w, chip_h, f"{n_records:,}", "Survey responses analyzed")
-add_chip(slide, Inches(0.65) + chip_w + chip_gap, chip_y, chip_w, chip_h,
-          f"{pd.Timestamp(date_min).strftime('%b')}–{pd.Timestamp(date_max).strftime('%b %Y')}", "Period covered")
-add_chip(slide, Inches(0.65) + 2 * (chip_w + chip_gap), chip_y, chip_w, chip_h, f"{n_channels}", "Channels: chat, email, voice")
-add_chip(slide, Inches(0.65) + 3 * (chip_w + chip_gap), chip_y, chip_w, chip_h, f"{n_primary_drivers} / {n_secondary_drivers}", "Primary / secondary drivers")
-add_text(slide, Inches(0.65), Inches(7.05), Inches(11), Inches(0.35),
-          "Data Analytics Consulting", 11, RGBColor(0x8A, 0x97, 0xAB))
 
 # %% Cell 4 - Slide 2: The Use Case & Objective
 slide = new_slide()
@@ -434,68 +431,99 @@ add_footer(slide, "CSAT Root-Cause & Sentiment Driver Analysis", 3)
 slide = new_slide()
 fill_bg(slide, WHITE)
 add_title_bar(slide, "Approach & Expected Output", kicker="Method")
-add_pipeline_steps(slide, Inches(0.5), Inches(1.75), Inches(12.3), [
-    ("1. Bootstrap dictionary", "Sentiment-split term frequency surfaces the words that "
-     "actually distinguish low-CSAT from high-CSAT text."),
-    ("2. Tag drivers", "Every response matched against an 11-category primary / 42-sub-issue "
-     "taxonomy, ranked by match strength."),
-    ("3. NMF safety net", "TF-IDF + NMF topic modeling (YAKE-labeled) catches any edge-of-\n"
-     "vocabulary residual - no response left unexplained."),
-    ("4. Score sentiment", "VADER lexicon model scores tone - fully offline, "
-     "no AI/LLM API dependency."),
-    ("5. Publish", "One Excel workbook (tagged data + every chart) plus a "
-     "Power BI report for the business narrative."),
+LEFT_COL_X, RIGHT_COL_X = Inches(0.65), Inches(6.75)
+COL_W = Inches(5.7)
+CONTENT_TOP = Inches(1.55)
+STEP_H = Inches(1.76)
+add_approach_step(slide, LEFT_COL_X, CONTENT_TOP, COL_W, 1, "Bootstrap dictionary", [
+    "Splits term frequency: low-CSAT vs high-CSAT text",
+    "Labels every term's sentiment lean upfront",
+    "Produces an inspectable shortlist, not a guess",
+    "Minutes of compute, not days of manual reading",
+])
+add_approach_step(slide, LEFT_COL_X, CONTENT_TOP + STEP_H, COL_W, 2, "Tag drivers", [
+    "Matches against 11 categories, 42 sub-issues",
+    "Ranks matches by phrase-match strength",
+    "Strongest match's category = PRIMARY driver",
+    "The sub-issue itself = actionable SECONDARY",
+])
+add_approach_step(slide, LEFT_COL_X, CONTENT_TOP + 2 * STEP_H, COL_W, 3, "NMF safety net", [
+    "TF-IDF + NMF finds latent themes in leftovers",
+    "YAKE auto-labels each theme, fully offline",
+    "Catches edge-of-vocabulary phrasing",
+    "No response ends with a blank secondary driver",
+])
+RIGHT_TOP = CONTENT_TOP + Emu(int((3 * STEP_H - 2 * STEP_H) / 2))
+add_approach_step(slide, RIGHT_COL_X, RIGHT_TOP, COL_W, 4, "Score sentiment", [
+    "VADER lexicon model scores tone of every row",
+    "Deterministic and explainable, no black box",
+    "100% offline — zero AI/LLM API dependency",
+    "Cross-checked against the CSAT score bucket",
+])
+add_approach_step(slide, RIGHT_COL_X, RIGHT_TOP + STEP_H, COL_W, 5, "Publish", [
+    "One workbook: row data + Analysis sheet",
+    "Every chart pairs volume with CSAT severity",
+    "A 6-slide deck, numbers read live from the data",
+    "A Power BI report built on top for the business",
 ])
 add_footer(slide, "CSAT Root-Cause & Sentiment Driver Analysis", 4)
 
-# %% Cell 7 - Slide 5: Key Outcomes (stat tiles)
+# %% Cell 7 - Slide 5: Key Outcomes
 slide = new_slide()
 fill_bg(slide, WHITE)
 add_title_bar(slide, "Key Outcomes", kicker="Results")
 tile_w, tile_h, gap = Inches(2.78), Inches(1.5), Inches(0.28)
 x0, y0 = Inches(0.65), Inches(1.6)
-add_stat_tile(slide, x0, y0, tile_w, tile_h, f"{top_primary_pct:.0f}%", f"of responses: {top_primary.replace('_', ' ')}", ACCENT)
-add_stat_tile(slide, x0 + tile_w + gap, y0, tile_w, tile_h, f"{avg_csat:.2f}", "Overall average CSAT (out of 5)", NAVY)
-add_stat_tile(slide, x0 + 2 * (tile_w + gap), y0, tile_w, tile_h, f"{pct_negative_sentiment:.0f}%", "of responses carry negative sentiment", DETRACTOR_RED)
-add_stat_tile(slide, x0 + 3 * (tile_w + gap), y0, tile_w, tile_h, f"{worst_circle_csat:.2f}", f"Lowest avg CSAT: {worst_circle} circle", ACCENT)
-add_text(slide, Inches(0.65), Inches(3.35), Inches(5), Inches(0.35), "CSAT MIX", 12, ACCENT_DARK, bold=True)
-add_proportional_bar(slide, Inches(0.65), Inches(3.75), Inches(5.6), Inches(0.45), [
+add_stat_tile(slide, x0, y0, tile_w, tile_h, f"{avg_csat:.2f}", "Overall average CSAT (out of 5)", NAVY)
+add_stat_tile(slide, x0 + tile_w + gap, y0, tile_w, tile_h, f"{pct_negative_sentiment:.0f}%", "of responses carry negative sentiment", DETRACTOR_RED)
+add_stat_tile(slide, x0 + 2 * (tile_w + gap), y0, tile_w, tile_h, f"{worst_circle_csat:.2f}", f"Lowest avg CSAT: {worst_circle} circle", ACCENT)
+add_stat_tile(slide, x0 + 3 * (tile_w + gap), y0, tile_w, tile_h, f"{top_primary_pct:.0f}%", f"of responses: {top_primary.replace('_', ' ')}", ACCENT)
+
+row2_y = Inches(3.35)
+col_gap = Inches(0.25)
+col_w = Inches((12.03 - 0.5) / 3)
+colA_x, colB_x = Inches(0.65), Inches(0.65) + col_w + col_gap
+colC_x = colB_x + col_w + col_gap
+
+add_text(slide, colA_x, row2_y, col_w, Inches(0.3), "CSAT MIX", 12, ACCENT_DARK, bold=True)
+add_mix_bar_vertical_legend(slide, colA_x, row2_y + Inches(0.4), col_w, Inches(0.35), [
     ("Promoters (4-5)", promoter_pct, ACCENT),
     ("Neutral (3)", neutral_pct, AMBER),
     ("Detractors (1-2)", detractor_pct, DETRACTOR_RED),
 ])
-add_icon_bullets(slide, Inches(6.9), Inches(3.35), Inches(5.8), Inches(0.95), [
-    f"{top_primary.replace('_', ' ')} is both the highest-volume and lowest-CSAT driver "
-    f"(avg CSAT {top_primary_csat:.2f}) - the clear priority-one fix.",
-    f"{worst_circle} circle and {worst_tier} tier are the lowest-performing segments "
-    f"(avg CSAT {worst_circle_csat:.2f} / {worst_tier_csat:.2f}).",
-], size=14.5)
-add_icon_bullets(slide, Inches(0.65), Inches(5.55), Inches(11.9), Inches(0.7), [
+
+add_ranked_list(slide, colB_x, row2_y, col_w, "Top 3 Primary Drivers",
+                 [(name.replace("_", " "), f"{pct:.1f}%") for name, pct in top3_primary.items()])
+add_ranked_list(slide, colC_x, row2_y, col_w, "Top 3 Secondary Drivers",
+                 [(name, f"{pct:.1f}%") for name, pct in top3_secondary.items()])
+
+add_icon_bullets(slide, Inches(0.65), Inches(5.75), Inches(11.9), Inches(0.6), [
     f"Agents with less than 6 months' tenure skew toward the lowest-CSAT bucket "
     f"({tenure_lowest_csat}) - a coaching signal alongside the process fix.",
 ], size=14.5)
 add_footer(slide, "CSAT Root-Cause & Sentiment Driver Analysis", 5)
 
-# %% Cell 8 - Slide 6: Actionable Recommendation
+# %% Cell 8 - Slide 6: Actionable Recommendation (left/center/right table)
 slide = new_slide()
 fill_bg(slide, NAVY)
 add_text(slide, Inches(0.65), Inches(0.55), Inches(11.8), Inches(0.8), "Recommendation", 30, WHITE, bold=True)
-rec1_desc = (f"The single biggest, lowest-scoring driver, concentrated and compounding with "
-             f"“{top_secondary}” in {top_secondary_pct:.0f}% of its own complaints."
-             if top_secondary else "The single biggest, lowest-scoring driver.")
-recs = [
-    (f"Fix #1: {top_primary.replace('_', ' ')}", rec1_desc),
-    ("Fix #2: Coach agents under 6 months' tenure",
-     f"This cohort shows the weakest CSAT ({tenure_lowest_csat} bucket) across the board."),
-    ("Next step: Validate & track",
-     "Validate this taxonomy against a sample of real customer verbatim, then track the top "
-     "driver's weekly trend (already built into the workbook) as fixes roll out."),
+rec1_what = (f"Investigate “{top_secondary}” specifically — the single most common, named "
+             f"sub-issue, not a vague theme." if top_secondary else
+             "Investigate the top sub-issue specifically — a named, not a vague, theme.")
+rec_rows = [
+    (f"Fix #1: {top_primary.replace('_', ' ')}",
+     rec1_what,
+     f"Removes the highest-volume, lowest-CSAT driver (avg CSAT {top_primary_csat:.2f}) from the table."),
+    ("Fix #2: Coach newer agents",
+     "Target coaching at agents under 6 months' tenure — this cohort skews toward the weakest CSAT bucket.",
+     "Lifts Agent Behavior & Communication scores, a top-volume driver."),
+    ("Next: Validate & track",
+     "Validate the taxonomy against real customer verbatim, then track the top driver's weekly "
+     "trend already built into the workbook.",
+     "Confirms the fix is working with real data, not a one-time snapshot."),
 ]
-y = Inches(1.9)
-row_h = Inches(1.45)
-for i, (title, desc) in enumerate(recs):
-    add_numbered_recommendation(slide, Inches(0.65), y + i * row_h, Inches(12), row_h, i + 1, title, desc)
-add_text(slide, Inches(0.65), Inches(6.9), Inches(11), Inches(0.4),
+add_recommendation_table(slide, Inches(0.65), Inches(1.85), Inches(12.0), Inches(1.4), rec_rows)
+add_text(slide, Inches(0.65), Inches(6.95), Inches(11), Inches(0.4),
          "Data Analytics Consulting  |  Synthetic demo dataset", 12, RGBColor(0xB8, 0xC2, 0xD0))
 
 # %% Cell 9 - Save
