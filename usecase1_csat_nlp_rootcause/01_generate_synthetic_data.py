@@ -23,10 +23,11 @@ RANDOM_SEED = 42
 random.seed(RANDOM_SEED)
 np.random.seed(RANDOM_SEED)
 
-N_RECORDS = 4000              # survey responses to simulate (cap at 10,000 per guideline)
+N_RECORDS = 7500              # survey responses to simulate (cap at 10,000 per guideline)
 OUTPUT_FILE = "input/input_survey_verbatims.xlsx"   # lands in the input/ subfolder
-TODAY = datetime(2026, 10, 26)   # fixed "as of" date so results are reproducible
-LOOKBACK_DAYS = 180
+DATE_RANGE_START = datetime(2026, 8, 1)     # last 3 full months: Aug-Sep-Oct 2026
+DATE_RANGE_END = datetime(2026, 10, 31)
+TOTAL_DAYS = (DATE_RANGE_END - DATE_RANGE_START).days
 
 # %% Cell 1 - Org hierarchy (manager -> TL -> agent) and reference lists
 MANAGERS = ["Rajesh Kumar", "Anita Sharma"]
@@ -128,8 +129,8 @@ def pick_driver(channel: str, lob: str, tenure_months: int) -> str:
     correlations baked in so the final dataset has a genuine 'story' to
     discover later - the kind of pattern that would normally only surface
     after days of manual tagging."""
-    weights = {"Billing_Charges": 0.25, "Agent_Behavior_Comm": 0.20,
-               "Resolution_Time_FCR": 0.20, "Positive_No_Issue": 0.35}
+    weights = {"Billing_Charges": 0.28, "Agent_Behavior_Comm": 0.17,
+               "Resolution_Time_FCR": 0.17, "Positive_No_Issue": 0.38}
 
     if lob in ("Billing & Payments", "Postpaid Mobile"):
         weights["Billing_Charges"] += 0.10
@@ -163,17 +164,57 @@ def make_verbatim(driver: str, channel: str) -> str:
 def make_csat(driver: str) -> int:
     if driver == "Positive_No_Issue":
         return int(np.random.choice([4, 5], p=[0.35, 0.65]))
-    return int(np.random.choice([1, 2, 3], p=[0.55, 0.35, 0.10]))
+    # Negative-driver responses still clearly underperform (mostly 2-3), but
+    # aren't a floor-level crisis - keeps the overall average closer to a
+    # realistic "room for improvement" ~3.0 rather than a 1-point disaster.
+    return int(np.random.choice([1, 2, 3, 4], p=[0.20, 0.30, 0.30, 0.20]))
+
+
+BASE_HANDLE_TIME = {"Voice": 360, "Chat": 480, "Email": 240}   # seconds; chat/email run longer in wall-clock (multitasking/typing)
+
+
+def make_handle_time(driver: str, channel: str) -> int:
+    """WHAT: simulates handle_time_seconds (AHT) - a standard call-center
+    operational KPI. WHY: negative-driver contacts (holds, transfers,
+    repeat explanation) genuinely take longer to handle than a clean
+    resolution - this lets the analysis surface the hidden OPERATIONAL COST
+    of each root cause, not just its CSAT impact."""
+    base = BASE_HANDLE_TIME[channel]
+    multiplier = {"Billing_Charges": 1.3, "Agent_Behavior_Comm": 1.5,
+                  "Resolution_Time_FCR": 1.6, "Positive_No_Issue": 0.85}[driver]
+    return max(60, int(np.random.normal(base * multiplier, base * 0.2)))
+
+
+def make_fcr(driver: str) -> str:
+    """WHAT: is_first_contact_resolution (Yes/No) - the classic contact-
+    center KPI. WHY: by definition, Resolution_Time_FCR complaints are
+    mostly FCR failures - this column lets us VALIDATE that the dictionary
+    tagging lines up with an independent operational signal, and gives the
+    client a second, well-known metric to act on."""
+    p_yes = {"Billing_Charges": 0.55, "Agent_Behavior_Comm": 0.50,
+             "Resolution_Time_FCR": 0.10, "Positive_No_Issue": 0.92}[driver]
+    return "Yes" if random.random() < p_yes else "No"
+
+
+def make_repeat_contact(driver: str) -> str:
+    """WHAT: is_repeat_contact_30d (Yes/No) - did this customer contact us
+    again about a similar issue within 30 days? WHY: a standard CX signal
+    for "did we actually fix it" - strongly tied to Resolution_Time_FCR by
+    construction, giving another independent angle on the same root cause."""
+    p_yes = {"Billing_Charges": 0.20, "Agent_Behavior_Comm": 0.15,
+             "Resolution_Time_FCR": 0.45, "Positive_No_Issue": 0.03}[driver]
+    return "Yes" if random.random() < p_yes else "No"
 
 
 def make_date(driver: str) -> datetime:
-    # Billing complaints cluster in the last 30 days to simulate a recent
-    # billing-cycle spike you can point to on a trend chart later.
+    # Billing complaints cluster in the most recent 30 days of the window
+    # (i.e. October) to simulate a recent billing-cycle spike you can point
+    # to on a trend chart later.
     if driver == "Billing_Charges" and random.random() < 0.5:
-        offset = random.randint(0, 30)
+        offset = random.randint(max(0, TOTAL_DAYS - 30), TOTAL_DAYS)
     else:
-        offset = random.randint(0, LOOKBACK_DAYS)
-    return TODAY - timedelta(days=offset)
+        offset = random.randint(0, TOTAL_DAYS)
+    return DATE_RANGE_START + timedelta(days=offset)
 
 
 records = []
@@ -184,7 +225,7 @@ for i in range(N_RECORDS):
     driver = pick_driver(channel, lob, int(agent["tenure_months"]))
 
     records.append({
-        "date": make_date(driver).strftime("%Y-%m-%d"),
+        "date": make_date(driver),   # kept as a real date, not text - see Cell 4
         "unique_id": f"SRV{100000 + i}",
         "channel": channel,
         "lob": lob,
@@ -194,17 +235,39 @@ for i in range(N_RECORDS):
         "tl_name": agent["tl_name"],
         "manager_name": agent["manager_name"],
         "tenure_months": int(agent["tenure_months"]),
+        "handle_time_seconds": make_handle_time(driver, channel),
+        "is_first_contact_resolution": make_fcr(driver),
+        "is_repeat_contact_30d": make_repeat_contact(driver),
     })
 
 df = pd.DataFrame(records).sort_values("date").reset_index(drop=True)
 
 # %% Cell 4 - Save + quick sanity check (this is what you show on screen)
 import os
+import openpyxl
+
 os.makedirs("input", exist_ok=True)
+
+# Write "date" as a real Excel date (not text) so sorting/pivoting by date
+# works correctly in Excel and Power BI.
+df["date"] = pd.to_datetime(df["date"]).dt.date
 df.to_excel(OUTPUT_FILE, index=False, sheet_name="Survey_Data")
+
+wb = openpyxl.load_workbook(OUTPUT_FILE)
+ws = wb["Survey_Data"]
+date_col = list(df.columns).index("date") + 1   # 1-indexed for openpyxl
+for row in range(2, ws.max_row + 1):
+    ws.cell(row=row, column=date_col).number_format = "yyyy-mm-dd"
+wb.save(OUTPUT_FILE)
+
 print(f"Saved {len(df)} rows -> {OUTPUT_FILE}")
 print("\nColumns:", list(df.columns))
+print("\nDate range:", df["date"].min(), "to", df["date"].max())
 print("\nChannel split:\n", df["channel"].value_counts())
 print("\nLoB split:\n", df["lob"].value_counts())
 print("\nCSAT distribution:\n", df["csat_score"].value_counts().sort_index())
+print("\nAverage CSAT:", round(df["csat_score"].mean(), 2))
+print("\nAvg handle time (sec):", round(df["handle_time_seconds"].mean(), 0))
+print("\nFirst Contact Resolution rate:", f"{(df['is_first_contact_resolution'] == 'Yes').mean() * 100:.1f}%")
+print("\n30-day repeat contact rate:", f"{(df['is_repeat_contact_30d'] == 'Yes').mean() * 100:.1f}%")
 print("\nSample rows:\n", df.sample(5, random_state=1)[["channel", "lob", "verbatim", "csat_score"]])

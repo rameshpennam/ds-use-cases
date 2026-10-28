@@ -9,8 +9,9 @@ Setup, status, and metadata notes. For the word-for-word talk track, see
 - [ ] Gemini / OpenAI / Anthropic **API** usage (programmatic calls, not chat
       tools — different from the banned AI-assistant tools) — pending
       confirmation. Until approved, this script uses ONLY offline, non-AI
-      techniques: a hand-curated keyword dictionary + VADER lexicon
-      sentiment. **Do not enable Cell 11** in
+      techniques: a hand-curated keyword dictionary + TF-IDF/NMF topic
+      modeling + YAKE keyword extraction + VADER lexicon sentiment, all
+      fully offline. **Do not enable Cell 11** in
       `02_root_cause_sentiment_analysis.py` until this is explicitly approved.
 
 ## Folder layout
@@ -19,12 +20,16 @@ usecase1_csat_nlp_rootcause/
 ├── requirements.txt
 ├── 01_generate_synthetic_data.py          <- run once before recording
 ├── 02_root_cause_sentiment_analysis.py    <- the recorded walkthrough script
+├── 03_generate_summary_ppt.py             <- builds the client-ready summary deck
 ├── README_narration_and_metadata.md       <- this file (setup/status/metadata)
 ├── narration_script.md                    <- full 30-45 min talk track
 ├── powerbi_build_guide.md                 <- Power BI page recipe
 ├── input/            <- INPUT artifact:   input_survey_verbatims.xlsx
 ├── intermediate/     <- INTERMEDIATE artifact: dictionary bootstrap terms
-├── final_output/     <- FINAL artifact:   final_output_csat_insights.xlsx
+│                         (with sentiment lean, so it's clear why each term
+│                         was or wasn't promoted into the dictionary)
+├── final_output/     <- FINAL artifacts:  final_output_csat_insights.xlsx
+│                         + usecase1_csat_summary.pptx
 └── recordings/        <- drop video.mp4 + unmodified recording zip here
 ```
 This maps 1:1 to Mercor's `Deliverables.zip` structure (input / intermediate /
@@ -50,31 +55,43 @@ python3 01_generate_synthetic_data.py
 (ideally the moment you get the Mac, not for the first time on recording
 day) so any network/firewall issue surfaces before you're on camera.
 
-This creates `input/input_survey_verbatims.xlsx`. Then open
-`02_root_cause_sentiment_analysis.py` in VS Code (Python extension) and run
-it **cell by cell** — click the "▷ Run Cell" link above each `# %%` block,
-or put your cursor in a cell and press **Shift+Enter** (runs it and
-auto-advances to the next cell). Do one silent dry run of every cell before
-recording, so you know exactly what each one prints/produces. The first
-cell you ever run in a session takes ~5-15s to start its Python kernel —
-run that once before you hit record. The final cell produces one workbook,
-`final_output/final_output_csat_insights.xlsx`, with 4 sheets and 4 embedded
-charts — rebuilt from scratch every time the script runs.
+This creates `input/input_survey_verbatims.xlsx` (7,500 rows, Aug-Oct).
+Then open `02_root_cause_sentiment_analysis.py` in VS Code (Python
+extension) and run it **cell by cell** — click the "▷ Run Cell" link above
+each `# %%` block, or put your cursor in a cell and press **Shift+Enter**
+(runs it and auto-advances to the next cell). Do one silent dry run of
+every cell before recording. The first cell you ever run in a session takes
+~5-15s to start its Python kernel — run that once before you hit record.
+The script produces one workbook, `final_output/final_output_csat_insights.xlsx`:
+- **Tagged_Data** — every response, row-level, with sentiment, primary/
+  secondary driver, tenure bucket, CSAT bucket
+- **Summary** — every aggregated table in one place (primary driver,
+  secondary driver, primary→secondary compounding %, CSAT cut by channel/
+  LoB/tenure/manager/team-lead/sentiment/CSAT-bucket, weekly trend)
+- **Charts** — all 13 charts together, each pairing response volume with
+  avg CSAT
+
+Then run `03_generate_summary_ppt.py` to build the 6-slide summary deck,
+`final_output/usecase1_csat_summary.pptx` — every number on it is pulled
+straight from the Excel output, not hand-typed.
 
 ## Metadata.rtf content (paste this into Metadata.rtf before upload)
 **Task**: Build an NLP root-cause and sentiment driver analysis pipeline for
 customer survey verbatim (chat/email/voice), to identify and rank the
-drivers behind low CSAT scores.
+drivers behind CSAT, down to a compounding secondary root cause.
 **Apps used**: VS Code (Python), Microsoft Power BI Desktop.
-**Request / scenario**: As a data analytics consultant, analyze up to 10,000
-synthetic customer survey responses (chat/email/voice) to surface the top
-root causes behind low CSAT and quantify their business impact.
+**Request / scenario**: As a data analytics consultant, analyze 7,500
+synthetic customer survey responses (chat/email/voice, Aug-Oct) to surface
+the top root causes affecting CSAT, the secondary factors compounding them,
+and quantify the business impact.
 **Flow**: Generate/ingest survey data → clean text → bootstrap keyword
-dictionary from low-CSAT responses (TF-IDF frequency scan) → tag each
-response against a 3-driver taxonomy → score sentiment (VADER, offline
-lexicon) → resolve one primary driver per response → aggregate → export one
-Excel workbook (4 sheets, 4 charts) → build a Power BI report on top for the
-business narrative.
-**Output**: `final_output_csat_insights.xlsx` (Tagged_Data, Driver_Summary,
-Channel_x_Driver, Tenure_by_Driver sheets), plus a Power BI report (3-4
-visuals) built live on screen.
+dictionary via sentiment-split term frequency (low-CSAT vs high-CSAT,
+labeled Negative/Positive/Neutral-leaning) → tag each response against a
+3-driver taxonomy ranked by match strength (primary + secondary) → fill
+gaps with TF-IDF + NMF topic modeling, auto-labeled via YAKE → score
+sentiment (VADER, offline lexicon) → aggregate across every category →
+export one Excel workbook (3 sheets, 13 charts) → build a Power BI report
+and a summary PowerPoint deck on top for the business narrative.
+**Output**: `final_output_csat_insights.xlsx` (Tagged_Data, Summary, Charts
+sheets), `usecase1_csat_summary.pptx` (6 slides), plus a Power BI report
+(3-4 visuals) built live on screen.

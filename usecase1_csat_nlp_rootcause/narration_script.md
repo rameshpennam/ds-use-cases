@@ -6,11 +6,9 @@ only you know what's accurate to say and this script shouldn't be guessing it
 on your behalf.
 
 Read this as a guide, not a strict script to recite word-for-word — paraphrase
-naturally in your own voice. The numbers quoted below (e.g. "29.8%", "avg
-CSAT 1.53") are the actual output of the fixed random seed in
-`01_generate_synthetic_data.py`, so if you run the scripts as shipped, your
-screen will show these exact figures. Pacing notes in *[italics]* are timing/
-action cues, not things to say out loud.
+naturally in your own voice. The numbers quoted below are the actual output
+of the fixed random seed in `01_generate_synthetic_data.py` as shipped — if
+you run the scripts unmodified, your screen will show these exact figures.
 
 Target length: 25-35 minutes of this content, stretching naturally to
 35-45 minutes once you add the required pacing — hovering before every
@@ -25,16 +23,16 @@ each click, and the live Power BI build at the end.
 
 "Today's use case is a root-cause and sentiment driver analysis on customer
 survey feedback. The business problem is simple to state and hard to solve
-well: CSAT scores are down, we have thousands of open-text survey responses
-across chat, email and voice, and leadership wants to know **why** — not
-just that satisfaction is low, but which specific, fixable issue is driving
-it, so we know what to prioritize.
+well: CSAT has room to improve, we have thousands of open-text survey
+responses across chat, email and voice, and leadership wants to know **why**
+— not just a number, but which specific, fixable issue is driving it, so we
+know what to prioritize.
 
 My objective here is to take raw customer verbatim, systematically tag each
 response against a small set of known root-cause drivers, score the
 sentiment of each response, and roll all of that up into a ranked view of
-which driver has the biggest impact on CSAT — broken down by channel, by
-line of business, and even by agent tenure, so the business gets an
+which driver has the biggest impact on CSAT — broken down by channel, line
+of business, agent tenure, and even over time — so the business gets an
 actionable story, not just a dashboard full of numbers."
 
 ## 2. Input data
@@ -45,31 +43,30 @@ pipeline.]*
 
 "This is the input — a survey export of customer responses. For this
 walkthrough I'm using a synthetic dataset built to the same shape as a real
-export, up to 10,000 responses, with a deliberately minimal set of columns:
-a date, a unique response ID, the channel the response came in on — chat,
-email, or voice — the line of business, the customer's own words in the
-`verbatim` column, the CSAT score they gave, and who handled it: agent name,
-team lead, and manager, plus the agent's tenure in months.
-
-I kept this to the columns that actually earn their place. I don't need
-twenty fields to do a root-cause analysis — I need the text, the outcome
-score, and enough org/channel context to slice the findings afterward."
+export: 7,500 responses, spanning August through October, with a
+deliberately minimal set of columns — a date, a unique response ID, the
+channel it came in on, the line of business, the customer's own words, the
+CSAT score, who handled it — agent, team lead, manager, tenure — and three
+real call-center operational signals: handle time, first-contact-resolution
+flag, and whether the customer contacted us again about the same issue
+within 30 days. I kept this to the columns that actually earn their place —
+not twenty fields for the sake of it, but enough text, outcome, and
+operational context to build a genuinely deep analysis."
 
 ## 3. Applications I'll use
 
-"For this task I'm using two applications: VS Code with Python for the
-analysis itself, and Power BI for the final business-facing insight view.
-This is a deeply technical, code-driven task, so I'm keeping it to the two
-applications that actually do the work, rather than padding the workflow
-with tools I wouldn't really reach for."
+"For this task I'm using VS Code with Python for the analysis, and Power BI
+for the final business-facing insight view — two applications, which is the
+right scope for deeply technical work like this rather than padding the
+workflow with tools I wouldn't really reach for."
 
 ## 4. What the final output looks like
 
 "By the end of this walkthrough I'll have one Excel workbook —
-`final_output_csat_insights.xlsx` — with four sheets: the full row-level
-tagged dataset, a driver summary table with charts, a channel-by-driver
-breakdown, and an agent-tenure breakdown. That becomes the handoff artifact,
-and it's also what I load into Power BI for the final narrative."
+`final_output_csat_insights.xlsx` — with three sheets: the full row-level
+tagged data, every summary cut together on one Summary sheet, and every
+chart together on a Charts sheet. I'll also generate a short, client-ready
+PowerPoint deck summarizing the use case and the findings."
 
 ## 5. Main task — walking through the code
 
@@ -79,142 +76,155 @@ just click through silently.]*
 
 ### Cell 0 — setup
 "I'll start by importing what I need: pandas and numpy for the data
-handling, a `CountVectorizer` from scikit-learn, which I'll use in a minute
-to statistically surface candidate keywords, and VADER — a lexicon-based
-sentiment scorer — for sentiment. I'm also setting my file paths up front,
-input, intermediate, and the final output workbook, so the whole pipeline is
-self-contained and reproducible."
+handling, `CountVectorizer` and `TfidfVectorizer` from scikit-learn for the
+term-frequency and topic-modeling work, `NMF` for topic discovery, and
+VADER — a lexicon-based sentiment scorer. File paths for input,
+intermediate, and the final output workbook are all set up front."
 
 ### Cell 1 — load the data
-"Now I load the survey export and take a first look at its shape — in this
-run that's 4,000 rows, 10 columns. Before I do anything clever, I always
-look at the raw data first."
+"I load the survey export and check its shape — in this run that's 7,500
+rows, 13 columns."
 
 ### Cell 2 — quick profiling
-"Before I touch the text at all, I check the basic distributions — how many
-responses per channel, per line of business, and the CSAT score spread. This
-tells me where the volume actually is before I start interpreting anything."
+"Before I touch the text at all, I check the basic distributions — channel
+mix, line-of-business mix, CSAT spread."
 
 ### Cell 3 — text cleaning
-"Customer verbatim is messy — different capitalization, punctuation,
-spacing. I normalize it: lowercase everything, strip out anything that isn't
-a letter or number, and collapse extra whitespace. This is what lets a
-keyword dictionary match reliably regardless of exactly how the customer
-typed their response."
+"Customer verbatim is messy. I normalize it: lowercase, strip anything
+that isn't a letter or number, collapse extra whitespace — so a keyword
+dictionary matches reliably regardless of exactly how someone typed it."
 
-### Cell 4 — fast dictionary bootstrap
-"Here's the part that normally eats days of effort on a project like this.
-The traditional way to build a root-cause keyword dictionary is to sit down
-and read hundreds of verbatims by hand, note the recurring phrases, and
-slowly build your taxonomy. Instead, I take a shortcut that gets me most of
-the way there in minutes: I filter down to just the low-CSAT responses — a
-1 or 2 out of 5 — and run a frequency count across single words and two-word
-phrases in that subset only. Whatever shows up most often in **specifically
-the unhappy customers** is my shortlist. I'm looking at the output now —
-terms like 'charged', 'activation', 'network issue', 'sim swap request' jump
-right out. That shortlist is what I turn into a proper dictionary in the
-next step, and I save this list as the task's intermediate artifact, so
-there's a clear evidence trail for how the dictionary was derived, not just
-a dictionary that appeared from nowhere."
+### Cell 4 — fast dictionary bootstrap, now sentiment-aware
+"Here's where I'd normally spend days reading verbatims by hand. Instead I
+count term frequency SEPARATELY in the low-CSAT responses and the
+high-CSAT responses, and compare the two — that's important, because a word
+like 'agent' or 'issue' shows up constantly in BOTH happy and unhappy text,
+and a plain frequency count can't tell the difference. By splitting it, I
+can label every candidate term's sentiment lean — negative-leaning,
+positive-leaning, or neutral/mixed — so the shortlist I hand off to Cell 5
+is actually signal, not noise. This comparison table is saved as the task's
+intermediate artifact, so there's a clear, inspectable trail for why each
+term did or didn't make it into the dictionary."
 
 ### Cell 5 — the root-cause dictionary
-"Here's the finished dictionary — three business drivers, each with the
-phrases I know, from the step above plus domain knowledge, signal that
-issue: **Billing & Charges** — things like 'charged twice', 'incorrect
-bill', 'not refunded'; **Agent Behavior & Communication** — 'rude',
-'interrupting', 'put on hold', 'transferred me'; and **Resolution Time and
-First-Call Resolution** — 'still not resolved', 'ticket reopened', 'no
-update'. This dictionary is the only thing that needs to change if a future
-wave of data surfaces a new issue type — everything downstream is generic."
+"Here's the finished dictionary — three business drivers: Billing &
+Charges, Agent Behavior & Communication, and Resolution Time / First-Call
+Resolution, each with the phrases that signal that issue. This dictionary
+counts how many distinct phrases match per response, not just whether one
+did — that match strength is what lets me rank a primary versus a secondary
+driver in a few cells' time."
 
 ### Cell 6 — sentiment scoring
-"For sentiment, I'm using VADER — a rules-and-lexicon-based sentiment model.
-It's deterministic and fully explainable: no black box, no external API
-call, it runs entirely offline. That matters here specifically because
-LLM-API usage hasn't been confirmed as permitted for this engagement yet, so
-I'm deliberately staying inside tooling that doesn't depend on that
-approval. Every response gets a sentiment score from -1 to +1, which I bucket
-into Negative, Neutral, and Positive."
+"For sentiment I use VADER — a rules-and-lexicon model. Deterministic,
+explainable, fully offline, no external API call — which matters
+specifically because LLM-API usage hasn't been confirmed as permitted for
+this engagement yet."
 
-### Cell 7 — resolving one primary driver per response
-"A single response can mention more than one issue — someone might complain
-about being overcharged **and** about a rude agent in the same sentence. I
-keep the full list of matches, but I also resolve a single primary driver
-per response, using a priority order, because that's what makes a clean
-pivot or Power BI view possible. If nothing in the dictionary matched but
-the sentiment is negative, I bucket it as 'Other, Unclassified' rather than
-forcing it into one of my three known drivers — an honest gap is better than
-a wrong tag."
+### Cell 7 — primary and secondary driver, ranked by strength
+"A response can mention more than one issue. I rank the matched drivers by
+how many distinct phrases hit — the strongest becomes the PRIMARY driver,
+the next strongest the SECONDARY driver, the compounding factor worth
+acting on alongside the headline issue. Where nothing matched, I fall back
+to sentiment rather than force a wrong tag."
 
-### Cell 8 — the aggregated views
-"Now I roll this up. In this run, **Billing & Charges is the top driver,
-responsible for roughly 30 percent of all responses**, with an average CSAT
-of about 1.5 out of 5 — that's the worst-performing driver in the dataset.
-Agent Behavior is close behind at around 27 percent. I also look at average
-agent tenure by driver — agents linked to the Agent Behavior driver skew
-noticeably newer than agents linked to positive responses, about six months
-less tenure on average, which is a real coaching/onboarding signal. And I
-cross-tab driver against channel — Voice carries a disproportionate share of
-both Agent Behavior and Resolution-Time complaints compared to Chat and
-Email, which makes sense: those are exactly the kinds of issues that surface
-in a live, synchronous conversation."
+### Cell 7b — making the secondary driver actually actionable
+"Here's the thing: on short survey text, a second DISTINCT keyword phrase
+often just isn't there, even when a second issue genuinely is — so the
+dictionary alone mostly comes back empty for the secondary driver, which
+isn't something a client can act on. So I complement it with unsupervised
+topic modeling: TF-IDF turns every 'unexplained' negative response into a
+weighted-term vector, NMF — non-negative matrix factorization, the same
+family of technique as LDA — discovers a handful of latent sub-themes
+directly from that text with no labels needed, and I auto-generate a short,
+readable name for each discovered theme using YAKE, a lightweight, offline,
+unsupervised keyword-extraction library. No AI, no API, no corpus download.
+The result: every negative response ends up with a concrete secondary
+driver, not a blank."
+
+### Cell 8 — CSAT across every category, plus the compounding view
+"I don't stop at one cut. I run the same volume-and-avg-CSAT view across
+every dimension we have — primary driver, secondary driver, channel, line
+of business, agent tenure, manager, team lead, sentiment label, and a
+classic NPS-style CSAT bucket: Promoter for a 4 or 5, Neutral for a 3,
+Detractor for a 1 or 2 — and for each cut I also bring the three
+operational metrics along: average handle time, first-contact-resolution
+rate, and 30-day repeat-contact rate. That's depth, not just a headline
+number.
+
+I also build the compounding-issue view — of the responses where Billing is
+the primary driver, what percent of the time is a given secondary driver
+also present — shown in percentages. And I cross-check the CSAT score
+bucket against the text sentiment label, because the two don't always agree
+— some Promoters still write negative-sounding text, which is itself a real
+finding."
 
 ### Cell 9 — saving the output
-"Instead of a flat CSV, I'm publishing one Excel workbook with the raw
-tagged data on one sheet, and ready-made insight tables with embedded charts
-on the others. This is fully reproducible — every time I rerun this script,
-every sheet and every chart regenerates from the current data, so there's
-never a stale, hand-edited copy floating around for someone to trip over
-later."
+"One Excel workbook: the raw tagged data on one sheet, every summary table
+on a second, every chart on a third — thirteen charts in this run, every
+one of them pairing response VOLUME with average CSAT so you can see both
+how often an issue happens and how badly it hurts satisfaction at the same
+time. Fully reproducible — rerun the script, everything regenerates."
 
 ### Cell 10 — the numbers I'll quote
-"So, to summarize what the data is telling us: the top driver is Billing
-and Charges, at roughly 30 percent of responses, with an average CSAT of
-1.5. Overall average CSAT across the dataset is about 2.2 out of 5, and
-just over half of all responses — about 52 percent — carry negative
-sentiment. That's the headline."
+"To summarize what the data is telling us: **Billing & Charges is the top
+primary driver, at 33.3 percent of all responses**, with an average CSAT of
+2.48 — clearly the worst-performing driver — an average handle time of 493
+seconds, a first-contact-resolution rate of only 54.8 percent, and an 18.5
+percent 30-day repeat-contact rate. Within Billing complaints specifically,
+a discovered sub-theme around roaming add-ons shows up as the secondary,
+compounding factor **71.2 percent of the time** — that's the specific thing
+to go investigate alongside the headline issue. Overall average CSAT across
+the dataset is 3.00 out of 5 — a real split, 38.4 percent Promoters against
+38.2 percent Detractors, not a crisis but a genuine, fixable opportunity —
+and just over half of all responses, 50.6 percent, carry negative sentiment
+in the text itself."
 
 ## 6. Output file walkthrough
 
 *[Switch to Excel. Open `final_output/final_output_csat_insights.xlsx`.]*
 
-"Here's the output workbook. The first sheet, Tagged Data, is the full
-row-level dataset — every response with its sentiment score, its matched
-drivers, and its resolved primary driver. The Driver Summary sheet has the
-aggregated table plus two charts — responses by driver, and average CSAT by
-driver — so you can see at a glance that Billing dominates both the volume
-and the severity. Channel by Driver shows the stacked view I just
-described, and Tenure by Driver shows the agent-tenure pattern."
+"Tagged_Data has every response with its sentiment score, matched drivers,
+primary and secondary driver, tenure bucket, and CSAT bucket. Summary has
+every aggregated table in one place — primary driver, secondary driver, the
+primary-to-secondary compounding percentages, CSAT cut by channel/LoB/
+tenure/manager/team-lead/sentiment/CSAT-bucket, and the weekly trend of the
+top primary and secondary driver. Charts has all thirteen charts together."
 
-## 7. Insights in Power BI
+## 7. The PowerPoint summary
+
+*[Run `03_generate_summary_ppt.py`, then open
+`final_output/usecase1_csat_summary.pptx`.]*
+
+"I also generate a short client-ready deck — six slides: the use case,
+the data, the approach, and the actual outcomes with the real numbers we
+just walked through, plus a recommendation slide. Every number on it is
+pulled straight from the output workbook, not hand-typed, so it can never
+drift out of sync with what the data actually shows."
+
+## 8. Insights in Power BI
 
 *[Switch to Power BI Desktop. Follow `powerbi_build_guide.md` to build the
 report live — don't skip this, it's part of the recorded task.]*
 
-"Now I'll take this into Power BI to build the business-facing view. I'm
-loading the Tagged Data sheet as my source, and I'm going to build a small
-set of visuals that tell this story at a glance: total responses and
-average CSAT by driver, a channel breakdown, a trend of Billing complaints
-over time, and the tenure comparison."
+"Now I'll take this into Power BI to build the business-facing view, loading
+the Tagged Data sheet as my source."
 
-*[Build the visuals per the guide, narrating each one as you add it — field
-by field, the same "name what you're clicking" discipline as the Python
-walkthrough.]*
+*[Build the visuals per the guide, narrating each one as you add it.]*
 
-"So pulling this together: Billing & Charges is our number one CSAT driver,
-it's concentrated specifically in Postpaid Mobile and Billing & Payments,
-newer agents are disproportionately linked to Agent Behavior complaints, and
-Voice is our highest-risk channel for both Agent Behavior and unresolved
-issues. If I were presenting this to the business, my recommendation would
-be: investigate the billing accuracy issue first, since it's both the
-highest-volume and lowest-CSAT driver, and pair it with a coaching
-initiative for agents under six months' tenure, since that's where the
-Agent Behavior complaints concentrate."
+"So pulling this together: Billing & Charges is our number one CSAT driver
+by volume and severity, roaming add-on confusion is the specific compounding
+factor within it 71 percent of the time, newer agents disproportionately
+link to Agent Behavior complaints, and Voice is our highest-risk channel. If
+I were presenting this to the business, my recommendation would be:
+investigate the billing/roaming-charge clarity issue first, since it's the
+highest-volume, lowest-CSAT, longest-handle-time driver, and pair it with a
+coaching initiative for agents under six months' tenure."
 
-## 8. Close
+## 9. Close
 
-"That's the end-to-end workflow — from raw customer verbatim, to a
-dictionary-based root-cause tag, to sentiment scoring, to a ranked,
-channel-and-tenure-aware insight view in Power BI, all without needing a
-single LLM API call, which matters given where API approval currently
-stands for this engagement."
+"That's the end-to-end workflow — from raw customer verbatim, through a
+dictionary-and-topic-modeling root-cause tag, sentiment scoring, a
+call-center-metrics-enriched, multi-dimensional insight view, to a
+client-ready deck and a Power BI report, all without needing a single LLM
+API call, which matters given where API approval currently stands for this
+engagement."

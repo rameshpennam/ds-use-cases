@@ -7,7 +7,12 @@ live in a few minutes. Two pages, matching the narration script.
 ## 1. Get Data
 Power BI Desktop → **Get Data → Excel Workbook** →
 `final_output/final_output_forecast_staffing.xlsx` → check
-**Forecast_Staffing** AND **Insights** → Load.
+**Forecast_Staffing** only → Load.
+(The workbook's `Summary` sheet stacks several tables with title rows and
+gaps for easy human reading in Excel — not a clean rectangular range, so
+don't import it. Forecast_Staffing is the full, clean, date-level table;
+build the weekly view directly in Power BI using its own date hierarchy, as
+below.)
 
 ## 2. DAX measures (Modeling → New Measure, on the Forecast_Staffing table)
 ```DAX
@@ -38,19 +43,26 @@ problem, it's a staffing-level problem."*
 ## 4. Page 2 — "Staffing Gap"
 | Visual | Type | Fields |
 |---|---|---|
-| Required vs Available FTE | Line chart (2 series) | Axis: `date` (from **Insights** sheet, weekly) · Values: `required_fte`, `available_fte` |
-| Staffing gap by week | Column chart, conditional formatting (red if > 0) | Axis: `week_starting` · Values: `staffing_gap_fte` |
-| Worst-week callout | Card | `Max Gap (FTE)` |
+| Required vs Available FTE | Line chart (2 series) | Axis: `date` · Values: `required_fte`, `available_fte` |
+| Staffing gap by day | Column chart, conditional formatting (red if > 0) | Axis: `date` · Values: `staffing_gap_fte` |
+| Worst-day callout | Card | `Max Gap (FTE)` |
 | Forecast detail table | Table | `date`, `forecast_volume`, `required_fte`, `available_fte`, `staffing_gap_fte` |
+
+To match the week-level view from the narration, right-click `date` in the
+Fields pane → Create hierarchy isn't needed — simpler: on each chart's axis
+well, Power BI auto-groups a date field; use the dropdown arrow on the axis
+field and switch from "Date" to a continuous axis, or add `date.[Week]`
+if you want an explicit weekly bucket instead of daily points.
 
 Narrate while building: *"Plotting required against available FTE on the
 same axis makes the gap visual immediately — the required line sits above
-available on most weeks. The column chart with conditional formatting turns
-every red bar into a week that needs attention; the worst single day is
-about 1.6 FTE short, which six weeks of lead time is more than enough to
+available on most days. The column chart with conditional formatting turns
+every red bar into a day that needs attention; the worst single day is
+about 3.7 FTE short, which six weeks of lead time is more than enough to
 fix with overtime or a couple of flexible shifts."*
 
 ## Note on data source
-Use the **Insights** sheet (weekly rollup) for the two-series FTE comparison
-chart — it's pre-aggregated and reads cleanly. Use **Forecast_Staffing**
-(date-level) for the detail table and the volume trend line.
+Everything in this guide comes from the single **Forecast_Staffing** sheet
+— it's the full, clean, date-level table and the only sheet you need to
+load into Power BI. The `Summary` and `Charts` sheets in the workbook are
+for the Excel-side walkthrough only.

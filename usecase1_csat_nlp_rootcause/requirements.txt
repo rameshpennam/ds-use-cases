@@ -3,3 +3,5 @@ numpy
 scikit-learn
 vaderSentiment
 openpyxl
+yake
+python-pptx

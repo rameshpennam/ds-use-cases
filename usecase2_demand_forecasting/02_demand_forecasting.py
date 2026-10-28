@@ -14,7 +14,8 @@ HOW TO RUN (VS Code):
 INPUTS : input/input_call_volume_history.xlsx, input/input_agent_roster.xlsx
 OUTPUT : final_output/final_output_forecast_staffing.xlsx
          - sheet "Forecast_Staffing" : date-level forecast + FTE gap
-         - sheet "Insights"          : weekly rollup table + charts
+         - sheet "Summary"           : model accuracy, weekly rollup, monthly rollup
+         - sheet "Charts"            : every chart in one place
          NOTE: same caveat as the other use case - a native Excel
          "PivotTable" object can't be created from a script in a way that
          works on macOS Excel (that needs Windows-only COM automation), so
@@ -44,17 +45,26 @@ os.makedirs("final_output", exist_ok=True)
 HOLDOUT_DAYS = 60          # most recent 60 days used to test model accuracy
 FORECAST_HORIZON = 42      # forecast the next 6 weeks forward
 DAILY_WORKING_HOURS = 8
-OCCUPANCY_TARGET = 0.85    # agents are only "productive" ~85% of a shift (breaks, admin, etc.)
 
 # %% Cell 1 - Load data
 # NARRATE: "This is 3-plus years of daily contact volume by LoB and channel,
 # plus the agent roster, so I can compare forecasted need against who we
 # actually have available."
-vol = pd.read_excel(VOLUME_FILE, sheet_name="Call_Volume_History")
+vol = pd.read_excel(VOLUME_FILE, sheet_name="Call_Volume_History", keep_default_na=False)
 vol["date"] = pd.to_datetime(vol["date"])
-roster = pd.read_excel(ROSTER_FILE, sheet_name="Agent_Roster")
+roster = pd.read_excel(ROSTER_FILE, sheet_name="Agent_Roster", keep_default_na=False)
 print(vol.shape, roster.shape)
 vol.head()
+
+# WHAT: occupancy target derived from the roster's REAL average shrinkage
+# (time scheduled but not available - breaks, training, coaching), not a
+# flat assumed constant. WHY: shrinkage is a genuine, measurable roster
+# attribute (newer agents run higher shrinkage from training/coaching) -
+# using the actual figure makes the required-FTE math reflect who's really
+# on the floor, not a textbook assumption.
+avg_shrinkage_pct = roster["shrinkage_pct"].mean()
+OCCUPANCY_TARGET = 1 - (avg_shrinkage_pct / 100)
+print(f"Avg roster shrinkage: {avg_shrinkage_pct:.1f}%  ->  occupancy target: {OCCUPANCY_TARGET:.2f}")
 
 # %% Cell 2 - Build the series we'll forecast: total daily volume (all LoB/channel)
 # NARRATE: "For this walkthrough I forecast total daily contact volume end to
@@ -157,44 +167,113 @@ staffing["staffing_gap_fte"] = (staffing["required_fte"] - staffing["available_f
 staffing.head(10)
 
 # %% Cell 9 - Save output: ONE workbook, rebuilt from scratch every run
-# NARRATE: "Same idea as the other use case - one Excel workbook, the
-# date-level forecast on one sheet, a weekly rollup with charts on another,
-# both regenerated every time I rerun the script."
-staffing_weekly = (
-    staffing.assign(week_starting=staffing["date"].dt.to_period("W").apply(lambda p: p.start_time))
-    .groupby("week_starting")[["forecast_volume", "required_fte", "available_fte", "staffing_gap_fte"]]
-    .mean()
-    .round(1)
-    .reset_index()
-)
-staffing_weekly["week_starting"] = staffing_weekly["week_starting"].dt.strftime("%Y-%m-%d")
+# NARRATE: "Same idea as the other use case - one Excel workbook: the raw
+# date-level forecast on one sheet, every summary table (model accuracy,
+# weekly rollup, monthly rollup) together on a second sheet, and every
+# chart together on a third - all regenerated every time I rerun the script."
+def rollup(freq_period: str) -> pd.DataFrame:
+    out = (
+        staffing.assign(period=staffing["date"].dt.to_period(freq_period).apply(lambda p: p.start_time))
+        .groupby("period")[["forecast_volume", "required_fte", "available_fte", "staffing_gap_fte"]]
+        .mean()
+        .round(1)
+        .reset_index()
+    )
+    out["period"] = pd.to_datetime(out["period"]).dt.date
+    return out
+
+
+staffing_weekly = rollup("W")
+staffing_monthly = rollup("M")
+
+staffing_out = staffing.copy()
+staffing_out["date"] = pd.to_datetime(staffing_out["date"]).dt.date  # real Excel date, not text
+
+SECTIONS = [
+    ("Model Accuracy Comparison", model_comparison),
+    ("Weekly Rollup", staffing_weekly),
+    ("Monthly Rollup", staffing_monthly),
+]
 
 with pd.ExcelWriter(OUTPUT_FILE, engine="openpyxl") as writer:
-    staffing.to_excel(writer, sheet_name="Forecast_Staffing", index=False)
-    staffing_weekly.to_excel(writer, sheet_name="Insights", index=False)
+    staffing_out.to_excel(writer, sheet_name="Forecast_Staffing", index=False)
+    cursor = 0
+    section_positions = []
+    for title, table in SECTIONS:
+        table.to_excel(writer, sheet_name="Summary", index=False, startrow=cursor + 1, startcol=0)
+        title_row = cursor + 1
+        header_row = cursor + 2
+        first_data_row = cursor + 3
+        last_data_row = cursor + 2 + len(table)
+        section_positions.append((title, table, title_row, header_row, first_data_row, last_data_row))
+        cursor = last_data_row + 2
+    pd.DataFrame({"x": []}).to_excel(writer, sheet_name="Charts", index=False, header=False)
 
 wb = openpyxl.load_workbook(OUTPUT_FILE)
-ws = wb["Insights"]
+
+ws_data = wb["Forecast_Staffing"]
+date_col = list(staffing_out.columns).index("date") + 1
+for row in range(2, ws_data.max_row + 1):
+    ws_data.cell(row=row, column=date_col).number_format = "yyyy-mm-dd"
+
+ws_summary = wb["Summary"]
+for title, table, title_row, header_row, first_data_row, last_data_row in section_positions:
+    cell = ws_summary.cell(row=title_row, column=1, value=title)
+    cell.font = openpyxl.styles.Font(bold=True, size=12)
+    if table.columns[0] == "period":
+        for row in range(first_data_row, last_data_row + 1):
+            ws_summary.cell(row=row, column=1).number_format = "yyyy-mm-dd"
+
+positions_by_title = {title: (header_row, first_data_row, last_data_row)
+                       for title, _table, _title_row, header_row, first_data_row, last_data_row
+                       in section_positions}
+
+ws_charts = wb["Charts"]
+ws_charts.delete_rows(1, ws_charts.max_row)
+
+weekly_header, weekly_first, weekly_last = positions_by_title["Weekly Rollup"]
+monthly_header, monthly_first, monthly_last = positions_by_title["Monthly Rollup"]
 
 chart1 = LineChart()
 chart1.title = "Required vs Available FTE (weekly avg)"
 chart1.y_axis.title = "FTE"
-data1 = Reference(ws, min_col=3, max_col=4, min_row=1, max_row=ws.max_row)  # required_fte, available_fte
-cats1 = Reference(ws, min_col=1, min_row=2, max_row=ws.max_row)
+data1 = Reference(ws_summary, min_col=3, max_col=4, min_row=weekly_header, max_row=weekly_last)  # required_fte, available_fte
+cats1 = Reference(ws_summary, min_col=1, min_row=weekly_first, max_row=weekly_last)
 chart1.add_data(data1, titles_from_data=True)
 chart1.set_categories(cats1)
-ws.add_chart(chart1, "G2")
+ws_charts.add_chart(chart1, "A2")
 
 chart2 = BarChart()
 chart2.title = "Staffing Gap (weekly avg FTE, positive = short-staffed)"
 chart2.y_axis.title = "Gap (FTE)"
-data2 = Reference(ws, min_col=5, max_col=5, min_row=1, max_row=ws.max_row)  # staffing_gap_fte
+data2 = Reference(ws_summary, min_col=5, max_col=5, min_row=weekly_header, max_row=weekly_last)  # staffing_gap_fte
 chart2.add_data(data2, titles_from_data=True)
 chart2.set_categories(cats1)
-ws.add_chart(chart2, "G18")
+ws_charts.add_chart(chart2, "A20")
+
+# Monthly combo: bar = volume, line = required FTE on a secondary axis -
+# same "show both volume AND the operational metric together" pattern as
+# the other use case's charts.
+chart3 = BarChart()
+chart3.title = "Monthly Forecast Volume vs Required FTE"
+chart3.y_axis.title = "Forecast Volume"
+cats3 = Reference(ws_summary, min_col=1, min_row=monthly_first, max_row=monthly_last)
+vol_data = Reference(ws_summary, min_col=2, max_col=2, min_row=monthly_header, max_row=monthly_last)
+chart3.add_data(vol_data, titles_from_data=True)
+chart3.set_categories(cats3)
+
+line3 = LineChart()
+fte_data = Reference(ws_summary, min_col=3, max_col=3, min_row=monthly_header, max_row=monthly_last)
+line3.add_data(fte_data, titles_from_data=True)
+line3.y_axis.axId = 200
+line3.y_axis.title = "Required FTE"
+line3.y_axis.crosses = "max"
+chart3.y_axis.crosses = "autoZero"
+chart3 += line3
+ws_charts.add_chart(chart3, "A38")
 
 wb.save(OUTPUT_FILE)
-print(f"Saved -> {OUTPUT_FILE} (2 sheets, 2 charts)")
+print(f"Saved -> {OUTPUT_FILE} (3 sheets: Forecast_Staffing, Summary, Charts)")
 
 # %% Cell 10 - Spoken walkthrough numbers (read these out on camera)
 worst_day = staffing.loc[staffing["staffing_gap_fte"].idxmax()]

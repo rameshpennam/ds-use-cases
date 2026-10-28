@@ -6,8 +6,8 @@ channel) and an agent roster for the Demand Forecasting & Staffing use case.
 
 Run once, top to bottom (VS Code: "Run Cell" above each "# %%" block, or
 Shift+Enter), to produce:
-  input/input_call_volume_history.csv
-  input/input_agent_roster.csv
+  input/input_call_volume_history.xlsx
+  input/input_agent_roster.xlsx
 
 NOTE: All names, volumes and IDs below are synthetic / fictional, generated
 purely for this demo. No real customer, agent or company data is used.
@@ -78,7 +78,7 @@ for lob in LOBS:
         for ch, split in CHANNEL_SPLIT.items():
             vol = int(round(total_volume * split * rng.normal(1.0, 0.03)))
             records.append({
-                "date": d.strftime("%Y-%m-%d"),
+                "date": d,   # kept as a real date, not text - see Cell 3
                 "lob": lob,
                 "channel": ch,
                 "volume": max(vol, 0),
@@ -91,8 +91,22 @@ df_volume = pd.DataFrame(records)
 
 # %% Cell 3 - Save volume history + sanity check
 import os
+import openpyxl
+
 os.makedirs("input", exist_ok=True)
+
+# Write "date" as a real Excel date (not text) so sorting/pivoting by date
+# works correctly in Excel and Power BI.
+df_volume["date"] = pd.to_datetime(df_volume["date"]).dt.date
 df_volume.to_excel(OUT_VOLUME_FILE, index=False, sheet_name="Call_Volume_History")
+
+wb = openpyxl.load_workbook(OUT_VOLUME_FILE)
+ws = wb["Call_Volume_History"]
+date_col = list(df_volume.columns).index("date") + 1
+for row in range(2, ws.max_row + 1):
+    ws.cell(row=row, column=date_col).number_format = "yyyy-mm-dd"
+wb.save(OUT_VOLUME_FILE)
+
 print(f"Saved {len(df_volume)} rows -> {OUT_VOLUME_FILE}")
 print(df_volume.groupby(["lob", "channel"])["volume"].mean().round(0))
 
@@ -116,6 +130,13 @@ for i in range(40):   # deliberately tight headcount so a genuine staffing gap s
     tenure = int(rng.choice(
         [2, 4, 6, 9, 12, 18, 24, 36, 48],
         p=[0.10, 0.10, 0.10, 0.12, 0.13, 0.15, 0.10, 0.10, 0.10]))
+    # WHAT: shrinkage_pct - the standard contact-center metric for time an
+    # agent is scheduled but NOT available to handle contacts (breaks,
+    # training, coaching, short-term absence). WHY: newer agents carry more
+    # training/coaching shrinkage - this gives the staffing model a REAL,
+    # per-roster shrinkage figure to use instead of a flat assumed constant.
+    shrinkage_pct = round(float(np.clip(rng.normal(22 - 0.15 * tenure, 4), 10, 40)), 1)
+
     roster.append({
         "agent_id": f"AGT{1000 + i}",
         "agent_name": f"{rng.choice(AGENT_FIRST)} {rng.choice(AGENT_LAST)} ({i + 1})",
@@ -124,9 +145,11 @@ for i in range(40):   # deliberately tight headcount so a genuine staffing gap s
         "manager_name": manager,
         "tenure_months": tenure,
         "weekly_available_hours": int(rng.choice([20, 30, 40, 40, 40])),  # some part-time
+        "shrinkage_pct": shrinkage_pct,
     })
 
 df_roster = pd.DataFrame(roster)
 df_roster.to_excel(OUT_ROSTER_FILE, index=False, sheet_name="Agent_Roster")
 print(f"Saved {len(df_roster)} rows -> {OUT_ROSTER_FILE}")
 print(df_roster.groupby("lob")["weekly_available_hours"].sum())
+print("\nAvg shrinkage:", round(df_roster["shrinkage_pct"].mean(), 1), "%")
