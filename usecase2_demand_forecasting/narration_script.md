@@ -1,7 +1,7 @@
 # Narration Script — Demand Forecasting & Staffing
-Full talk track for the recording. Deliberately starts at the use-case
-introduction — **your own personal/role introduction is not included here**;
-do that yourself in your own words at the very start of the recording.
+Full talk track for presenting this walkthrough. Deliberately starts at the
+use-case introduction — **your own personal/role introduction is not
+included here**; do that yourself in your own words at the very start.
 
 Read this as a guide, not a strict script to recite word-for-word —
 paraphrase naturally. The numbers below are the actual output of the fixed
@@ -9,8 +9,8 @@ random seed in `01_generate_synthetic_data.py` as shipped, so your screen
 should show these exact figures if you haven't changed the config.
 
 Target length: 25-35 minutes of this content, stretching to 35-45 minutes
-with required pacing (hover-before-click, narrating what/why, ~1 second
-pause after each click) and the live Power BI build at the end.
+with good pacing (hover-before-click, narrating what/why, ~1 second pause
+after each click) and the live Power BI build at the end.
 
 ---
 

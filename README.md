@@ -1,8 +1,8 @@
-# Data Science & ML — Screen Recording Use Cases
+# Data Science & ML — Use Case Portfolio
 
-Two self-contained use cases for the Mercor/Concentrix "Project Frost" screen
-recording task. Each folder is independent — `requirements.txt`, three
-runnable scripts, a narration script, and a Power BI build guide.
+Two self-contained, end-to-end data science use cases. Each folder is
+independent — `requirements.txt`, three runnable scripts, a full walkthrough
+script, and a Power BI build guide.
 
 | Folder | Use case |
 |---|---|
@@ -21,26 +21,23 @@ conflict with) — just:
 4. `python 03_generate_summary_ppt.py` — builds a 6-slide client-ready
    summary deck in `final_output/`, every number pulled straight from the
    Excel output (nothing hand-typed)
-5. `narration_script.md` — the talk track for the recording (does not
-   include a personal introduction — add your own at the start)
+5. `narration_script.md` — a full word-for-word walkthrough script for
+   presenting the use case (does not include a personal introduction —
+   add your own at the start)
 6. `powerbi_build_guide.md` — exact visuals/DAX to build live in Power BI
    on top of the `final_output/*.xlsx` workbook
-7. `README_narration_and_metadata.md` — status checklist, folder layout,
-   and the content to paste into `Metadata.rtf` before upload
-
-## Status — confirm before recording (applies to both use cases)
-- [ ] GitHub access to pull this repo on the Mac — pending client confirmation
-- [ ] Upload destination (Mercor Studio vs elsewhere) — pending confirmation
-- [ ] Gemini / OpenAI / Anthropic API usage — pending confirmation (both
-      scripts currently use only offline, non-AI techniques so they work
-      either way; see each use case's README for the disabled opt-in cell)
+7. `README_narration_and_metadata.md` — folder layout and setup notes for
+   that use case
 
 ## Notes
+- API usage (Gemini/OpenAI/Anthropic) is optional — both pipelines
+  currently use only offline, non-AI techniques (keyword dictionaries,
+  TF-IDF/NMF, VADER, classical statistical forecasting), so they run with
+  zero API keys. See each use case's README for the disabled opt-in cell
+  if you want to wire one in.
 - `input/`, `intermediate/`, `final_output/` ARE committed to this repo as a
-  known-good reference snapshot — a safety net if Python/pip doesn't work on
-  the Mac for some reason. They're also fully regenerated (byte-for-byte
-  identical, fixed random seed) every time the scripts run — don't hand-edit
-  anything inside them, your changes get overwritten on the next run.
-- `recordings/` is a local drop folder for the `.mp4` + unmodified recording
-  zip before upload; gitignored (large binaries, not source, and not
-  generated until you actually record).
+  known-good reference snapshot — a safety net if Python/pip isn't set up
+  yet on whatever machine you're running this on. They're also fully
+  reproducible (fixed random seed) — just re-run the scripts to regenerate
+  them; don't hand-edit anything inside them, your changes get overwritten
+  on the next run.

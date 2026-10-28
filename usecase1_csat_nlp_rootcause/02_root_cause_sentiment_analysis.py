@@ -10,32 +10,32 @@ HOW TO RUN (VS Code):
      click "Run Cell" (or press Shift+Enter) to execute just that block and
      see its output in the interactive window.
   3. Run the cells top to bottom in order. Comments starting with "NARRATE:"
-     are talk-track cues for the recording - say that, then run the cell.
+     are talk-track cues for presenting this walkthrough - say that, then
+     run the cell.
 
 INPUT : input/input_survey_verbatims.xlsx   (produced by 01_generate_synthetic_data.py)
 OUTPUT: final_output/final_output_csat_insights.xlsx
         - sheet "Tagged_Data" : row-level, incl. primary/secondary driver,
-          sentiment, tenure bucket, week - for your own pivot tables too
-        - sheet "Summary"     : every aggregated table in one place (primary
-          driver, secondary driver, primary->secondary %, CSAT cut by
-          channel/LoB/tenure/manager/TL, weekly trend of the top primary and
-          top secondary driver)
-        - sheet "Charts"      : every chart in one place, each pairing
-          RESPONSE VOLUME (bars) with AVG CSAT (line, secondary axis) so
-          every view shows both how often an issue happens and how badly it
-          hurts satisfaction
+          issue theme, sentiment, tenure bucket, week - for your own pivot
+          tables too
+        - sheet "Analysis"    : every aggregated table (primary driver,
+          secondary driver, sub-issue drill-down within the top primary
+          driver, issue theme, CSAT cut by channel/LoB/tenure/manager/TL/
+          plan-tier/circle, weekly trend), each one with its own chart
+          placed right beside it - every chart pairs RESPONSE VOLUME (bars)
+          with AVG CSAT (line, secondary axis) so every view shows both how
+          often an issue happens and how badly it hurts satisfaction
         NOTE: a native Excel "PivotTable" object (the drag-and-drop field
         list) can't be created from a script in a way that's portable to
         macOS Excel - the only way to do that is to drive the real Excel
-        application via Windows-only COM automation, which won't run on the
-        Mac this gets recorded on. So this workbook ships the PIVOT-EQUIVALENT
-        (pre-aggregated tables + real embedded Excel charts) instead, and it
-        is rebuilt from scratch every time you run this script - so re-running
-        never leaves you with a stale or hand-edited copy to worry about. If
-        you also want to show yourself building a live PivotTable on camera,
-        do that as a separate, quick "Insert > PivotTable" step on the
-        Tagged_Data sheet during the recording - a normal 30-second expert
-        move, and unrelated to (won't be touched by) this script.
+        application via Windows-only COM automation. So this workbook ships
+        the PIVOT-EQUIVALENT (pre-aggregated tables + real embedded Excel
+        charts) instead, and it is rebuilt from scratch every time you run
+        this script - so re-running never leaves you with a stale or
+        hand-edited copy to worry about. If you also want a live PivotTable,
+        that's a separate, quick "Insert > PivotTable" step on the
+        Tagged_Data sheet - a normal 30-second expert move, and unrelated
+        to (won't be touched by) this script.
 """
 
 # %% Cell 0 - Imports & config
@@ -686,7 +686,7 @@ for title, table, chart_kind, title_row, header_row, first_data_row, last_data_r
 wb.save(OUTPUT_FILE)
 print(f"Saved -> {OUTPUT_FILE} (2 sheets: Tagged_Data, Analysis - {len(section_positions)} tables+charts)")
 
-# %% Cell 10 - Spoken walkthrough numbers (read these out on camera)
+# %% Cell 10 - Spoken walkthrough numbers (read these out loud)
 top = primary_summary.iloc[0]
 print(f"Top PRIMARY driver: {top['primary_driver']} -> {top['pct_of_total']}% of all responses, "
       f"avg CSAT {top['avg_csat']:.2f}")

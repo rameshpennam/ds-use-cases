@@ -9,7 +9,8 @@ HOW TO RUN (VS Code):
      click "Run Cell" (or press Shift+Enter) to execute just that block and
      see its output (and any chart) in the interactive window.
   3. Run the cells top to bottom in order. Comments starting with "NARRATE:"
-     are talk-track cues for the recording - say that, then run the cell.
+     are talk-track cues for presenting this walkthrough - say that, then
+     run the cell.
 
 INPUTS : input/input_call_volume_history.xlsx, input/input_agent_roster.xlsx
 OUTPUT : final_output/final_output_forecast_staffing.xlsx
@@ -322,7 +323,7 @@ for title, table, chart_kind, title_row, header_row, first_data_row, last_data_r
 wb.save(OUTPUT_FILE)
 print(f"Saved -> {OUTPUT_FILE} (2 sheets: Forecast_Staffing, Analysis - {len(section_positions)} tables+charts)")
 
-# %% Cell 10 - Spoken walkthrough numbers (read these out on camera)
+# %% Cell 10 - Spoken walkthrough numbers (read these out loud)
 worst_day = staffing.loc[staffing["staffing_gap_fte"].idxmax()]
 days_short = (staffing["staffing_gap_fte"] > 0).sum()
 print(f"Model improved MAPE from {baseline_mape:.1f}% (baseline) to {hw_mape:.1f}% (Holt-Winters)")

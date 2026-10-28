@@ -1,9 +1,9 @@
 # Narration Script — CSAT Root-Cause & Sentiment Driver Analysis
-Full talk track for the recording. Deliberately starts at the use-case
-introduction — **your own personal/role introduction is not included here**;
-do that yourself in your own words at the very start of the recording, since
-only you know what's accurate to say and this script shouldn't be guessing it
-on your behalf.
+Full talk track for presenting this walkthrough. Deliberately starts at the
+use-case introduction — **your own personal/role introduction is not
+included here**; do that yourself in your own words at the very start,
+since only you know what's accurate to say and this script shouldn't be
+guessing it on your behalf.
 
 Read this as a guide, not a strict script to recite word-for-word — paraphrase
 naturally in your own voice. The numbers quoted below are the actual output
@@ -11,9 +11,9 @@ of the fixed random seed in `01_generate_synthetic_data.py` as shipped — if
 you run the scripts unmodified, your screen will show these exact figures.
 
 Target length: 25-35 minutes of this content, stretching naturally to
-35-45 minutes once you add the required pacing — hovering before every
-click, narrating what you're about to click and why, a ~1 second pause after
-each click, and the live Power BI build at the end.
+35-45 minutes with good pacing — hovering before every click, narrating
+what you're about to click and why, a ~1 second pause after each click, and
+the live Power BI build at the end.
 
 ---
 
@@ -29,8 +29,8 @@ responses across chat, email and voice, and leadership wants to know **why**
 know what to prioritize.
 
 My objective here is to take raw customer verbatim, systematically tag each
-response against a small set of known root-cause drivers, score the
-sentiment of each response, and roll all of that up into a ranked view of
+response against a known root-cause taxonomy, score the sentiment of each
+response, and roll all of that up into a ranked view of
 which driver has the biggest impact on CSAT — broken down by channel, line
 of business, agent tenure, and even over time — so the business gets an
 actionable story, not just a dashboard full of numbers."
@@ -38,7 +38,7 @@ actionable story, not just a dashboard full of numbers."
 ## 2. Input data
 
 *[Open `input/input_survey_verbatims.xlsx` — if it doesn't exist yet, run
-`01_generate_synthetic_data.py` first, on camera, since that's part of the
+`01_generate_synthetic_data.py` first, live, since that's part of the
 pipeline.]*
 
 "This is the input — a survey export of customer responses. For this

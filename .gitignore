@@ -3,9 +3,9 @@
 # identically every run (fixed random seed), so there's nothing to merge-
 # conflict over; just don't hand-edit them.
 
-# Recording deliverables — large binaries, dropped in locally, not source
-*/recordings/*.mp4
-*/recordings/*.zip
+# Recording deliverables and local-only drop-folder notes — not source,
+# not needed by anyone cloning this as a portfolio
+*/recordings/*
 
 # Internal reference material — not needed to execute the use cases on the Mac
 reference_screenshots/
