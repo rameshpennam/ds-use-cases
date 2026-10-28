@@ -321,13 +321,26 @@ def add_ranked_list(slide, left, top, width, heading, items, row_height=0.36, ac
     return y
 
 
-def add_approach_step(slide, left, top, width, number, title, approach_bullets, output_bullets,
-                        accent=ACCENT, output_color=NAVY):
-    """One pipeline step, with APPROACH (how it works) and OUTPUT (what it
-    produces) explicitly split into two labeled, differently-colored groups
-    - not one flat bullet list. Lets the method and its result both be
-    stated in implementation-specific language, not just named."""
-    badge = slide.shapes.add_shape(MSO_SHAPE.OVAL, left, top, Inches(0.32), Inches(0.32))
+STEP_COL1_X, STEP_COL1_W = Inches(0.65), Inches(2.7)
+STEP_COL2_X, STEP_COL2_W = Inches(3.6), Inches(5.3)
+STEP_COL3_X, STEP_COL3_W = Inches(9.15), Inches(3.53)
+STEP_BADGE_D = Inches(0.38)
+STEP_OFFSET_PER_ROW = Inches(0.07)  # each badge nudges right - a literal staircase down the slide
+
+
+def step_badge_center(row_index, top):
+    cx = Emu(int(STEP_COL1_X) + int(STEP_OFFSET_PER_ROW) * row_index + int(STEP_BADGE_D) // 2)
+    cy = Emu(int(top) + int(STEP_BADGE_D) // 2)
+    return cx, cy
+
+
+def add_approach_row(slide, top, row_height, row_index, number, title, approach_text, output_text, accent=ACCENT):
+    """One pipeline step as a full-width row: a staircase-stepped numbered
+    badge + title on the left, the APPROACH explained in plain prose in a
+    wide middle column, and the OUTPUT as a short, visually distinct phrase
+    on the right - far more readable than cramming both into a small card."""
+    badge_x = Emu(int(STEP_COL1_X) + int(STEP_OFFSET_PER_ROW) * row_index)
+    badge = slide.shapes.add_shape(MSO_SHAPE.OVAL, badge_x, top, STEP_BADGE_D, STEP_BADGE_D)
     badge.fill.solid()
     badge.fill.fore_color.rgb = accent
     badge.line.fill.background()
@@ -338,35 +351,32 @@ def add_approach_step(slide, left, top, width, number, title, approach_bullets, 
     p.alignment = PP_ALIGN.CENTER
     r = p.add_run()
     r.text = str(number)
-    r.font.size = Pt(14)
+    r.font.size = Pt(15)
     r.font.bold = True
     r.font.color.rgb = WHITE
     r.font.name = FONT
-    add_text(slide, left + Inches(0.42), top - Inches(0.02), width - Inches(0.42), Inches(0.32),
-              title, 14.5, NAVY, bold=True)
-    y = top + Inches(0.36)
-    add_text(slide, left + Inches(0.06), y, width - Inches(0.06), Inches(0.2), "APPROACH", 9.5, ACCENT_DARK, bold=True)
-    y += Inches(0.22)
-    for b in approach_bullets:
-        dot = slide.shapes.add_shape(MSO_SHAPE.OVAL, left + Inches(0.08), y + Inches(0.06), Inches(0.09), Inches(0.09))
-        dot.fill.solid()
-        dot.fill.fore_color.rgb = accent
-        dot.line.fill.background()
-        _no_shadow(dot)
-        add_text(slide, left + Inches(0.3), y, width - Inches(0.3), Inches(0.28), b, 11.5, DARK_TEXT)
-        y += Inches(0.3)
-    y += Inches(0.02)
-    add_text(slide, left + Inches(0.06), y, width - Inches(0.06), Inches(0.2), "OUTPUT", 9.5, output_color, bold=True)
-    y += Inches(0.22)
-    for b in output_bullets:
-        dot = slide.shapes.add_shape(MSO_SHAPE.OVAL, left + Inches(0.08), y + Inches(0.06), Inches(0.09), Inches(0.09))
-        dot.fill.solid()
-        dot.fill.fore_color.rgb = output_color
-        dot.line.fill.background()
-        _no_shadow(dot)
-        add_text(slide, left + Inches(0.3), y, width - Inches(0.3), Inches(0.28), b, 11.5, DARK_TEXT, bold=True)
-        y += Inches(0.3)
-    return y
+    title_x = Emu(int(badge_x) + int(STEP_BADGE_D) + Inches(0.12))
+    title_w = Emu(int(STEP_COL1_X) + int(STEP_COL1_W) - int(title_x))
+    add_text(slide, title_x, top + Inches(0.01), title_w, Inches(0.55), title, 14.5, NAVY, bold=True)
+    add_text(slide, STEP_COL2_X, top, STEP_COL2_W, row_height, approach_text, 12.5, DARK_TEXT)
+    out_box = slide.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, STEP_COL3_X, top, STEP_COL3_W, row_height - Inches(0.1))
+    out_box.fill.solid()
+    out_box.fill.fore_color.rgb = LIGHT_BG
+    out_box.line.color.rgb = CARD_BORDER
+    _no_shadow(out_box)
+    tf2 = out_box.text_frame
+    tf2.word_wrap = True
+    tf2.vertical_anchor = MSO_ANCHOR.MIDDLE
+    tf2.margin_left = Emu(91440)
+    tf2.margin_right = Emu(91440)
+    p0 = tf2.paragraphs[0]
+    p0.alignment = PP_ALIGN.LEFT
+    r0 = p0.add_run()
+    r0.text = output_text
+    r0.font.size = Pt(12)
+    r0.font.bold = True
+    r0.font.color.rgb = NAVY
+    r0.font.name = FONT
 
 
 def add_recommendation_table(slide, left, top, width, row_height, rows, accent=ACCENT):
@@ -463,50 +473,49 @@ segments = [(ch, cnt / total_ch * 100, ch_colors[i % len(ch_colors)]) for i, (ch
 add_proportional_bar(slide, Inches(0.65), Inches(5.25), Inches(11.9), Inches(0.45), segments)
 add_footer(slide, "CSAT Root-Cause & Sentiment Driver Analysis", 3)
 
-# %% Cell 6 - Slide 4: Approach & Expected Output
+# %% Cell 6 - Slide 4: Approach & Expected Output (stepped, full-width rows)
 slide = new_slide()
 fill_bg(slide, WHITE)
 add_title_bar(slide, "Approach & Expected Output", kicker="Method")
-LEFT_COL_X, RIGHT_COL_X = Inches(0.65), Inches(6.75)
-COL_W = Inches(5.7)
-CONTENT_TOP = Inches(1.5)
-STEP_H = Inches(1.74)
-add_approach_step(slide, LEFT_COL_X, CONTENT_TOP, COL_W, 1, "Load & clean data",
-    approach_bullets=[
-        "pandas loads the 7,500-row survey export",
-        "Lowercase, strip punctuation, collapse whitespace",
-    ],
-    output_bullets=["A clean_text column every later step reuses"])
-add_approach_step(slide, LEFT_COL_X, CONTENT_TOP + STEP_H, COL_W, 2, "Bootstrap dictionary",
-    approach_bullets=[
-        "Split term frequency: low-CSAT vs high-CSAT text",
-        "Label every candidate term's sentiment lean",
-    ],
-    output_bullets=["An inspectable keyword shortlist, not a guess"])
-add_approach_step(slide, LEFT_COL_X, CONTENT_TOP + 2 * STEP_H, COL_W, 3, "Tag drivers",
-    approach_bullets=[
-        "Match against 11 categories, 42 sub-issues",
-        "Rank matches by phrase-match strength",
-    ],
-    output_bullets=["A PRIMARY + actionable SECONDARY driver per row"])
-add_approach_step(slide, RIGHT_COL_X, CONTENT_TOP, COL_W, 4, "NMF safety net",
-    approach_bullets=[
-        "TF-IDF + NMF finds latent themes in leftovers",
-        "YAKE auto-labels each theme, fully offline",
-    ],
-    output_bullets=["Zero responses left with a blank secondary driver"])
-add_approach_step(slide, RIGHT_COL_X, CONTENT_TOP + STEP_H, COL_W, 5, "Score sentiment",
-    approach_bullets=[
-        "VADER lexicon model scores tone of every row",
-        "100% offline — zero AI/LLM API dependency",
-    ],
-    output_bullets=["A Negative/Neutral/Positive label per response"])
-add_approach_step(slide, RIGHT_COL_X, CONTENT_TOP + 2 * STEP_H, COL_W, 6, "Publish",
-    approach_bullets=[
-        "Write one workbook: row data + Analysis sheet",
-        "Build the PPT deck + Power BI report on top",
-    ],
-    output_bullets=["A client-ready package, numbers always in sync"])
+add_text(slide, STEP_COL2_X, Inches(1.6), STEP_COL2_W, Inches(0.3), "APPROACH", 10.5, ACCENT_DARK, bold=True)
+add_text(slide, STEP_COL3_X, Inches(1.6), STEP_COL3_W, Inches(0.3), "OUTPUT", 10.5, ACCENT_DARK, bold=True)
+STEP_CONTENT_TOP = Inches(1.92)
+STEP_ROW_H = Inches(0.84)
+steps = [
+    ("Load & clean data",
+     "pandas loads the 7,500-row survey export, then the text is lowercased, stripped of "
+     "punctuation, and whitespace-collapsed.",
+     "A clean_text column every later step reuses"),
+    ("Bootstrap dictionary",
+     "Term frequency is split low-CSAT vs high-CSAT text, and every candidate term's "
+     "sentiment lean is labeled upfront.",
+     "An inspectable keyword shortlist, not a guess"),
+    ("Tag drivers",
+     "Every response is matched against 11 categories and 42 sub-issues, ranked by "
+     "phrase-match strength.",
+     "A PRIMARY + actionable SECONDARY driver per row"),
+    ("NMF safety net",
+     "TF-IDF + NMF finds latent themes in any leftover text; YAKE auto-labels each theme, "
+     "fully offline.",
+     "Zero responses left with a blank secondary driver"),
+    ("Score sentiment",
+     "VADER, a lexicon-based model, scores the tone of every row — 100% offline, zero "
+     "AI/LLM API dependency.",
+     "A Negative/Neutral/Positive label per response"),
+    ("Publish",
+     "One workbook is written (row data + Analysis sheet), then the PPT deck and Power BI "
+     "report are built on top.",
+     "A client-ready package, numbers always in sync"),
+]
+# Staircase connector: a straight segment between each pair of consecutive
+# step badges - drawn BEFORE the badges so the badges sit visually on top.
+centers = [step_badge_center(i, STEP_CONTENT_TOP + i * STEP_ROW_H) for i in range(len(steps))]
+for (x1, y1), (x2, y2) in zip(centers, centers[1:]):
+    connector = slide.shapes.add_connector(MSO_CONNECTOR.STRAIGHT, x1, y1, x2, y2)
+    connector.line.color.rgb = CARD_BORDER
+    connector.line.width = Pt(1.75)
+for i, (title, approach, output) in enumerate(steps):
+    add_approach_row(slide, STEP_CONTENT_TOP + i * STEP_ROW_H, STEP_ROW_H, i, i + 1, title, approach, output)
 add_footer(slide, "CSAT Root-Cause & Sentiment Driver Analysis", 4)
 
 # %% Cell 7 - Slide 5: Key Outcomes

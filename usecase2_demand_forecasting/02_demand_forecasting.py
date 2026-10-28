@@ -210,7 +210,7 @@ SECTIONS = [
 HEADER_FILL = PatternFill(start_color="1B2A4A", end_color="1B2A4A", fill_type="solid")
 HEADER_FONT = Font(bold=True, color="FFFFFF", size=11)
 TITLE_FONT = Font(bold=True, size=13, color="1B2A4A")
-MIN_SECTION_ROWS = 14  # reserve enough rows beside a short table for the 6.5cm-tall chart next to it
+MIN_SECTION_ROWS = 17  # reserve enough rows beside a table for the larger, taller chart next to it
 
 with pd.ExcelWriter(OUTPUT_FILE, engine="openpyxl") as writer:
     staffing_out.to_excel(writer, sheet_name="Forecast_Staffing", index=False)
@@ -251,8 +251,6 @@ for title, table, chart_kind, title_row, header_row, first_data_row, last_data_r
         hcell.fill = HEADER_FILL
         hcell.alignment = Alignment(horizontal="center")
         col_letter = get_column_letter(col_idx)
-        # Kept narrow (24/13, not 26/16) specifically so the table + its
-        # chart both fit on screen together without horizontal scrolling.
         ws.column_dimensions[col_letter].width = 24 if col_idx == 1 else 13
     if table.columns[0] == "period":
         for row in range(first_data_row, last_data_row + 1):
@@ -264,7 +262,11 @@ def single_bar_chart(ws_target, title, anchor_col, header_row, first_data_row, l
     bar = BarChart()
     bar.title = title
     bar.y_axis.title = "Holdout MAPE %"
-    bar.width, bar.height = 11, 6.5  # cm - compact enough to sit beside the table with no scrolling
+    bar.width, bar.height = 24, 8  # cm - large enough to read cleanly, not a cramped thumbnail
+    bar.x_axis.delete = False
+    bar.x_axis.majorGridlines = None  # Excel's default gridlines look cluttered
+    bar.y_axis.majorGridlines = None
+    bar.x_axis.tickLblPos = "low"
     cats = Reference(ws_target, min_col=1, min_row=first_data_row, max_row=last_data_row)
     data = Reference(ws_target, min_col=2, min_row=header_row, max_row=last_data_row)
     bar.add_data(data, titles_from_data=True)
@@ -284,7 +286,12 @@ def combo_chart(ws_target, title, anchor_col, header_row, first_data_row, last_d
     bar = BarChart()
     bar.title = title
     bar.y_axis.title = "Forecast Volume"
-    bar.width, bar.height = 11, 6.5  # cm - compact enough to sit beside the table with no scrolling
+    bar.width, bar.height = 24, 8  # cm - large enough to read cleanly, not a cramped thumbnail
+    bar.x_axis.delete = False
+    bar.x_axis.majorGridlines = None  # Excel's default gridlines look cluttered on a bar+line combo
+    bar.y_axis.majorGridlines = None
+    bar.x_axis.tickLblPos = "low"  # pin category labels to the bottom - a dual-axis combo chart
+    # can otherwise float them into the middle of the plot area
     cats = Reference(ws_target, min_col=1, min_row=first_data_row, max_row=last_data_row)
     vol_data = Reference(ws_target, min_col=2, min_row=header_row, max_row=last_data_row)  # forecast_volume
     bar.add_data(vol_data, titles_from_data=True)
@@ -298,6 +305,7 @@ def combo_chart(ws_target, title, anchor_col, header_row, first_data_row, last_d
     line.y_axis.axId = 200
     line.y_axis.title = "Staffing Gap (FTE)"
     line.y_axis.crosses = "max"
+    line.y_axis.majorGridlines = None
     bar.y_axis.crosses = "autoZero"
     line.dataLabels = DataLabelList()
     line.dataLabels.showVal = True

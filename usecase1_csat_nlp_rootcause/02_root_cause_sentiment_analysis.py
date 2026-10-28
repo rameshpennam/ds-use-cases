@@ -470,7 +470,6 @@ lob_summary = summarize(df, "lob")
 tenure_summary = summarize(df, "tenure_bucket")
 manager_summary = summarize(df, "manager_name")
 tl_summary = summarize(df, "tl_name")
-sentiment_summary = summarize(df, "sentiment_label")
 csat_bucket_summary = summarize(df, "csat_bucket")
 plan_tier_summary = summarize(df, "plan_tier")
 circle_summary = summarize(df, "circle")
@@ -521,8 +520,8 @@ def weekly_trend(df_in: pd.DataFrame, driver_col: str, driver_value: str) -> pd.
     return out
 
 
-weekly_primary = weekly_trend(df, "primary_driver", top_primary)
-weekly_secondary = weekly_trend(df, "secondary_driver", top_secondary) if top_secondary else None
+weekly_primary = weekly_trend(df, "primary_driver", top_primary).head(5)
+weekly_secondary = weekly_trend(df, "secondary_driver", top_secondary).head(5) if top_secondary else None
 
 print(f"\nTop primary driver: {top_primary}")
 print(f"Top secondary driver: {top_secondary}")
@@ -546,41 +545,39 @@ df_out["date"] = pd.to_datetime(df_out["date"]).dt.date  # real Excel date, not 
 df_out["week_starting"] = pd.to_datetime(df_out["week_starting"]).dt.date
 
 SECTIONS = [
-    ("Issue Theme: Agent vs Product vs Process", issue_theme_summary, "combo"),
-    ("Primary Driver Summary", primary_summary, "combo"),
-    ("Secondary Driver Summary (Top 15 shown)", secondary_summary.head(15), "combo"),
-    (f"Sub-Issue Breakdown within Top Driver ({top_primary})", top_primary_subissues, "combo"),
-    ("CSAT by Channel", channel_summary, "combo"),
-    ("CSAT by Line of Business", lob_summary, "combo"),
-    ("CSAT by Agent Tenure Bucket", tenure_summary, "combo"),
-    ("CSAT by Manager", manager_summary, "combo"),
-    ("CSAT by Team Lead", tl_summary, "combo"),
-    ("CSAT by Sentiment Label", sentiment_summary, "combo"),
-    ("CSAT Bucket (Promoter/Neutral/Detractor)", csat_bucket_summary, "combo"),
-    ("CSAT Bucket vs Sentiment Label (% within bucket)", score_vs_sentiment, "stacked"),
-    ("CSAT by Plan Tier", plan_tier_summary, "combo"),
-    ("CSAT by Circle (Top 15 shown)", circle_summary.head(15), "combo"),
-    (f"Weekly Trend - Top Primary Driver ({top_primary})", weekly_primary, "combo"),
+    ("Issue Theme: Agent vs Product vs Process", issue_theme_summary),
+    ("Primary Driver Summary (Top 5 shown)", primary_summary.head(5)),
+    ("Secondary Driver Summary (Top 5 shown)", secondary_summary.head(5)),
+    (f"Sub-Issue Breakdown within Top Driver ({top_primary})", top_primary_subissues),
+    ("CSAT by Channel", channel_summary),
+    ("CSAT by Line of Business", lob_summary),
+    ("CSAT by Agent Tenure Bucket", tenure_summary),
+    ("CSAT by Manager", manager_summary),
+    ("CSAT by Team Lead", tl_summary),
+    ("CSAT Bucket (Promoter/Neutral/Detractor)", csat_bucket_summary),
+    ("CSAT by Plan Tier", plan_tier_summary),
+    ("CSAT by Circle (Top 5 shown)", circle_summary.head(5)),
+    (f"Weekly Trend - Top Primary Driver ({top_primary}, Top 5 weeks)", weekly_primary),
 ]
 if weekly_secondary is not None:
-    SECTIONS.append((f"Weekly Trend - Top Secondary Driver ({top_secondary})", weekly_secondary, "combo"))
+    SECTIONS.append((f"Weekly Trend - Top Secondary Driver ({top_secondary}, Top 5 weeks)", weekly_secondary))
 
 HEADER_FILL = PatternFill(start_color="1B2A4A", end_color="1B2A4A", fill_type="solid")
 HEADER_FONT = Font(bold=True, color="FFFFFF", size=11)
 TITLE_FONT = Font(bold=True, size=13, color="1B2A4A")
-MIN_SECTION_ROWS = 14  # reserve enough rows beside a short table for the 6.5cm-tall chart next to it
+MIN_SECTION_ROWS = 17  # reserve enough rows beside a table for the larger, taller chart next to it
 
 with pd.ExcelWriter(OUTPUT_FILE, engine="openpyxl") as writer:
     df_out.to_excel(writer, sheet_name="Tagged_Data", index=False)
     cursor = 0
-    section_positions = []  # (title, table, chart_kind, title_row, header_row, first_data_row, last_data_row)
-    for title, table, chart_kind in SECTIONS:
+    section_positions = []  # (title, table, title_row, header_row, first_data_row, last_data_row)
+    for title, table in SECTIONS:
         table.to_excel(writer, sheet_name="Analysis", index=False, startrow=cursor + 1, startcol=0)
         title_row = cursor + 1
         header_row = cursor + 2
         first_data_row = cursor + 3
         last_data_row = cursor + 2 + len(table)
-        section_positions.append((title, table, chart_kind, title_row, header_row, first_data_row, last_data_row))
+        section_positions.append((title, table, title_row, header_row, first_data_row, last_data_row))
         cursor += max(len(table) + 2, MIN_SECTION_ROWS)
 
 # Reopen to style cells + attach native Excel chart objects (openpyxl can't
@@ -600,7 +597,7 @@ for col_idx in range(1, ws_data.max_column + 1):
 
 ws = wb["Analysis"]
 
-for title, table, chart_kind, title_row, header_row, first_data_row, last_data_row in section_positions:
+for title, table, title_row, header_row, first_data_row, last_data_row in section_positions:
     cell = ws.cell(row=title_row, column=1, value=title)
     cell.font = TITLE_FONT
     ncols = table.shape[1]
@@ -611,9 +608,7 @@ for title, table, chart_kind, title_row, header_row, first_data_row, last_data_r
         hcell.alignment = Alignment(horizontal="center")
         col_letter = get_column_letter(col_idx)
         # Wide enough for the longest labels ("Service Suspended For KYC"),
-        # comfortable for numeric columns too - kept as narrow as that
-        # allows (24/13, not 30/16) specifically so the table + its chart
-        # both fit on screen together without horizontal scrolling.
+        # comfortable for numeric columns too.
         ws.column_dimensions[col_letter].width = 24 if col_idx == 1 else 13
     if table.columns[0] in ("week_starting",):
         for row in range(first_data_row, last_data_row + 1):
@@ -628,7 +623,12 @@ def combo_chart(ws_target, title, anchor_col, header_row, first_data_row, last_d
     bar = BarChart()
     bar.title = title
     bar.y_axis.title = "Responses"
-    bar.width, bar.height = 11, 6.5  # cm - compact enough to sit beside the table with no scrolling
+    bar.width, bar.height = 24, 8  # cm - large enough to read cleanly, not a cramped thumbnail
+    bar.x_axis.delete = False
+    bar.x_axis.majorGridlines = None  # Excel's default gridlines look cluttered on a bar+line combo
+    bar.y_axis.majorGridlines = None
+    bar.x_axis.tickLblPos = "low"  # pin category labels to the bottom - a dual-axis combo chart
+    # can otherwise float them into the middle of the plot area
     cats = Reference(ws_target, min_col=1, min_row=first_data_row, max_row=last_data_row)
     count_data = Reference(ws_target, min_col=2, min_row=header_row, max_row=last_data_row)
     bar.add_data(count_data, titles_from_data=True)
@@ -642,6 +642,7 @@ def combo_chart(ws_target, title, anchor_col, header_row, first_data_row, last_d
     line.y_axis.axId = 200
     line.y_axis.title = "Avg CSAT"
     line.y_axis.crosses = "max"
+    line.y_axis.majorGridlines = None
     bar.y_axis.crosses = "autoZero"
     line.dataLabels = DataLabelList()
     line.dataLabels.showVal = True
@@ -652,36 +653,14 @@ def combo_chart(ws_target, title, anchor_col, header_row, first_data_row, last_d
     ws_target.add_chart(bar, anchor)
 
 
-def stacked_pct_chart(ws_target, title, anchor_col, header_row, first_data_row, last_data_row, ncols):
-    chart = BarChart()
-    chart.type = "col"
-    chart.grouping = "stacked"
-    chart.overlap = 100
-    chart.title = title
-    chart.y_axis.title = "%"
-    chart.width, chart.height = 11, 6.5  # cm - compact enough to sit beside the table with no scrolling
-    data = Reference(ws_target, min_col=2, max_col=ncols, min_row=header_row, max_row=last_data_row)
-    cats = Reference(ws_target, min_col=1, min_row=first_data_row, max_row=last_data_row)
-    chart.add_data(data, titles_from_data=True)
-    chart.set_categories(cats)
-    chart.dataLabels = DataLabelList()
-    chart.dataLabels.showVal = True
-    chart.legend.position = "b"
-    anchor = f"{get_column_letter(anchor_col)}{first_data_row - 1}"
-    ws_target.add_chart(chart, anchor)
-
-
 # Every chart is anchored BESIDE its own table (same row, one column past
 # the table's last column, a single-column gap), not collected on a
-# separate sheet - so the number and the picture read together on one
-# screen, without flipping tabs OR scrolling sideways to see the chart.
-for title, table, chart_kind, title_row, header_row, first_data_row, last_data_row in section_positions:
+# separate sheet - so the number and the picture read together without
+# flipping tabs.
+for title, table, title_row, header_row, first_data_row, last_data_row in section_positions:
     anchor_col = table.shape[1] + 1
     chart_title = title if len(title) < 45 else title[:42] + "..."
-    if chart_kind == "stacked":
-        stacked_pct_chart(ws, chart_title, anchor_col, header_row, first_data_row, last_data_row, table.shape[1])
-    else:
-        combo_chart(ws, chart_title, anchor_col, header_row, first_data_row, last_data_row)
+    combo_chart(ws, chart_title, anchor_col, header_row, first_data_row, last_data_row)
 
 wb.save(OUTPUT_FILE)
 print(f"Saved -> {OUTPUT_FILE} (2 sheets: Tagged_Data, Analysis - {len(section_positions)} tables+charts)")
