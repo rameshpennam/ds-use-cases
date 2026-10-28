@@ -53,8 +53,6 @@ primary_counts = df["primary_driver"].value_counts(normalize=True) * 100
 top_primary = primary_counts.index[0]
 top_primary_pct = primary_counts.iloc[0]
 top_primary_csat = df.loc[df["primary_driver"] == top_primary, "csat_score"].mean()
-top_primary_fcr = (df.loc[df["primary_driver"] == top_primary, "is_first_contact_resolution"] == "Yes").mean() * 100
-top_primary_handle_time = df.loc[df["primary_driver"] == top_primary, "handle_time_seconds"].mean()
 
 top_primary_rows = df[df["primary_driver"] == top_primary]
 secondary_within_top = top_primary_rows["secondary_driver"].value_counts(normalize=True) * 100
@@ -65,6 +63,11 @@ top_secondary_pct = secondary_within_top.iloc[0] if len(secondary_within_top) el
 csat_bucket_counts = df["csat_bucket"].value_counts(normalize=True) * 100
 promoter_pct = csat_bucket_counts.get("Promoter (4-5)", 0)
 detractor_pct = csat_bucket_counts.get("Detractor (1-2)", 0)
+
+circle_csat = df.groupby("circle")["csat_score"].mean().sort_values()
+worst_circle, worst_circle_csat = circle_csat.index[0], circle_csat.iloc[0]
+tier_csat = df.groupby("plan_tier")["csat_score"].mean().sort_values()
+worst_tier, worst_tier_csat = tier_csat.index[0], tier_csat.iloc[0]
 
 channel_counts = df["channel"].value_counts()
 tenure_lowest_csat = df.groupby("tenure_bucket")["csat_score"].mean().idxmin()
@@ -239,12 +242,13 @@ x0, y0 = Inches(0.65), Inches(1.7)
 add_stat_tile(slide, x0, y0, tile_w, tile_h, f"{top_primary_pct:.0f}%", f"of responses: {top_primary.replace('_', ' ')}", ACCENT)
 add_stat_tile(slide, x0 + tile_w + gap, y0, tile_w, tile_h, f"{avg_csat:.2f}", "Overall average CSAT (out of 5)", NAVY)
 add_stat_tile(slide, x0 + 2 * (tile_w + gap), y0, tile_w, tile_h, f"{pct_negative_sentiment:.0f}%", "of responses carry negative sentiment", DETRACTOR_RED)
-add_stat_tile(slide, x0 + 3 * (tile_w + gap), y0, tile_w, tile_h, f"{top_primary_fcr:.0f}%", f"First-Contact Resolution rate for {top_primary.replace('_', ' ')}", ACCENT)
+add_stat_tile(slide, x0 + 3 * (tile_w + gap), y0, tile_w, tile_h, f"{worst_circle_csat:.2f}", f"Lowest avg CSAT: {worst_circle} circle", ACCENT)
 add_bullets(slide, Inches(0.65), Inches(3.9), Inches(11.8), Inches(2.6), [
     f"{top_primary.replace('_', ' ')} is both the highest-VOLUME and lowest-CSAT driver "
     f"(avg CSAT {top_primary_csat:.2f}) - the clear priority-one fix.",
-    f"It also runs the longest average handle time ({top_primary_handle_time:.0f} seconds) - "
-    f"a real operational cost on top of the CSAT hit.",
+    f"{worst_circle} is the lowest-performing circle (avg CSAT {worst_circle_csat:.2f}) and "
+    f"{worst_tier} the lowest-performing plan tier (avg CSAT {worst_tier_csat:.2f}) - "
+    f"two segment-level leads worth investigating alongside the process fix.",
     f"CSAT mix: {promoter_pct:.0f}% Promoters (4-5) vs {detractor_pct:.0f}% Detractors (1-2) - "
     f"a split, not a crisis, but with a specific, fixable lever.",
     f"Agents with less than 6 months' tenure skew toward the lowest-CSAT bucket "

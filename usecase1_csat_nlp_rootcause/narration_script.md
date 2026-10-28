@@ -47,11 +47,15 @@ export: 7,500 responses, spanning August through October, with a
 deliberately minimal set of columns — a date, a unique response ID, the
 channel it came in on, the line of business, the customer's own words, the
 CSAT score, who handled it — agent, team lead, manager, tenure — and three
-real call-center operational signals: handle time, first-contact-resolution
-flag, and whether the customer contacted us again about the same issue
-within 30 days. I kept this to the columns that actually earn their place —
-not twenty fields for the sake of it, but enough text, outcome, and
-operational context to build a genuinely deep analysis."
+more customer/survey-platform attributes: plan tier, telecom circle, and
+survey type — post-interaction versus a periodic relationship survey. I
+deliberately kept this to fields that are genuinely realistic on a survey
+export — plan tier and circle are customer-master attributes a survey
+platform routinely pre-joins by customer ID, and survey type is captured
+natively by the platform itself. I'm not including things like handle time
+or a resolution flag here, because those actually live in a separate
+telephony/CRM system and would need a real operational join — out of scope
+for what a CSAT survey table itself would contain."
 
 ## 3. Applications I'll use
 
@@ -144,12 +148,11 @@ driver, not a blank."
 ### Cell 8 — CSAT across every category, plus the compounding view
 "I don't stop at one cut. I run the same volume-and-avg-CSAT view across
 every dimension we have — primary driver, secondary driver, channel, line
-of business, agent tenure, manager, team lead, sentiment label, and a
-classic NPS-style CSAT bucket: Promoter for a 4 or 5, Neutral for a 3,
-Detractor for a 1 or 2 — and for each cut I also bring the three
-operational metrics along: average handle time, first-contact-resolution
-rate, and 30-day repeat-contact rate. That's depth, not just a headline
-number.
+of business, agent tenure, manager, team lead, sentiment label, a classic
+NPS-style CSAT bucket (Promoter for a 4 or 5, Neutral for a 3, Detractor
+for a 1 or 2), plan tier, telecom circle, and survey type. That's depth,
+not just a headline number — and it means I can tell the client which
+customer SEGMENTS are underperforming, not just which agents.
 
 I also build the compounding-issue view — of the responses where Billing is
 the primary driver, what percent of the time is a given secondary driver
@@ -160,24 +163,25 @@ finding."
 
 ### Cell 9 — saving the output
 "One Excel workbook: the raw tagged data on one sheet, every summary table
-on a second, every chart on a third — thirteen charts in this run, every
+on a second, every chart on a third — sixteen charts in this run, every
 one of them pairing response VOLUME with average CSAT so you can see both
 how often an issue happens and how badly it hurts satisfaction at the same
 time. Fully reproducible — rerun the script, everything regenerates."
 
 ### Cell 10 — the numbers I'll quote
 "To summarize what the data is telling us: **Billing & Charges is the top
-primary driver, at 33.3 percent of all responses**, with an average CSAT of
-2.48 — clearly the worst-performing driver — an average handle time of 493
-seconds, a first-contact-resolution rate of only 54.8 percent, and an 18.5
-percent 30-day repeat-contact rate. Within Billing complaints specifically,
-a discovered sub-theme around roaming add-ons shows up as the secondary,
-compounding factor **71.2 percent of the time** — that's the specific thing
-to go investigate alongside the headline issue. Overall average CSAT across
-the dataset is 3.00 out of 5 — a real split, 38.4 percent Promoters against
-38.2 percent Detractors, not a crisis but a genuine, fixable opportunity —
-and just over half of all responses, 50.6 percent, carry negative sentiment
-in the text itself."
+primary driver, at 32.2 percent of all responses**, with an average CSAT of
+2.50 — clearly the worst-performing driver. Within Billing complaints
+specifically, a discovered sub-theme around being charged shows up as the
+secondary, compounding factor **72.1 percent of the time** — that's the
+specific thing to go investigate alongside the headline issue. Overall
+average CSAT across the dataset is 3.01 out of 5 — a real split, 38.4
+percent Promoters against 38.0 percent Detractors, not a crisis but a
+genuine, fixable opportunity — and just over half of all responses, 50.3
+percent, carry negative sentiment in the text itself. Cutting it by segment:
+Delhi NCR is the lowest-performing circle at an average CSAT of 2.96, and
+Postpaid Standard the lowest-performing plan tier at 2.90 — two
+segment-level leads worth investigating alongside the process fix."
 
 ## 6. Output file walkthrough
 
@@ -212,19 +216,21 @@ the Tagged Data sheet as my source."
 *[Build the visuals per the guide, narrating each one as you add it.]*
 
 "So pulling this together: Billing & Charges is our number one CSAT driver
-by volume and severity, roaming add-on confusion is the specific compounding
-factor within it 71 percent of the time, newer agents disproportionately
-link to Agent Behavior complaints, and Voice is our highest-risk channel. If
-I were presenting this to the business, my recommendation would be:
-investigate the billing/roaming-charge clarity issue first, since it's the
-highest-volume, lowest-CSAT, longest-handle-time driver, and pair it with a
-coaching initiative for agents under six months' tenure."
+by volume and severity, a billing/charge-clarity sub-theme is the specific
+compounding factor within it 72 percent of the time, newer agents
+disproportionately link to Agent Behavior complaints, Voice is our
+highest-risk channel, and Delhi NCR and the Postpaid Standard tier are the
+lowest-performing segments. If I were presenting this to the business, my
+recommendation would be: investigate the billing-charge clarity issue
+first, since it's the highest-volume, lowest-CSAT driver, pair it with a
+coaching initiative for agents under six months' tenure, and take a closer
+look at the Delhi NCR circle specifically."
 
 ## 9. Close
 
 "That's the end-to-end workflow — from raw customer verbatim, through a
 dictionary-and-topic-modeling root-cause tag, sentiment scoring, a
-call-center-metrics-enriched, multi-dimensional insight view, to a
+segment-enriched, multi-dimensional insight view, to a
 client-ready deck and a Power BI report, all without needing a single LLM
 API call, which matters given where API approval currently stands for this
 engagement."

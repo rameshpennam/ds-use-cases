@@ -311,23 +311,15 @@ print(df["secondary_driver"].value_counts())
 # you'd otherwise build as a pivot table)
 # NARRATE: "I don't stop at one cut - I run the same volume + avg-CSAT view
 # across every dimension we have: primary driver, secondary driver, channel,
-# LoB, agent tenure, manager, team lead, and sentiment. And for each one, I
-# also bring in three operational call-center metrics - average handle
-# time, first-contact-resolution rate, and 30-day repeat-contact rate - so
-# the client sees not just WHO is unhappy but the operational cost and the
-# 'did we actually fix it' signal behind each cut."
+# LoB, agent tenure, manager, team lead, sentiment, plan tier, circle, and
+# survey type. That's what lets me show the client depth, and tell them
+# which SEGMENTS - not just which agents - are underperforming."
 def summarize(df_in: pd.DataFrame, group_col: str) -> pd.DataFrame:
     return (
         df_in.groupby(group_col)
-        .agg(
-            responses=("unique_id", "count"),
-            avg_csat=("csat_score", "mean"),
-            avg_handle_time_sec=("handle_time_seconds", "mean"),
-            fcr_rate_pct=("is_first_contact_resolution", lambda s: (s == "Yes").mean() * 100),
-            repeat_contact_pct=("is_repeat_contact_30d", lambda s: (s == "Yes").mean() * 100),
-        )
+        .agg(responses=("unique_id", "count"), avg_csat=("csat_score", "mean"))
         .assign(pct_of_total=lambda d: (d["responses"] / len(df_in) * 100).round(1))
-        .round({"avg_csat": 2, "avg_handle_time_sec": 0, "fcr_rate_pct": 1, "repeat_contact_pct": 1})
+        .round({"avg_csat": 2})
         .sort_values("responses", ascending=False)
         .reset_index()
     )
@@ -342,6 +334,9 @@ manager_summary = summarize(df, "manager_name")
 tl_summary = summarize(df, "tl_name")
 sentiment_summary = summarize(df, "sentiment_label")
 csat_bucket_summary = summarize(df, "csat_bucket")
+plan_tier_summary = summarize(df, "plan_tier")
+circle_summary = summarize(df, "circle")
+survey_type_summary = summarize(df, "survey_type")
 
 print(primary_summary)
 
@@ -428,6 +423,9 @@ SECTIONS = [
     ("CSAT by Sentiment Label", sentiment_summary),
     ("CSAT Bucket (Promoter/Neutral/Detractor)", csat_bucket_summary),
     ("CSAT Bucket vs Sentiment Label (% within bucket)", score_vs_sentiment),
+    ("CSAT by Plan Tier", plan_tier_summary),
+    ("CSAT by Circle", circle_summary),
+    ("CSAT by Survey Type", survey_type_summary),
     (f"Weekly Trend - Top Primary Driver ({top_primary})", weekly_primary),
 ]
 if weekly_secondary is not None:
@@ -541,6 +539,9 @@ stacked_pct_chart(
     *positions_by_title["CSAT Bucket vs Sentiment Label (% within bucket)"],
     ncols=score_vs_sentiment.shape[1],
 )
+combo_chart("Plan Tier: Volume vs Avg CSAT", *positions_by_title["CSAT by Plan Tier"])
+combo_chart("Circle: Volume vs Avg CSAT", *positions_by_title["CSAT by Circle"])
+combo_chart("Survey Type: Volume vs Avg CSAT", *positions_by_title["CSAT by Survey Type"])
 combo_chart(
     f"Weekly Trend - Primary Driver ({top_primary}): Volume vs Avg CSAT",
     *positions_by_title[f"Weekly Trend - Top Primary Driver ({top_primary})"],
@@ -557,14 +558,18 @@ print(f"Saved -> {OUTPUT_FILE} (3 sheets: Tagged_Data, Summary, Charts)")
 # %% Cell 10 - Spoken walkthrough numbers (read these out on camera)
 top = primary_summary.iloc[0]
 print(f"Top PRIMARY driver: {top['primary_driver']} -> {top['pct_of_total']}% of all responses, "
-      f"avg CSAT {top['avg_csat']:.2f}, avg handle time {top['avg_handle_time_sec']:.0f}s, "
-      f"FCR rate {top['fcr_rate_pct']:.1f}%, 30-day repeat contact {top['repeat_contact_pct']:.1f}%")
+      f"avg CSAT {top['avg_csat']:.2f}")
 if top_secondary:
     print(f"Top COMPOUNDING secondary driver within {top_primary}: {top_secondary} "
           f"-> present in {top_secondary_pct_within_primary:.1f}% of {top_primary} complaints")
 print(f"Overall avg CSAT: {df['csat_score'].mean():.2f}")
 print(f"CSAT mix: {dict(df['csat_bucket'].value_counts())}")
 print(f"% Negative sentiment overall: {(df['sentiment_label'] == 'Negative').mean() * 100:.1f}%")
+
+worst_circle = circle_summary.sort_values("avg_csat").iloc[0]
+worst_tier = plan_tier_summary.sort_values("avg_csat").iloc[0]
+print(f"Lowest-CSAT circle: {worst_circle['circle']} (avg CSAT {worst_circle['avg_csat']:.2f})")
+print(f"Lowest-CSAT plan tier: {worst_tier['plan_tier']} (avg CSAT {worst_tier['avg_csat']:.2f})")
 
 # %% Cell 11 [OPTIONAL - DO NOT RUN] - LLM-assisted tagging, pending approval
 # ----------------------------------------------------------------------------

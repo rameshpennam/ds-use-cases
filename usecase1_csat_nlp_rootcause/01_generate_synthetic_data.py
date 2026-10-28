@@ -67,6 +67,21 @@ AGENT_ROSTER = build_agent_roster()
 LOBS = ["Postpaid Mobile", "Prepaid Mobile", "Broadband", "Billing & Payments"]
 CHANNELS = ["Voice", "Chat", "Email"]
 
+# WHAT: three more realistic categorical cuts, all customer/survey-platform
+# attributes (not operational call-center telemetry that would need a
+# cross-system join) - the kind of fields a CSAT survey export routinely
+# carries already: plan tier and circle from the customer master record,
+# survey type from the survey platform itself (which survey trigger this
+# response came from).
+PLAN_TIER_BY_LOB = {
+    "Postpaid Mobile": ["Postpaid Standard", "Postpaid Premium"],
+    "Prepaid Mobile": ["Prepaid Basic", "Prepaid Plus"],
+    "Broadband": ["Broadband Home", "Broadband Pro"],
+    "Billing & Payments": ["Postpaid Standard", "Prepaid Basic", "Broadband Home"],
+}
+CIRCLES = ["Karnataka", "Maharashtra", "Delhi NCR", "Tamil Nadu", "West Bengal"]
+SURVEY_TYPES = ["Post-Interaction", "Periodic Relationship"]
+
 # %% Cell 2 - Root-cause vocabulary used to WRITE the synthetic verbatims
 # In the analysis script we independently build a keyword dictionary and try
 # to RE-DISCOVER these same root causes purely from the text + CSAT score,
@@ -170,40 +185,28 @@ def make_csat(driver: str) -> int:
     return int(np.random.choice([1, 2, 3, 4], p=[0.20, 0.30, 0.30, 0.20]))
 
 
-BASE_HANDLE_TIME = {"Voice": 360, "Chat": 480, "Email": 240}   # seconds; chat/email run longer in wall-clock (multitasking/typing)
+def make_plan_tier(lob: str) -> str:
+    """WHAT: the customer's plan tier (e.g. Postpaid Standard/Premium).
+    WHY: a genuine customer-master attribute, routinely pre-joined onto a
+    CSAT survey export by the survey platform (customer ID lookup) - no
+    cross-system operational join required, unlike call-center telemetry."""
+    return random.choice(PLAN_TIER_BY_LOB[lob])
 
 
-def make_handle_time(driver: str, channel: str) -> int:
-    """WHAT: simulates handle_time_seconds (AHT) - a standard call-center
-    operational KPI. WHY: negative-driver contacts (holds, transfers,
-    repeat explanation) genuinely take longer to handle than a clean
-    resolution - this lets the analysis surface the hidden OPERATIONAL COST
-    of each root cause, not just its CSAT impact."""
-    base = BASE_HANDLE_TIME[channel]
-    multiplier = {"Billing_Charges": 1.3, "Agent_Behavior_Comm": 1.5,
-                  "Resolution_Time_FCR": 1.6, "Positive_No_Issue": 0.85}[driver]
-    return max(60, int(np.random.normal(base * multiplier, base * 0.2)))
+def make_circle() -> str:
+    """WHAT: the telecom circle/region the customer is in - a standard
+    reporting dimension for any Indian telecom operator, and another
+    customer-master field routinely present on a survey export."""
+    return random.choice(CIRCLES)
 
 
-def make_fcr(driver: str) -> str:
-    """WHAT: is_first_contact_resolution (Yes/No) - the classic contact-
-    center KPI. WHY: by definition, Resolution_Time_FCR complaints are
-    mostly FCR failures - this column lets us VALIDATE that the dictionary
-    tagging lines up with an independent operational signal, and gives the
-    client a second, well-known metric to act on."""
-    p_yes = {"Billing_Charges": 0.55, "Agent_Behavior_Comm": 0.50,
-             "Resolution_Time_FCR": 0.10, "Positive_No_Issue": 0.92}[driver]
-    return "Yes" if random.random() < p_yes else "No"
-
-
-def make_repeat_contact(driver: str) -> str:
-    """WHAT: is_repeat_contact_30d (Yes/No) - did this customer contact us
-    again about a similar issue within 30 days? WHY: a standard CX signal
-    for "did we actually fix it" - strongly tied to Resolution_Time_FCR by
-    construction, giving another independent angle on the same root cause."""
-    p_yes = {"Billing_Charges": 0.20, "Agent_Behavior_Comm": 0.15,
-             "Resolution_Time_FCR": 0.45, "Positive_No_Issue": 0.03}[driver]
-    return "Yes" if random.random() < p_yes else "No"
+def make_survey_type() -> str:
+    """WHAT: which survey this response came from - a Post-Interaction
+    (triggered right after a chat/call/email) or a Periodic Relationship
+    survey (sent on a schedule, not tied to one specific contact). WHY:
+    this is captured natively BY THE SURVEY PLATFORM ITSELF - the single
+    most directly-realistic "extra" column of the three, no join at all."""
+    return random.choices(SURVEY_TYPES, weights=[0.7, 0.3])[0]
 
 
 def make_date(driver: str) -> datetime:
@@ -235,9 +238,9 @@ for i in range(N_RECORDS):
         "tl_name": agent["tl_name"],
         "manager_name": agent["manager_name"],
         "tenure_months": int(agent["tenure_months"]),
-        "handle_time_seconds": make_handle_time(driver, channel),
-        "is_first_contact_resolution": make_fcr(driver),
-        "is_repeat_contact_30d": make_repeat_contact(driver),
+        "plan_tier": make_plan_tier(lob),
+        "circle": make_circle(),
+        "survey_type": make_survey_type(),
     })
 
 df = pd.DataFrame(records).sort_values("date").reset_index(drop=True)
@@ -267,7 +270,7 @@ print("\nChannel split:\n", df["channel"].value_counts())
 print("\nLoB split:\n", df["lob"].value_counts())
 print("\nCSAT distribution:\n", df["csat_score"].value_counts().sort_index())
 print("\nAverage CSAT:", round(df["csat_score"].mean(), 2))
-print("\nAvg handle time (sec):", round(df["handle_time_seconds"].mean(), 0))
-print("\nFirst Contact Resolution rate:", f"{(df['is_first_contact_resolution'] == 'Yes').mean() * 100:.1f}%")
-print("\n30-day repeat contact rate:", f"{(df['is_repeat_contact_30d'] == 'Yes').mean() * 100:.1f}%")
+print("\nPlan tier split:\n", df["plan_tier"].value_counts())
+print("\nCircle split:\n", df["circle"].value_counts())
+print("\nSurvey type split:\n", df["survey_type"].value_counts())
 print("\nSample rows:\n", df.sample(5, random_state=1)[["channel", "lob", "verbatim", "csat_score"]])
