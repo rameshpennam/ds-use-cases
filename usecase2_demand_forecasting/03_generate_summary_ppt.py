@@ -70,15 +70,18 @@ days_short = (staffing["staffing_gap_fte"] > 0).sum()
 worst_day = staffing.loc[staffing["staffing_gap_fte"].idxmax()]
 avg_gap = staffing["staffing_gap_fte"].mean()
 
-top3_worst_days = staffing.nlargest(3, "staffing_gap_fte")[["date", "staffing_gap_fte"]]
+top5_worst_days = staffing.nlargest(5, "staffing_gap_fte")[["date", "staffing_gap_fte"]]
 
-weekly_gap = (
+weekly_gap_top5 = (
     staffing.assign(week=staffing["date"].dt.to_period("W").dt.start_time)
-    .groupby("week")["staffing_gap_fte"].mean().round(1).head(3)
+    .groupby("week")["staffing_gap_fte"].mean().round(1).head(5)
 )
 
 lob_split = vol.groupby("lob")["volume"].sum()
 lob_split_pct = (lob_split / lob_split.sum() * 100).round(1)
+top_lob, top_lob_pct = lob_split_pct.index[0], lob_split_pct.iloc[0]
+pct_days_short = days_short / horizon_days * 100
+gap_pct_of_required = avg_gap / avg_required_fte * 100
 
 print(f"History: {n_history_years:.1f} years | Forecast horizon: {horizon_days} days")
 print(f"MAPE: baseline {baseline_mape:.1f}% -> Holt-Winters {hw_mape:.1f}% (improved {mape_improvement:.1f}pp)")
@@ -266,13 +269,14 @@ def add_mix_bar_vertical_legend(slide, left, top, width, bar_height, segments):
     return ly
 
 
-def add_ranked_list(slide, left, top, width, heading, items, row_height=0.42, accent=ACCENT):
-    """heading + up to a few numbered rows (small badge + 'label - value') -
-    a ranked, scannable alternative to a paragraph of bullets."""
+def add_ranked_list(slide, left, top, width, heading, items, row_height=0.36, accent=ACCENT):
+    """heading + up to a few numbered rows (small badge + 'label - value'),
+    used for the Top-5 ranked lists - a ranked, scannable alternative to a
+    paragraph of bullets."""
     add_text(slide, left, top, width, Inches(0.3), heading.upper(), 12, ACCENT_DARK, bold=True)
     y = top + Inches(0.4)
     for i, (label, value) in enumerate(items):
-        badge = slide.shapes.add_shape(MSO_SHAPE.OVAL, left, y + Inches(0.02), Inches(0.26), Inches(0.26))
+        badge = slide.shapes.add_shape(MSO_SHAPE.OVAL, left, y + Inches(0.01), Inches(0.22), Inches(0.22))
         badge.fill.solid()
         badge.fill.fore_color.rgb = accent
         badge.line.fill.background()
@@ -283,20 +287,22 @@ def add_ranked_list(slide, left, top, width, heading, items, row_height=0.42, ac
         p.alignment = PP_ALIGN.CENTER
         r = p.add_run()
         r.text = str(i + 1)
-        r.font.size = Pt(12)
+        r.font.size = Pt(10.5)
         r.font.bold = True
         r.font.color.rgb = WHITE
         r.font.name = FONT
-        add_text(slide, left + Inches(0.36), y, width - Inches(0.36), Inches(0.36),
-                  f"{label} — {value}", 13, DARK_TEXT)
+        add_text(slide, left + Inches(0.32), y - Inches(0.02), width - Inches(0.32), Inches(0.32),
+                  f"{label} — {value}", 12, DARK_TEXT)
         y += Inches(row_height)
     return y
 
 
-def add_approach_step(slide, left, top, width, number, title, bullets, accent=ACCENT):
-    """One pipeline step: a small numbered badge + bold title on one line,
-    then 2-4 supporting bullets beneath - enough detail to actually explain
-    HOW that step works, not just name it."""
+def add_approach_step(slide, left, top, width, number, title, approach_bullets, output_bullets,
+                        accent=ACCENT, output_color=NAVY):
+    """One pipeline step, with APPROACH (how it works) and OUTPUT (what it
+    produces) explicitly split into two labeled, differently-colored groups
+    - not one flat bullet list. Lets the method and its result both be
+    stated in implementation-specific language, not just named."""
     badge = slide.shapes.add_shape(MSO_SHAPE.OVAL, left, top, Inches(0.32), Inches(0.32))
     badge.fill.solid()
     badge.fill.fore_color.rgb = accent
@@ -314,37 +320,57 @@ def add_approach_step(slide, left, top, width, number, title, bullets, accent=AC
     r.font.name = FONT
     add_text(slide, left + Inches(0.42), top - Inches(0.02), width - Inches(0.42), Inches(0.32),
               title, 14.5, NAVY, bold=True)
-    y = top + Inches(0.4)
-    for b in bullets:
-        dot = slide.shapes.add_shape(MSO_SHAPE.OVAL, left + Inches(0.08), y + Inches(0.07), Inches(0.09), Inches(0.09))
+    y = top + Inches(0.36)
+    add_text(slide, left + Inches(0.06), y, width - Inches(0.06), Inches(0.2), "APPROACH", 9.5, ACCENT_DARK, bold=True)
+    y += Inches(0.22)
+    for b in approach_bullets:
+        dot = slide.shapes.add_shape(MSO_SHAPE.OVAL, left + Inches(0.08), y + Inches(0.06), Inches(0.09), Inches(0.09))
         dot.fill.solid()
         dot.fill.fore_color.rgb = accent
         dot.line.fill.background()
         _no_shadow(dot)
-        add_text(slide, left + Inches(0.3), y, width - Inches(0.3), Inches(0.32), b, 11.5, DARK_TEXT)
-        y += Inches(0.34)
+        add_text(slide, left + Inches(0.3), y, width - Inches(0.3), Inches(0.28), b, 11.5, DARK_TEXT)
+        y += Inches(0.3)
+    y += Inches(0.02)
+    add_text(slide, left + Inches(0.06), y, width - Inches(0.06), Inches(0.2), "OUTPUT", 9.5, output_color, bold=True)
+    y += Inches(0.22)
+    for b in output_bullets:
+        dot = slide.shapes.add_shape(MSO_SHAPE.OVAL, left + Inches(0.08), y + Inches(0.06), Inches(0.09), Inches(0.09))
+        dot.fill.solid()
+        dot.fill.fore_color.rgb = output_color
+        dot.line.fill.background()
+        _no_shadow(dot)
+        add_text(slide, left + Inches(0.3), y, width - Inches(0.3), Inches(0.28), b, 11.5, DARK_TEXT, bold=True)
+        y += Inches(0.3)
     return y
 
 
 def add_recommendation_table(slide, left, top, width, row_height, rows, accent=ACCENT):
     """A 3-column action table for the closing slide: what the
-    recommendation is, exactly what to do, and the outcome it buys."""
-    col_gap = Inches(0.25)
-    col_w = Emu(int((int(width) - 2 * int(col_gap)) / 3))
-    col1_x, col2_x = left, Emu(int(left) + int(col_w) + int(col_gap))
-    col3_x = Emu(int(col2_x) + int(col_w) + int(col_gap))
+    recommendation is, exactly what to do (with the %'s and the specific
+    'why' behind it), and the outcome it buys. Columns are NOT equal thirds
+    - "what to do" carries the longest, most specific text, so it gets the
+    most width."""
+    col_gap = Inches(0.22)
+    usable = int(width) - 2 * int(col_gap)
+    col1_w = Emu(int(usable * 0.24))
+    col2_w = Emu(int(usable * 0.44))
+    col3_w = Emu(usable - int(col1_w) - int(col2_w))
+    col1_x = left
+    col2_x = Emu(int(left) + int(col1_w) + int(col_gap))
+    col3_x = Emu(int(col2_x) + int(col2_w) + int(col_gap))
     headers = ["RECOMMENDATION", "WHAT TO DO", "EXPECTED OUTCOME"]
-    for cx, h in zip([col1_x, col2_x, col3_x], headers):
-        add_text(slide, cx, top, col_w, Inches(0.3), h, 12, ACCENT, bold=True)
+    for cx, cw, h in zip([col1_x, col2_x, col3_x], [col1_w, col2_w, col3_w], headers):
+        add_text(slide, cx, top, cw, Inches(0.3), h, 12, ACCENT, bold=True)
     rule = slide.shapes.add_connector(MSO_CONNECTOR.STRAIGHT, left, top + Inches(0.4),
                                         Emu(int(left) + int(width)), top + Inches(0.4))
     rule.line.color.rgb = NAVY_SOFT
     rule.line.width = Pt(1)
     y = top + Inches(0.55)
     for rec_title, what, outcome in rows:
-        add_text(slide, col1_x, y, col_w, row_height, rec_title, 15, accent, bold=True)
-        add_text(slide, col2_x, y, col_w, row_height, what, 13, WHITE)
-        add_text(slide, col3_x, y, col_w, row_height, outcome, 13, CHIP_TEXT_ON_NAVY)
+        add_text(slide, col1_x, y, col1_w, row_height, rec_title, 14.5, accent, bold=True)
+        add_text(slide, col2_x, y, col2_w, row_height, what, 12.5, WHITE)
+        add_text(slide, col3_x, y, col3_w, row_height, outcome, 12.5, CHIP_TEXT_ON_NAVY)
         y += row_height
 
 
@@ -412,39 +438,44 @@ fill_bg(slide, WHITE)
 add_title_bar(slide, "Approach & Expected Output", kicker="Method")
 LEFT_COL_X, RIGHT_COL_X = Inches(0.65), Inches(6.75)
 COL_W = Inches(5.7)
-CONTENT_TOP = Inches(1.55)
-STEP_H = Inches(1.76)
-add_approach_step(slide, LEFT_COL_X, CONTENT_TOP, COL_W, 1, "Explore first", [
-    "Decomposes trend + weekly/yearly seasonality",
-    "Checks day-of-week patterns before modeling",
-    "Spots holiday/campaign spikes visually first",
-    "No model touches the data blind",
-])
-add_approach_step(slide, LEFT_COL_X, CONTENT_TOP + STEP_H, COL_W, 2, "Benchmark honestly", [
-    "Naive seasonal baseline: repeat last week",
-    "Every candidate tested on a 60-day holdout",
-    "A model only ships if it beats the baseline",
-    "Script asserts this — never silently skipped",
-])
-add_approach_step(slide, LEFT_COL_X, CONTENT_TOP + 2 * STEP_H, COL_W, 3, "Holt-Winters", [
-    "Models trend + weekly seasonality explicitly",
-    "Lightweight, explainable — not a black box",
-    f"Forecasts volume {horizon_days} days forward",
-    f"Beat the baseline: {hw_mape:.1f}% vs {baseline_mape:.1f}% MAPE",
-])
-RIGHT_TOP = CONTENT_TOP + Emu(int((3 * STEP_H - 2 * STEP_H) / 2))
-add_approach_step(slide, RIGHT_COL_X, RIGHT_TOP, COL_W, 4, "Volume -> FTE", [
-    "Converts volume to agent-hours via handle time",
-    "Uses the roster's REAL shrinkage %, not a guess",
-    "Compares required FTE to available FTE",
-    "Flags the exact day staffing runs short",
-])
-add_approach_step(slide, RIGHT_COL_X, RIGHT_TOP + STEP_H, COL_W, 5, "Publish", [
-    "One workbook: forecast + Analysis sheet",
-    "Every chart pairs volume with staffing gap",
-    "A 6-slide deck, numbers read live from the data",
-    "A Power BI staffing-gap report on top",
-])
+CONTENT_TOP = Inches(1.5)
+STEP_H = Inches(1.74)
+add_approach_step(slide, LEFT_COL_X, CONTENT_TOP, COL_W, 1, "Load & prepare data",
+    approach_bullets=[
+        "Load 3.8 yrs volume history + the agent roster",
+        "Derive occupancy from the roster's REAL shrinkage %",
+    ],
+    output_bullets=["A ready-to-model daily volume series + occupancy figure"])
+add_approach_step(slide, LEFT_COL_X, CONTENT_TOP + STEP_H, COL_W, 2, "Explore first",
+    approach_bullets=[
+        "Decompose trend + weekly/yearly seasonality",
+        "Check day-of-week patterns before modeling",
+    ],
+    output_bullets=["Confirms the series' real shape before trusting a model"])
+add_approach_step(slide, LEFT_COL_X, CONTENT_TOP + 2 * STEP_H, COL_W, 3, "Benchmark honestly",
+    approach_bullets=[
+        "Naive seasonal baseline: repeat last week",
+        "Test every candidate on a 60-day holdout",
+    ],
+    output_bullets=["A bar every model must beat before it ships"])
+add_approach_step(slide, RIGHT_COL_X, CONTENT_TOP, COL_W, 4, "Holt-Winters",
+    approach_bullets=[
+        "Model trend + weekly seasonality explicitly",
+        f"Forecast volume {horizon_days} days forward",
+    ],
+    output_bullets=[f"{hw_mape:.1f}% MAPE — beats the {baseline_mape:.1f}% baseline"])
+add_approach_step(slide, RIGHT_COL_X, CONTENT_TOP + STEP_H, COL_W, 5, "Volume -> FTE",
+    approach_bullets=[
+        "Convert volume to agent-hours via handle time",
+        "Compare required FTE to available FTE",
+    ],
+    output_bullets=["The exact day(s) staffing runs short, and by how much"])
+add_approach_step(slide, RIGHT_COL_X, CONTENT_TOP + 2 * STEP_H, COL_W, 6, "Publish",
+    approach_bullets=[
+        "Write one workbook: forecast + Analysis sheet",
+        "Build the PPT deck + Power BI report on top",
+    ],
+    output_bullets=["A client-ready package, numbers always in sync"])
 add_footer(slide, "Demand Forecasting & Staffing", 4)
 
 # %% Cell 7 - Slide 5: Key Outcomes
@@ -471,13 +502,13 @@ add_mix_bar_vertical_legend(slide, colA_x, row2_y + Inches(0.4), col_w, Inches(0
     ("Available", avg_available_fte / avg_total * 100, ACCENT),
 ])
 
-add_ranked_list(slide, colB_x, row2_y, col_w, "Top 3 Short-Staffed Days",
+add_ranked_list(slide, colB_x, row2_y, col_w, "Top 5 Short-Staffed Days",
                  [(pd.Timestamp(d).strftime("%d %b %Y"), f"{g:.1f} FTE short") for d, g in
-                  zip(top3_worst_days["date"], top3_worst_days["staffing_gap_fte"])])
-add_ranked_list(slide, colC_x, row2_y, col_w, "Weekly Gap Trend (Next 3 Wks)",
-                 [(pd.Timestamp(w).strftime("Week of %d %b"), f"{g:.1f} FTE avg gap") for w, g in weekly_gap.items()])
+                  zip(top5_worst_days["date"], top5_worst_days["staffing_gap_fte"])])
+add_ranked_list(slide, colC_x, row2_y, col_w, "Weekly Gap Trend (Next 5 Wks)",
+                 [(pd.Timestamp(w).strftime("Week of %d %b"), f"{g:.1f} FTE avg gap") for w, g in weekly_gap_top5.items()])
 
-add_icon_bullets(slide, Inches(0.65), Inches(5.75), Inches(11.9), Inches(0.6), [
+add_icon_bullets(slide, Inches(0.65), Inches(5.95), Inches(11.9), Inches(0.6), [
     "This is a modest, fixable gap - not a crisis - but worth flagging now, with weeks "
     "of lead time, rather than discovering it the week service levels slip.",
 ], size=14.5)
@@ -488,16 +519,22 @@ slide = new_slide()
 fill_bg(slide, NAVY)
 add_text(slide, Inches(0.65), Inches(0.55), Inches(11.8), Inches(0.8), "Recommendation", 30, WHITE, bold=True)
 rec_rows = [
-    ("Fix #1: Close the FTE gap",
-     f"Add overtime or a couple of flexible-shift agents — {horizon_days} days of lead time "
-     f"to plan it, not a same-week scramble.",
-     f"Closes the average {avg_gap:.1f}-FTE shortfall before it hits service levels."),
+    (f"Fix #1: Close the FTE gap ({pct_days_short:.0f}% of days)",
+     f"Short-staffed on {pct_days_short:.0f}% of the next {horizon_days} days, averaging "
+     f"{avg_gap:.1f} FTE ({gap_pct_of_required:.0f}% of required headcount) — add overtime or "
+     f"flexible-shift agents, prioritizing {top_lob} coverage since it alone drives "
+     f"{top_lob_pct:.0f}% of total volume.",
+     f"Closes the gap with {horizon_days} days of lead time, protecting the LoB carrying "
+     f"most of the service-level risk."),
     ("Fix #2: Watch the peak day",
-     f"Flag {pd.Timestamp(worst_day['date']).strftime('%d %b %Y')} specifically for extra coverage.",
-     f"Avoids the single worst-staffed day in the horizon, {worst_day['staffing_gap_fte']:.1f} FTE short."),
+     f"{pd.Timestamp(worst_day['date']).strftime('%d %b %Y')} is the single worst day, "
+     f"{worst_day['staffing_gap_fte']:.1f} FTE short — forecast volume peaks that day with "
+     f"no spare buffer.",
+     "Proactive scheduling avoids the highest service-level-risk day in the horizon."),
     ("Next: Extend & revisit",
-     "Extend the model per LoB/channel, and revisit shrinkage assumptions quarterly.",
-     "Sharper staffing allocation as the roster's tenure mix shifts over time."),
+     "Extend the model per LoB/channel for sharper allocation, and revisit shrinkage "
+     "assumptions quarterly as the roster's tenure mix shifts.",
+     "Keeps the staffing plan accurate instead of going stale between reviews."),
 ]
 add_recommendation_table(slide, Inches(0.65), Inches(1.85), Inches(12.0), Inches(1.4), rec_rows)
 add_text(slide, Inches(0.65), Inches(6.95), Inches(11), Inches(0.4),

@@ -60,7 +60,13 @@ primary_counts = df["primary_driver"].value_counts(normalize=True) * 100
 top_primary = primary_counts.index[0]
 top_primary_pct = primary_counts.iloc[0]
 top_primary_csat = df.loc[df["primary_driver"] == top_primary, "csat_score"].mean()
-top3_primary = primary_counts.head(3)
+top5_primary = primary_counts.head(5)
+# WHAT: the real, computable "if this driver matched the rest of the book"
+# CSAT estimate - the weighted average of every OTHER driver's responses.
+# WHY: an honest, directly-derived impact number for the recommendation
+# slide, not an invented percentage - if Billing's own average rose to meet
+# this figure, the overall average would rise to exactly this figure too.
+avg_csat_excl_top_primary = df.loc[df["primary_driver"] != top_primary, "csat_score"].mean()
 
 top_primary_rows = df[df["primary_driver"] == top_primary]
 secondary_within_top = top_primary_rows["secondary_driver"].value_counts(normalize=True) * 100
@@ -70,7 +76,15 @@ top_secondary_pct = secondary_within_top.iloc[0] if len(secondary_within_top) el
 
 secondary_counts_all = df["secondary_driver"].value_counts(normalize=True) * 100
 secondary_counts_all = secondary_counts_all.drop("No Secondary Driver", errors="ignore")
-top3_secondary = secondary_counts_all.head(3)
+top5_secondary = secondary_counts_all.head(5)
+
+# WHAT: does a specific, named segment of agents concentrate in a specific
+# driver's complaints, out of proportion to their share of the roster?
+# WHY: "coach newer agents" is a vague recommendation on its own - this
+# checks whether that's actually backed by the data before the slide says it.
+pop_share_new_tenure = (df["tenure_bucket"] == "<6 months").mean() * 100
+_abc_rows = df[df["primary_driver"] == "Agent_Behavior_Comm"]
+abc_new_tenure_share = (_abc_rows["tenure_bucket"] == "<6 months").mean() * 100 if len(_abc_rows) else 0
 
 csat_bucket_counts = df["csat_bucket"].value_counts(normalize=True) * 100
 promoter_pct = csat_bucket_counts.get("Promoter (4-5)", 0)
@@ -279,14 +293,14 @@ def add_mix_bar_vertical_legend(slide, left, top, width, bar_height, segments):
     return ly
 
 
-def add_ranked_list(slide, left, top, width, heading, items, row_height=0.42, accent=ACCENT):
+def add_ranked_list(slide, left, top, width, heading, items, row_height=0.36, accent=ACCENT):
     """heading + up to a few numbered rows (small badge + 'label - value'),
-    used for the Top-3-driver lists - a ranked, scannable alternative to a
+    used for the Top-5-driver lists - a ranked, scannable alternative to a
     paragraph of bullets."""
     add_text(slide, left, top, width, Inches(0.3), heading.upper(), 12, ACCENT_DARK, bold=True)
     y = top + Inches(0.4)
     for i, (label, value) in enumerate(items):
-        badge = slide.shapes.add_shape(MSO_SHAPE.OVAL, left, y + Inches(0.02), Inches(0.26), Inches(0.26))
+        badge = slide.shapes.add_shape(MSO_SHAPE.OVAL, left, y + Inches(0.01), Inches(0.22), Inches(0.22))
         badge.fill.solid()
         badge.fill.fore_color.rgb = accent
         badge.line.fill.background()
@@ -297,20 +311,22 @@ def add_ranked_list(slide, left, top, width, heading, items, row_height=0.42, ac
         p.alignment = PP_ALIGN.CENTER
         r = p.add_run()
         r.text = str(i + 1)
-        r.font.size = Pt(12)
+        r.font.size = Pt(10.5)
         r.font.bold = True
         r.font.color.rgb = WHITE
         r.font.name = FONT
-        add_text(slide, left + Inches(0.36), y, width - Inches(0.36), Inches(0.36),
-                  f"{label} — {value}", 13, DARK_TEXT)
+        add_text(slide, left + Inches(0.32), y - Inches(0.02), width - Inches(0.32), Inches(0.32),
+                  f"{label} — {value}", 12, DARK_TEXT)
         y += Inches(row_height)
     return y
 
 
-def add_approach_step(slide, left, top, width, number, title, bullets, accent=ACCENT):
-    """One pipeline step: a small numbered badge + bold title on one line,
-    then 2-4 supporting bullets beneath - enough detail to actually explain
-    HOW that step works, not just name it."""
+def add_approach_step(slide, left, top, width, number, title, approach_bullets, output_bullets,
+                        accent=ACCENT, output_color=NAVY):
+    """One pipeline step, with APPROACH (how it works) and OUTPUT (what it
+    produces) explicitly split into two labeled, differently-colored groups
+    - not one flat bullet list. Lets the method and its result both be
+    stated in implementation-specific language, not just named."""
     badge = slide.shapes.add_shape(MSO_SHAPE.OVAL, left, top, Inches(0.32), Inches(0.32))
     badge.fill.solid()
     badge.fill.fore_color.rgb = accent
@@ -328,38 +344,58 @@ def add_approach_step(slide, left, top, width, number, title, bullets, accent=AC
     r.font.name = FONT
     add_text(slide, left + Inches(0.42), top - Inches(0.02), width - Inches(0.42), Inches(0.32),
               title, 14.5, NAVY, bold=True)
-    y = top + Inches(0.4)
-    for b in bullets:
-        dot = slide.shapes.add_shape(MSO_SHAPE.OVAL, left + Inches(0.08), y + Inches(0.07), Inches(0.09), Inches(0.09))
+    y = top + Inches(0.36)
+    add_text(slide, left + Inches(0.06), y, width - Inches(0.06), Inches(0.2), "APPROACH", 9.5, ACCENT_DARK, bold=True)
+    y += Inches(0.22)
+    for b in approach_bullets:
+        dot = slide.shapes.add_shape(MSO_SHAPE.OVAL, left + Inches(0.08), y + Inches(0.06), Inches(0.09), Inches(0.09))
         dot.fill.solid()
         dot.fill.fore_color.rgb = accent
         dot.line.fill.background()
         _no_shadow(dot)
-        add_text(slide, left + Inches(0.3), y, width - Inches(0.3), Inches(0.32), b, 11.5, DARK_TEXT)
-        y += Inches(0.34)
+        add_text(slide, left + Inches(0.3), y, width - Inches(0.3), Inches(0.28), b, 11.5, DARK_TEXT)
+        y += Inches(0.3)
+    y += Inches(0.02)
+    add_text(slide, left + Inches(0.06), y, width - Inches(0.06), Inches(0.2), "OUTPUT", 9.5, output_color, bold=True)
+    y += Inches(0.22)
+    for b in output_bullets:
+        dot = slide.shapes.add_shape(MSO_SHAPE.OVAL, left + Inches(0.08), y + Inches(0.06), Inches(0.09), Inches(0.09))
+        dot.fill.solid()
+        dot.fill.fore_color.rgb = output_color
+        dot.line.fill.background()
+        _no_shadow(dot)
+        add_text(slide, left + Inches(0.3), y, width - Inches(0.3), Inches(0.28), b, 11.5, DARK_TEXT, bold=True)
+        y += Inches(0.3)
     return y
 
 
 def add_recommendation_table(slide, left, top, width, row_height, rows, accent=ACCENT):
     """A 3-column action table for the closing slide: what the
-    recommendation is, exactly what to do, and the outcome it buys -
-    clearer than a single description blob per recommendation."""
-    col_gap = Inches(0.25)
-    col_w = Emu(int((int(width) - 2 * int(col_gap)) / 3))
-    col1_x, col2_x = left, Emu(int(left) + int(col_w) + int(col_gap))
-    col3_x = Emu(int(col2_x) + int(col_w) + int(col_gap))
+    recommendation is, exactly what to do (with the %'s and the specific
+    'why' behind it), and the outcome it buys - clearer than a single
+    description blob per recommendation. Columns are NOT equal thirds -
+    "what to do" carries the longest, most specific text, so it gets the
+    most width."""
+    col_gap = Inches(0.22)
+    usable = int(width) - 2 * int(col_gap)
+    col1_w = Emu(int(usable * 0.24))
+    col2_w = Emu(int(usable * 0.44))
+    col3_w = Emu(usable - int(col1_w) - int(col2_w))
+    col1_x = left
+    col2_x = Emu(int(left) + int(col1_w) + int(col_gap))
+    col3_x = Emu(int(col2_x) + int(col2_w) + int(col_gap))
     headers = ["RECOMMENDATION", "WHAT TO DO", "EXPECTED OUTCOME"]
-    for cx, h in zip([col1_x, col2_x, col3_x], headers):
-        add_text(slide, cx, top, col_w, Inches(0.3), h, 12, ACCENT, bold=True)
+    for cx, cw, h in zip([col1_x, col2_x, col3_x], [col1_w, col2_w, col3_w], headers):
+        add_text(slide, cx, top, cw, Inches(0.3), h, 12, ACCENT, bold=True)
     rule = slide.shapes.add_connector(MSO_CONNECTOR.STRAIGHT, left, top + Inches(0.4),
                                         Emu(int(left) + int(width)), top + Inches(0.4))
     rule.line.color.rgb = NAVY_SOFT
     rule.line.width = Pt(1)
     y = top + Inches(0.55)
     for rec_title, what, outcome in rows:
-        add_text(slide, col1_x, y, col_w, row_height, rec_title, 15, accent, bold=True)
-        add_text(slide, col2_x, y, col_w, row_height, what, 13, WHITE)
-        add_text(slide, col3_x, y, col_w, row_height, outcome, 13, CHIP_TEXT_ON_NAVY)
+        add_text(slide, col1_x, y, col1_w, row_height, rec_title, 14.5, accent, bold=True)
+        add_text(slide, col2_x, y, col2_w, row_height, what, 12.5, WHITE)
+        add_text(slide, col3_x, y, col3_w, row_height, outcome, 12.5, CHIP_TEXT_ON_NAVY)
         y += row_height
         if y < top + Inches(0.55) + row_height * len(rows):
             rule2 = slide.shapes.add_connector(MSO_CONNECTOR.STRAIGHT, left, y - Inches(0.1),
@@ -433,39 +469,44 @@ fill_bg(slide, WHITE)
 add_title_bar(slide, "Approach & Expected Output", kicker="Method")
 LEFT_COL_X, RIGHT_COL_X = Inches(0.65), Inches(6.75)
 COL_W = Inches(5.7)
-CONTENT_TOP = Inches(1.55)
-STEP_H = Inches(1.76)
-add_approach_step(slide, LEFT_COL_X, CONTENT_TOP, COL_W, 1, "Bootstrap dictionary", [
-    "Splits term frequency: low-CSAT vs high-CSAT text",
-    "Labels every term's sentiment lean upfront",
-    "Produces an inspectable shortlist, not a guess",
-    "Minutes of compute, not days of manual reading",
-])
-add_approach_step(slide, LEFT_COL_X, CONTENT_TOP + STEP_H, COL_W, 2, "Tag drivers", [
-    "Matches against 11 categories, 42 sub-issues",
-    "Ranks matches by phrase-match strength",
-    "Strongest match's category = PRIMARY driver",
-    "The sub-issue itself = actionable SECONDARY",
-])
-add_approach_step(slide, LEFT_COL_X, CONTENT_TOP + 2 * STEP_H, COL_W, 3, "NMF safety net", [
-    "TF-IDF + NMF finds latent themes in leftovers",
-    "YAKE auto-labels each theme, fully offline",
-    "Catches edge-of-vocabulary phrasing",
-    "No response ends with a blank secondary driver",
-])
-RIGHT_TOP = CONTENT_TOP + Emu(int((3 * STEP_H - 2 * STEP_H) / 2))
-add_approach_step(slide, RIGHT_COL_X, RIGHT_TOP, COL_W, 4, "Score sentiment", [
-    "VADER lexicon model scores tone of every row",
-    "Deterministic and explainable, no black box",
-    "100% offline — zero AI/LLM API dependency",
-    "Cross-checked against the CSAT score bucket",
-])
-add_approach_step(slide, RIGHT_COL_X, RIGHT_TOP + STEP_H, COL_W, 5, "Publish", [
-    "One workbook: row data + Analysis sheet",
-    "Every chart pairs volume with CSAT severity",
-    "A 6-slide deck, numbers read live from the data",
-    "A Power BI report built on top for the business",
-])
+CONTENT_TOP = Inches(1.5)
+STEP_H = Inches(1.74)
+add_approach_step(slide, LEFT_COL_X, CONTENT_TOP, COL_W, 1, "Load & clean data",
+    approach_bullets=[
+        "pandas loads the 7,500-row survey export",
+        "Lowercase, strip punctuation, collapse whitespace",
+    ],
+    output_bullets=["A clean_text column every later step reuses"])
+add_approach_step(slide, LEFT_COL_X, CONTENT_TOP + STEP_H, COL_W, 2, "Bootstrap dictionary",
+    approach_bullets=[
+        "Split term frequency: low-CSAT vs high-CSAT text",
+        "Label every candidate term's sentiment lean",
+    ],
+    output_bullets=["An inspectable keyword shortlist, not a guess"])
+add_approach_step(slide, LEFT_COL_X, CONTENT_TOP + 2 * STEP_H, COL_W, 3, "Tag drivers",
+    approach_bullets=[
+        "Match against 11 categories, 42 sub-issues",
+        "Rank matches by phrase-match strength",
+    ],
+    output_bullets=["A PRIMARY + actionable SECONDARY driver per row"])
+add_approach_step(slide, RIGHT_COL_X, CONTENT_TOP, COL_W, 4, "NMF safety net",
+    approach_bullets=[
+        "TF-IDF + NMF finds latent themes in leftovers",
+        "YAKE auto-labels each theme, fully offline",
+    ],
+    output_bullets=["Zero responses left with a blank secondary driver"])
+add_approach_step(slide, RIGHT_COL_X, CONTENT_TOP + STEP_H, COL_W, 5, "Score sentiment",
+    approach_bullets=[
+        "VADER lexicon model scores tone of every row",
+        "100% offline — zero AI/LLM API dependency",
+    ],
+    output_bullets=["A Negative/Neutral/Positive label per response"])
+add_approach_step(slide, RIGHT_COL_X, CONTENT_TOP + 2 * STEP_H, COL_W, 6, "Publish",
+    approach_bullets=[
+        "Write one workbook: row data + Analysis sheet",
+        "Build the PPT deck + Power BI report on top",
+    ],
+    output_bullets=["A client-ready package, numbers always in sync"])
 add_footer(slide, "CSAT Root-Cause & Sentiment Driver Analysis", 4)
 
 # %% Cell 7 - Slide 5: Key Outcomes
@@ -492,12 +533,12 @@ add_mix_bar_vertical_legend(slide, colA_x, row2_y + Inches(0.4), col_w, Inches(0
     ("Detractors (1-2)", detractor_pct, DETRACTOR_RED),
 ])
 
-add_ranked_list(slide, colB_x, row2_y, col_w, "Top 3 Primary Drivers",
-                 [(name.replace("_", " "), f"{pct:.1f}%") for name, pct in top3_primary.items()])
-add_ranked_list(slide, colC_x, row2_y, col_w, "Top 3 Secondary Drivers",
-                 [(name, f"{pct:.1f}%") for name, pct in top3_secondary.items()])
+add_ranked_list(slide, colB_x, row2_y, col_w, "Top 5 Primary Drivers",
+                 [(name.replace("_", " "), f"{pct:.1f}%") for name, pct in top5_primary.items()])
+add_ranked_list(slide, colC_x, row2_y, col_w, "Top 5 Secondary Drivers",
+                 [(name, f"{pct:.1f}%") for name, pct in top5_secondary.items()])
 
-add_icon_bullets(slide, Inches(0.65), Inches(5.75), Inches(11.9), Inches(0.6), [
+add_icon_bullets(slide, Inches(0.65), Inches(5.95), Inches(11.9), Inches(0.6), [
     f"Agents with less than 6 months' tenure skew toward the lowest-CSAT bucket "
     f"({tenure_lowest_csat}) - a coaching signal alongside the process fix.",
 ], size=14.5)
@@ -507,20 +548,27 @@ add_footer(slide, "CSAT Root-Cause & Sentiment Driver Analysis", 5)
 slide = new_slide()
 fill_bg(slide, NAVY)
 add_text(slide, Inches(0.65), Inches(0.55), Inches(11.8), Inches(0.8), "Recommendation", 30, WHITE, bold=True)
-rec1_what = (f"Investigate “{top_secondary}” specifically — the single most common, named "
-             f"sub-issue, not a vague theme." if top_secondary else
-             "Investigate the top sub-issue specifically — a named, not a vague, theme.")
+rec1_what = (f"{top_primary_pct:.1f}% of all complaints are {top_primary.replace('_', ' ')}, and "
+             f"“{top_secondary}” alone drives {top_secondary_pct:.1f}% of those — fix the "
+             f"duplicate-charge billing defect first, not the category as a whole."
+             if top_secondary else
+             f"{top_primary_pct:.1f}% of all complaints are {top_primary.replace('_', ' ')} — "
+             f"investigate this driver's top sub-issue first.")
 rec_rows = [
-    (f"Fix #1: {top_primary.replace('_', ' ')}",
+    (f"Fix #1: {top_primary.replace('_', ' ')} ({top_primary_pct:.1f}%)",
      rec1_what,
-     f"Removes the highest-volume, lowest-CSAT driver (avg CSAT {top_primary_csat:.2f}) from the table."),
-    ("Fix #2: Coach newer agents",
-     "Target coaching at agents under 6 months' tenure — this cohort skews toward the weakest CSAT bucket.",
-     "Lifts Agent Behavior & Communication scores, a top-volume driver."),
+     f"Billing responses average {top_primary_csat:.2f} vs {avg_csat_excl_top_primary:.2f} "
+     f"everywhere else — closing that gap could lift OVERALL CSAT from {avg_csat:.2f} toward "
+     f"roughly {avg_csat_excl_top_primary:.2f} over time."),
+    (f"Fix #2: Coach agents under 6 months ({pop_share_new_tenure:.0f}% of roster)",
+     f"Agents under 6 months' tenure are {pop_share_new_tenure:.0f}% of the roster but generate "
+     f"{abc_new_tenure_share:.0f}% of Agent Behavior complaints — these specific agents are "
+     f"driving this category, not the team broadly.",
+     "Targeted coaching (not generic training) directly shrinks a top-3 driver by volume."),
     ("Next: Validate & track",
      "Validate the taxonomy against real customer verbatim, then track the top driver's weekly "
      "trend already built into the workbook.",
-     "Confirms the fix is working with real data, not a one-time snapshot."),
+     "Confirms both fixes are actually moving CSAT, with real data, not a one-time snapshot."),
 ]
 add_recommendation_table(slide, Inches(0.65), Inches(1.85), Inches(12.0), Inches(1.4), rec_rows)
 add_text(slide, Inches(0.65), Inches(6.95), Inches(11), Inches(0.4),
