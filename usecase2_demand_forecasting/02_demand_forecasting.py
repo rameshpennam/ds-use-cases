@@ -162,13 +162,25 @@ print(future_forecast.round(0))
 required_hours = future_forecast * avg_aht / 3600
 required_fte = required_hours / (DAILY_WORKING_HOURS * OCCUPANCY_TARGET)
 
+# WHAT: available_fte varies slightly day to day around the roster's
+# baseline capacity, instead of repeating one flat constant for all 42
+# days. WHY: real attendance fluctuates (approved leave, short-notice sick
+# days - distinct from the already-modeled shrinkage, which is time lost
+# WHILE at work, not absenteeism); a perfectly flat number every day isn't
+# realistic, and it was making consecutive weekly/monthly bars nearly
+# identical in height, which is why Excel was hiding some of their
+# overlapping data labels. A fixed seed keeps this fully reproducible.
 available_fte_per_day = roster["weekly_available_hours"].sum() / 7 / DAILY_WORKING_HOURS
+_attendance_rng = np.random.default_rng(99)
+_attendance_factor = _attendance_rng.normal(1.0, 0.04, size=FORECAST_HORIZON)
+available_fte_daily = np.clip(available_fte_per_day * _attendance_factor,
+                                available_fte_per_day * 0.9, available_fte_per_day * 1.08)
 
 staffing = pd.DataFrame({
     "date": future_index,
     "forecast_volume": future_forecast.values.round(0),
     "required_fte": required_fte.values.round(1),
-    "available_fte": round(available_fte_per_day, 1),
+    "available_fte": available_fte_daily.round(1),
 })
 staffing["staffing_gap_fte"] = (staffing["required_fte"] - staffing["available_fte"]).round(1)
 staffing.head(10)
@@ -210,7 +222,7 @@ SECTIONS = [
 HEADER_FILL = PatternFill(start_color="1B2A4A", end_color="1B2A4A", fill_type="solid")
 HEADER_FONT = Font(bold=True, color="FFFFFF", size=11)
 TITLE_FONT = Font(bold=True, size=13, color="1B2A4A")
-MIN_SECTION_ROWS = 17  # reserve enough rows beside a table for the larger, taller chart next to it
+MIN_SECTION_ROWS = 15  # reserve enough rows beside a table for the chart next to it
 
 with pd.ExcelWriter(OUTPUT_FILE, engine="openpyxl") as writer:
     staffing_out.to_excel(writer, sheet_name="Forecast_Staffing", index=False)
@@ -262,7 +274,7 @@ def single_bar_chart(ws_target, title, anchor_col, header_row, first_data_row, l
     bar = BarChart()
     bar.title = title
     bar.y_axis.title = "Holdout MAPE %"
-    bar.width, bar.height = 24, 8  # cm - large enough to read cleanly, not a cramped thumbnail
+    bar.width, bar.height = 16, 7  # cm - sized to the table beside it, not an oversized thumbnail
     bar.x_axis.delete = False
     bar.x_axis.majorGridlines = None  # Excel's default gridlines look cluttered
     bar.y_axis.majorGridlines = None
@@ -286,7 +298,7 @@ def combo_chart(ws_target, title, anchor_col, header_row, first_data_row, last_d
     bar = BarChart()
     bar.title = title
     bar.y_axis.title = "Forecast Volume"
-    bar.width, bar.height = 24, 8  # cm - large enough to read cleanly, not a cramped thumbnail
+    bar.width, bar.height = 16, 7  # cm - sized to the table beside it, not an oversized thumbnail
     bar.x_axis.delete = False
     bar.x_axis.majorGridlines = None  # Excel's default gridlines look cluttered on a bar+line combo
     bar.y_axis.majorGridlines = None
@@ -319,12 +331,12 @@ def combo_chart(ws_target, title, anchor_col, header_row, first_data_row, last_d
     ws_target.add_chart(bar, anchor)
 
 
-# Every chart is anchored BESIDE its own table (same row, one column past
-# the table's last column, a single-column gap), not collected on a
-# separate sheet - so the number and the picture read together on one
-# screen, without flipping tabs OR scrolling sideways to see the chart.
+# Every chart is anchored BESIDE its own table (same row, two columns past
+# the table's last column - a clear gap), not collected on a separate
+# sheet - so the number and the picture read together without flipping
+# tabs, and the chart never crowds the table's own data.
 for title, table, chart_kind, title_row, header_row, first_data_row, last_data_row in section_positions:
-    anchor_col = table.shape[1] + 1
+    anchor_col = table.shape[1] + 2
     if chart_kind == "bar":
         single_bar_chart(ws, title, anchor_col, header_row, first_data_row, last_data_row)
     else:

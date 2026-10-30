@@ -58,7 +58,7 @@ Narrate while building: *"Plotting required against available FTE on the
 same axis makes the gap visual immediately — the required line sits above
 available on most days. The column chart with conditional formatting turns
 every red bar into a day that needs attention; the worst single day is
-about 2.3 FTE short, which six weeks of lead time is more than enough to
+about 3.3 FTE short, which six weeks of lead time is more than enough to
 fix with overtime or a couple of flexible shifts."*
 
 ## Note on data source

@@ -131,11 +131,13 @@ including the Sunday dip into November and early December."
 "I convert the volume forecast into required agent-hours using the blended
 handle time, then into required FTEs using the shrinkage-derived occupancy
 figure from Cell 1, and compare that against what the roster can actually
-deliver. In this run, required FTE averages about **25.5** over the
-forecast horizon, against roughly **24.5** available — and on **36 of the
-next 42 days**, we're running short, by up to **2.3 FTE** on the worst day,
-October 29th. That's a real, actionable gap — tight enough to need a plan,
-not a crisis."
+deliver. Available FTE now varies slightly day to day too - real
+attendance fluctuates (approved leave, short-notice sick days), so it's
+not one flat number repeated 42 times. In this run, required FTE averages
+about **25.5** over the forecast horizon, against roughly **24.7**
+available — and on **34 of the next 42 days**, we're running short, by up
+to **3.3 FTE** on the worst day, December 2nd. That's a real, actionable
+gap — tight enough to need a plan, not a crisis."
 
 ### Cell 9 — saving the output
 "One Excel workbook, rebuilt from scratch every run: the date-level
@@ -149,9 +151,9 @@ is coming and how short-staffed it leaves the floor, in the same picture."
 ### Cell 10 — the numbers I'll quote
 "To summarize: Holt-Winters improves forecast accuracy from 17.2 to 15.1
 percent MAPE versus the naive baseline. Average required staffing over the
-next six weeks is about 25.5 FTE, against roughly 24.5 available today, and
-we're short-staffed on 36 of the next 42 days, peaking at a shortfall of
-2.3 FTE on October 29th."
+next six weeks is about 25.5 FTE, against roughly 24.7 available today, and
+we're short-staffed on 34 of the next 42 days, peaking at a shortfall of
+3.3 FTE on December 2nd."
 
 ## 6. Output file walkthrough
 
@@ -179,7 +181,7 @@ number pulled straight from the real output files."
 
 "Pulling this together for the business: our forecast shows contact volume
 holding roughly steady with the usual weekly rhythm over the next six
-weeks, but our current roster is running about 2.3 FTE short on the worst
+weeks, but our current roster is running about 3.3 FTE short on the worst
 day. That's a small, fixable gap — a modest overtime allocation or a couple
 of flexible-shift agents would close it — but worth flagging now, with six
 weeks of lead time, rather than discovering it the week service levels

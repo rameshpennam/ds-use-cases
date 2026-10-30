@@ -68,7 +68,7 @@ not a guarantee if you change the random seed/config): Holt-Winters beats the
 naive-seasonal baseline (15.1% vs 17.2% holdout MAPE), and the occupancy
 target is now derived from the roster's real average shrinkage (~19.5%,
 ~79% occupancy) rather than a flat assumption — the 40-agent roster runs
-short by an average of ~1.0 FTE, peaking at 2.3 FTE short on the worst day,
+short by an average of ~0.8 FTE, peaking at 3.3 FTE short on the worst day,
 over the next 6 weeks — a believable, actionable "we're tight, not in
 crisis" story. If you regenerate the data and the model ever loses to the
 baseline, the script's own `assert` will stop you before you present a
