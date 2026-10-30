@@ -65,10 +65,10 @@ pulled straight from the Excel output, not hand-typed.
 
 **Known result on the shipped synthetic data** (so you know what to expect,
 not a guarantee if you change the random seed/config): Holt-Winters beats the
-naive-seasonal baseline (18.8% vs 20.1% holdout MAPE), and the occupancy
-target is now derived from the roster's real average shrinkage (~20.6%,
+naive-seasonal baseline (15.1% vs 17.2% holdout MAPE), and the occupancy
+target is now derived from the roster's real average shrinkage (~19.5%,
 ~79% occupancy) rather than a flat assumption — the 40-agent roster runs
-short by an average of ~2.5 FTE, peaking at 3.7 FTE short on the worst day,
+short by an average of ~1.0 FTE, peaking at 2.3 FTE short on the worst day,
 over the next 6 weeks — a believable, actionable "we're tight, not in
 crisis" story. If you regenerate the data and the model ever loses to the
 baseline, the script's own `assert` will stop you before you present a
@@ -81,11 +81,12 @@ into required agent staffing (FTE), compared against current roster
 availability and real roster shrinkage.
 **Apps used**: VS Code (Python), Microsoft Power BI Desktop.
 **Request / scenario**: As a data analytics consultant, forecast customer
-care contact volume for the next 6 weeks from ~3.8 years of daily history
-(with trend, weekly/yearly seasonality, holidays and campaign spikes), then
-convert the forecast into required agent FTE (using real roster shrinkage)
-and flag staffing gaps against the current roster.
-**Flow**: Generate/ingest 3.8 years of volume history + agent roster (incl.
+care contact volume for the next 6 weeks from 3 years of daily history
+across four lines of business (with trend, weekly/yearly seasonality,
+holidays and campaign spikes), then convert the forecast into required
+agent FTE (using real roster shrinkage) and flag staffing gaps against the
+current roster.
+**Flow**: Generate/ingest 3 years of volume history + agent roster (incl.
 shrinkage %) → exploratory decomposition (trend/seasonality) → naive
 baseline forecast → Holt-Winters exponential smoothing model → validate on
 a holdout (fails loud if the model doesn't beat the baseline) → forecast
@@ -107,5 +108,4 @@ a Power BI report (3-4 visuals) built live on screen.
   `FTE = hours / (shift hours × occupancy)`, where occupancy is now derived
   from the roster's real average shrinkage rather than a flat constant. A
   full rollout would use Erlang C for service-level-driven staffing — noted
-  as a next step, not built here, to keep the walkthrough explainable on
-  camera.
+  as a next step, not built here, to keep the walkthrough explainable.

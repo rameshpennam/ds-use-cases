@@ -21,9 +21,10 @@ from datetime import datetime, timedelta
 RANDOM_SEED = 7
 rng = np.random.default_rng(RANDOM_SEED)
 
-START_DATE = datetime(2023, 1, 1)
-END_DATE = datetime(2026, 10, 26)     # ~3.8 years of history
-LOBS = ["Postpaid Mobile", "Broadband"]
+START_DATE = datetime(2023, 10, 26)
+END_DATE = datetime(2026, 10, 26)     # 3 years of history, capped (was ~3.8) -
+# at 4 LoBs x 3 channels/day this is ~13,140 rows, close to the ~15k target
+LOBS = ["Postpaid Mobile", "Prepaid Mobile", "Broadband", "Billing & Payments"]  # same 4 LoBs as use case 1
 CHANNELS = ["Voice", "Chat", "Email"]
 
 OUT_VOLUME_FILE = "input/input_call_volume_history.xlsx"
@@ -57,7 +58,12 @@ for d in CAMPAIGN_DATES:
 # weekly seasonality (lower on Sundays), yearly seasonality (a festive-season
 # bump), holiday spikes, campaign spikes, and random noise - the same
 # components a real contact-center volume series has."
-BASE_LEVEL = {"Postpaid Mobile": 900, "Broadband": 500}
+BASE_LEVEL = {"Postpaid Mobile": 650, "Prepaid Mobile": 380, "Broadband": 300, "Billing & Payments": 150}
+# WHAT: 4 LoBs instead of 2, matching use case 1's LoB set, but the total
+# (1480) is kept close to the prior total (1400 = 900+500) on purpose - a
+# like-for-like redistribution, not an added volume load - so the already
+# -tuned "tight, not crisis" staffing-gap story doesn't need re-tuning
+# from scratch just because the LoB split got more realistic.
 CHANNEL_SPLIT = {"Voice": 0.50, "Chat": 0.30, "Email": 0.20}
 AHT_SECONDS = {"Voice": 420, "Chat": 300, "Email": 240}   # avg handle time per channel
 
@@ -119,8 +125,22 @@ TL_BY_MANAGER = {
     "Anita Sharma": ["Deepa Menon", "Arjun Rao"],
 }
 AGENT_FIRST = ["Aarav", "Vivaan", "Aditya", "Kabir", "Ishaan", "Rohan", "Karan", "Aryan",
-               "Sanya", "Ananya", "Diya", "Meera", "Riya", "Neha", "Pooja", "Kavya"]
-AGENT_LAST = ["Verma", "Gupta", "Reddy", "Khan", "Pillai", "Shetty", "Joshi", "Mehta"]
+               "Sanya", "Ananya", "Diya", "Meera", "Riya", "Neha", "Pooja", "Kavya",
+               "Farhan", "Imran", "Zoya", "Alisha", "Arjun", "Rahul", "Sneha", "Priyanka",
+               "Nikhil", "Tanvi", "Yash", "Ritu", "Siddharth", "Varun", "Ishita", "Dev",
+               "Naina", "Aman", "Simran", "Rajat", "Shreya", "Harsh", "Anika", "Manish"]
+AGENT_LAST = ["Verma", "Gupta", "Reddy", "Khan", "Pillai", "Shetty", "Joshi", "Mehta",
+              "Chopra", "Bose", "Kapoor", "Malhotra", "Agarwal", "Bhatt", "Desai",
+              "Kulkarni", "Patel", "Yadav", "Mishra", "Pandey", "Choudhury", "Sinha",
+              "Ghosh", "Banerjee", "Saxena", "Trivedi", "Nambiar", "Rathore", "Dutta", "Kaur",
+              "Thakur", "Chauhan", "Bhatia", "Oberoi", "Rana", "Sharma", "Srinivasan", "Iyer",
+              "Menon", "Nair"]
+# Sample first and last names INDEPENDENTLY without replacement, so every
+# agent has both a unique first name AND a unique last name - no name
+# component repeats anywhere across the roster (same fix as use case 1's
+# agent_name, which had the identical "(i+1)" index-suffix issue).
+_agent_first_names = rng.choice(AGENT_FIRST, size=40, replace=False)
+_agent_last_names = rng.choice(AGENT_LAST, size=40, replace=False)
 
 roster = []
 for i in range(40):   # deliberately tight headcount so a genuine staffing gap shows up on peak days
@@ -139,7 +159,7 @@ for i in range(40):   # deliberately tight headcount so a genuine staffing gap s
 
     roster.append({
         "agent_id": f"AGT{1000 + i}",
-        "agent_name": f"{rng.choice(AGENT_FIRST)} {rng.choice(AGENT_LAST)} ({i + 1})",
+        "agent_name": f"{_agent_first_names[i]} {_agent_last_names[i]}",
         "lob": lob,
         "tl_name": tl,
         "manager_name": manager,

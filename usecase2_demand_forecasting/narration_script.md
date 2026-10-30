@@ -37,8 +37,9 @@ gap against what we have today."
 *[Open `input/input_call_volume_history.xlsx` and
 `input/input_agent_roster.xlsx`.]*
 
-"I have two inputs here. The first is daily contact-volume history — about
-3.8 years of it — broken out by line of business and channel, with average
+"I have two inputs here. The first is daily contact-volume history — 3
+years of it, across four lines of business — broken out by line of
+business and channel, with average
 handle time per channel and flags for holidays and marketing campaigns. The
 second is the agent roster: who we have today, which line of business they
 support, their team lead and manager, tenure, how many hours a week they're
@@ -75,14 +76,14 @@ assumptions up front: a 60-day holdout to validate the model honestly, a
 42-day forward forecast, and an 8-hour working day."
 
 ### Cell 1 — load the data, and ground the occupancy assumption in real data
-"Loading both files — in this run that's just over 8,000 rows of volume
-history and 40 agents on the roster. Instead of assuming a flat occupancy
-figure, I compute it from the roster's REAL average shrinkage — in this run
-that's about 20.6 percent, so an 79-ish percent occupancy target, not a
-textbook constant. That matters because shrinkage is a genuine, measurable
-roster attribute — newer agents typically run higher shrinkage from
-training and coaching — so this ties the staffing math to who's actually on
-the floor."
+"Loading both files — in this run that's just over 13,000 rows of volume
+history, across four lines of business, and 40 agents on the roster.
+Instead of assuming a flat occupancy figure, I compute it from the
+roster's REAL average shrinkage — in this run that's about 19.5 percent,
+so a 79-ish percent occupancy target, not a textbook constant. That
+matters because shrinkage is a genuine, measurable roster attribute —
+newer agents typically run higher shrinkage from training and coaching —
+so this ties the staffing math to who's actually on the floor."
 
 ### Cell 2 — building the series to forecast
 "I'm collapsing this down to total daily contact volume across every line
@@ -106,14 +107,14 @@ is just a guess with extra steps."
 ### Cell 5 — the baseline
 "Before reaching for anything sophisticated, I benchmark against the
 simplest possible forecast: repeat last week's seven values forward. In
-this run, that naive baseline achieves a MAPE of about 20.1 percent on the
+this run, that naive baseline achieves a MAPE of about 17.2 percent on the
 holdout. That's my bar to beat."
 
 ### Cell 6 — Holt-Winters
 "I fit a Holt-Winters model, which explicitly models trend and weekly
 seasonality rather than just repeating the last cycle. On the same holdout
-it comes in at 18.8 percent MAPE versus 20.1 for the baseline — a real,
-honest 1.3-point improvement. I'm upfront about that margin: it's modest,
+it comes in at 15.1 percent MAPE versus 17.2 for the baseline — a real,
+honest 2.1-point improvement. I'm upfront about that margin: it's modest,
 and that's a realistic outcome on data this regular — I'd rather report a
 real small win than overstate it. I've also put an explicit check in the
 script: if Holt-Winters ever loses to the baseline, the script stops and
@@ -130,10 +131,10 @@ including the Sunday dip into November and early December."
 "I convert the volume forecast into required agent-hours using the blended
 handle time, then into required FTEs using the shrinkage-derived occupancy
 figure from Cell 1, and compare that against what the roster can actually
-deliver. In this run, required FTE averages about **27.5** over the
-forecast horizon, against roughly **25.0** available — and on **36 of the
-next 42 days**, we're running short, by up to **3.7 FTE** on the worst day,
-November 18th. That's a real, actionable gap — tight enough to need a plan,
+deliver. In this run, required FTE averages about **25.5** over the
+forecast horizon, against roughly **24.5** available — and on **36 of the
+next 42 days**, we're running short, by up to **2.3 FTE** on the worst day,
+October 29th. That's a real, actionable gap — tight enough to need a plan,
 not a crisis."
 
 ### Cell 9 — saving the output
@@ -146,11 +147,11 @@ in FTE (a line on a secondary axis), so you can see both how much volume
 is coming and how short-staffed it leaves the floor, in the same picture."
 
 ### Cell 10 — the numbers I'll quote
-"To summarize: Holt-Winters improves forecast accuracy from 20.1 to 18.8
+"To summarize: Holt-Winters improves forecast accuracy from 17.2 to 15.1
 percent MAPE versus the naive baseline. Average required staffing over the
-next six weeks is about 27.5 FTE, against roughly 25.0 available today, and
+next six weeks is about 25.5 FTE, against roughly 24.5 available today, and
 we're short-staffed on 36 of the next 42 days, peaking at a shortfall of
-3.7 FTE on November 18th."
+2.3 FTE on October 29th."
 
 ## 6. Output file walkthrough
 
@@ -178,7 +179,7 @@ number pulled straight from the real output files."
 
 "Pulling this together for the business: our forecast shows contact volume
 holding roughly steady with the usual weekly rhythm over the next six
-weeks, but our current roster is running about 3.7 FTE short on the worst
+weeks, but our current roster is running about 2.3 FTE short on the worst
 day. That's a small, fixable gap — a modest overtime allocation or a couple
 of flexible-shift agents would close it — but worth flagging now, with six
 weeks of lead time, rather than discovering it the week service levels
