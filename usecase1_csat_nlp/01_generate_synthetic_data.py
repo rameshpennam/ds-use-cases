@@ -14,6 +14,7 @@ purely for this demo. No real customer, agent or company data is used.
 """
 
 # %% Cell 0 - Imports & configuration
+import os
 import numpy as np
 import pandas as pd
 import random
@@ -23,8 +24,10 @@ RANDOM_SEED = 42
 random.seed(RANDOM_SEED)
 np.random.seed(RANDOM_SEED)
 
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))   # anchor to this script's own folder, not the cwd
+
 N_RECORDS = 7500              # survey responses to simulate (cap at 10,000 per guideline)
-OUTPUT_FILE = "input/input_survey_verbatims.xlsx"   # lands in the input/ subfolder
+OUTPUT_FILE = os.path.join(BASE_DIR, "input", "input_survey_verbatims.xlsx")   # lands in the input/ subfolder
 DATE_RANGE_START = datetime(2026, 8, 1)     # last 3 full months: Aug-Sep-Oct 2026
 DATE_RANGE_END = datetime(2026, 10, 31)
 TOTAL_DAYS = (DATE_RANGE_END - DATE_RANGE_START).days
@@ -629,10 +632,9 @@ for i in range(N_RECORDS):
 df = pd.DataFrame(records).sort_values("date").reset_index(drop=True)
 
 # %% Cell 4 - Save + quick sanity check (this is what you show on screen)
-import os
 import openpyxl
 
-os.makedirs("input", exist_ok=True)
+os.makedirs(os.path.dirname(OUTPUT_FILE), exist_ok=True)
 
 # Write "date" as a real Excel date (not text) so sorting/pivoting by date
 # works correctly in Excel and Power BI.

@@ -14,6 +14,7 @@ purely for this demo. No real customer, agent or company data is used.
 """
 
 # %% Cell 0 - Imports & config
+import os
 import numpy as np
 import pandas as pd
 from datetime import datetime, timedelta
@@ -21,14 +22,16 @@ from datetime import datetime, timedelta
 RANDOM_SEED = 7
 rng = np.random.default_rng(RANDOM_SEED)
 
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))   # anchor to this script's own folder, not the cwd
+
 START_DATE = datetime(2023, 10, 26)
 END_DATE = datetime(2026, 10, 26)     # 3 years of history, capped (was ~3.8) -
 # at 4 LoBs x 3 channels/day this is ~13,140 rows, close to the ~15k target
 LOBS = ["Postpaid Mobile", "Prepaid Mobile", "Broadband", "Billing & Payments"]  # same 4 LoBs as use case 1
 CHANNELS = ["Voice", "Chat", "Email"]
 
-OUT_VOLUME_FILE = "input/input_call_volume_history.xlsx"
-OUT_ROSTER_FILE = "input/input_agent_roster.xlsx"
+OUT_VOLUME_FILE = os.path.join(BASE_DIR, "input", "input_call_volume_history.xlsx")
+OUT_ROSTER_FILE = os.path.join(BASE_DIR, "input", "input_agent_roster.xlsx")
 
 dates = pd.date_range(START_DATE, END_DATE, freq="D")
 
@@ -99,7 +102,7 @@ df_volume = pd.DataFrame(records)
 import os
 import openpyxl
 
-os.makedirs("input", exist_ok=True)
+os.makedirs(os.path.dirname(OUT_VOLUME_FILE), exist_ok=True)
 
 # Write "date" as a real Excel date (not text) so sorting/pivoting by date
 # works correctly in Excel and Power BI.

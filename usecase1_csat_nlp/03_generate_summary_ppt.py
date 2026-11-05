@@ -22,8 +22,10 @@ from pptx.dml.color import RGBColor
 from pptx.enum.text import PP_ALIGN, MSO_ANCHOR
 from pptx.enum.shapes import MSO_SHAPE, MSO_CONNECTOR
 
-DATA_FILE = "final_output/final_output_csat_insights.xlsx"
-OUTPUT_FILE = "final_output/usecase1_csat_summary.pptx"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))   # anchor to this script's own folder, not the cwd
+
+DATA_FILE = os.path.join(BASE_DIR, "final_output", "final_output_csat_insights.xlsx")
+OUTPUT_FILE = os.path.join(BASE_DIR, "final_output", "usecase1_csat_summary.pptx")
 
 # WHAT: a small, consistent design system (colors, fonts, helper shapes)
 # reused across every slide. WHY: this is what makes a deck look like one
@@ -603,6 +605,6 @@ add_text(slide, Inches(0.65), Inches(6.95), Inches(11), Inches(0.4),
          "Data Analytics Consulting  |  Synthetic demo dataset", 12, RGBColor(0xB8, 0xC2, 0xD0))
 
 # %% Cell 9 - Save
-os.makedirs("final_output", exist_ok=True)
+os.makedirs(os.path.dirname(OUTPUT_FILE), exist_ok=True)
 prs.save(OUTPUT_FILE)
 print(f"Saved -> {OUTPUT_FILE} ({len(prs.slides)} slides)")

@@ -41,13 +41,15 @@ from openpyxl.styles import Font, PatternFill, Alignment
 from openpyxl.utils import get_column_letter
 import openpyxl
 
-VOLUME_FILE = "input/input_call_volume_history.xlsx"
-ROSTER_FILE = "input/input_agent_roster.xlsx"
-INTERMEDIATE_FILE = "intermediate/intermediate_model_accuracy_comparison.xlsx"
-OUTPUT_FILE = "final_output/final_output_forecast_staffing.xlsx"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))   # anchor to this script's own folder, not the cwd
 
-os.makedirs("intermediate", exist_ok=True)
-os.makedirs("final_output", exist_ok=True)
+VOLUME_FILE = os.path.join(BASE_DIR, "input", "input_call_volume_history.xlsx")
+ROSTER_FILE = os.path.join(BASE_DIR, "input", "input_agent_roster.xlsx")
+INTERMEDIATE_FILE = os.path.join(BASE_DIR, "intermediate", "intermediate_model_accuracy_comparison.xlsx")
+OUTPUT_FILE = os.path.join(BASE_DIR, "final_output", "final_output_forecast_staffing.xlsx")
+
+os.makedirs(os.path.dirname(INTERMEDIATE_FILE), exist_ok=True)
+os.makedirs(os.path.dirname(OUTPUT_FILE), exist_ok=True)
 
 HOLDOUT_DAYS = 60          # most recent 60 days used to test model accuracy
 FORECAST_HORIZON = 42      # forecast the next 6 weeks forward

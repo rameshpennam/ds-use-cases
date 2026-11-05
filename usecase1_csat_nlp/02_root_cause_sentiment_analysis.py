@@ -49,12 +49,14 @@ from sklearn.decomposition import NMF
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 from openpyxl.chart import BarChart, LineChart, Reference
 
-INPUT_FILE = "input/input_survey_verbatims.xlsx"
-INTERMEDIATE_FILE = "intermediate/intermediate_dictionary_bootstrap_terms.xlsx"
-OUTPUT_FILE = "final_output/final_output_csat_insights.xlsx"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))   # anchor to this script's own folder, not the cwd
 
-os.makedirs("intermediate", exist_ok=True)
-os.makedirs("final_output", exist_ok=True)
+INPUT_FILE = os.path.join(BASE_DIR, "input", "input_survey_verbatims.xlsx")
+INTERMEDIATE_FILE = os.path.join(BASE_DIR, "intermediate", "intermediate_dictionary_bootstrap_terms.xlsx")
+OUTPUT_FILE = os.path.join(BASE_DIR, "final_output", "final_output_csat_insights.xlsx")
+
+os.makedirs(os.path.dirname(INTERMEDIATE_FILE), exist_ok=True)
+os.makedirs(os.path.dirname(OUTPUT_FILE), exist_ok=True)
 
 pd.set_option("display.max_colwidth", 80)
 
