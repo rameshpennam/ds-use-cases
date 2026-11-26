@@ -253,118 +253,6 @@
     "basis": "Projected at today's click rate of 5.37% -- deliberately the cautious version, since click rate should improve once the quality fixes land."
   },
   "market_evidence_ranked": {
-    "SignalWatch Competitive Intelligence": [
-      {
-        "table": "Competitor | Spend Share | Active Creatives | Channels",
-        "row": {
-          "Competitor": "Crestfield Direct",
-          "Spend Share": "15%",
-          "Active Creatives": "29",
-          "Channels": "Search, Social"
-        },
-        "source_page": 6,
-        "relevance_score": 0.104
-      },
-      {
-        "table": "Competitor | Spend Share | Active Creatives | Channels",
-        "row": {
-          "Competitor": "Bluewave Insurance",
-          "Spend Share": "24%",
-          "Active Creatives": "48",
-          "Channels": "Search, Social, Display"
-        },
-        "source_page": 6,
-        "relevance_score": 0.101
-      },
-      {
-        "table": "Competitor | Spend Share | Active Creatives | Channels",
-        "row": {
-          "Competitor": "Stonegate Assurance",
-          "Spend Share": "8%",
-          "Active Creatives": "17",
-          "Channels": "Search"
-        },
-        "source_page": 6,
-        "relevance_score": 0.087
-      },
-      {
-        "table": "Competitor | Spend Share | Active Creatives | Channels",
-        "row": {
-          "Competitor": "Harborline Mutual",
-          "Spend Share": "19%",
-          "Active Creatives": "36",
-          "Channels": "Search, Video"
-        },
-        "source_page": 6,
-        "relevance_score": 0.084
-      },
-      {
-        "table": "Competitor | Spend Share | Active Creatives | Channels",
-        "row": {
-          "Competitor": "Redline Direct Cover",
-          "Spend Share": "4%",
-          "Active Creatives": "9",
-          "Channels": "Search"
-        },
-        "source_page": 6,
-        "relevance_score": 0.074
-      },
-      {
-        "table": "Competitor | Spend Share | Active Creatives | Channels",
-        "row": {
-          "Competitor": "Fieldstone Insurance Group",
-          "Spend Share": "6%",
-          "Active Creatives": "13",
-          "Channels": "Search, Display"
-        },
-        "source_page": 6,
-        "relevance_score": 0.074
-      },
-      {
-        "table": "Competitor | Spend Share | Active Creatives | Channels",
-        "row": {
-          "Competitor": "Nordkreuz Assurance",
-          "Spend Share": "12%",
-          "Active Creatives": "22",
-          "Channels": "Display"
-        },
-        "source_page": 6,
-        "relevance_score": 0.071
-      },
-      {
-        "table": "Competitor | Spend Share | Active Creatives | Channels",
-        "row": {
-          "Competitor": "Pilot Account (this report)",
-          "Spend Share": "6.0%",
-          "Active Creatives": "--",
-          "Channels": "Search (primary)"
-        },
-        "source_page": 6,
-        "relevance_score": 0.071
-      },
-      {
-        "table": "Competitor | Spend Share | Active Creatives | Channels",
-        "row": {
-          "Competitor": "Ambervale Mutual",
-          "Spend Share": "5%",
-          "Active Creatives": "11",
-          "Channels": "Social"
-        },
-        "source_page": 6,
-        "relevance_score": 0.058
-      },
-      {
-        "table": "Competitor | Spend Share | Active Creatives | Channels",
-        "row": {
-          "Competitor": "Thornbury Protection Co",
-          "Spend Share": "3%",
-          "Active Creatives": "7",
-          "Channels": "Display"
-        },
-        "source_page": 6,
-        "relevance_score": 0.047
-      }
-    ],
     "Ashcroft Research Partners": [
       {
         "table": "Market | Search Spend Growth QoQ | Vertical-Avg Impression Share",
@@ -374,7 +262,7 @@
           "Vertical-Avg Impression Share": "21.0%"
         },
         "source_page": 7,
-        "relevance_score": 0.064
+        "relevance_score": 0.08
       },
       {
         "table": "Market | Search Spend Growth QoQ | Vertical-Avg Impression Share",
@@ -384,7 +272,7 @@
           "Vertical-Avg Impression Share": "31.0%"
         },
         "source_page": 8,
-        "relevance_score": 0.05
+        "relevance_score": 0.072
       },
       {
         "table": "Market | Search Spend Growth QoQ | Vertical-Avg Impression Share",
@@ -394,7 +282,7 @@
           "Vertical-Avg Impression Share": "29.5%"
         },
         "source_page": 8,
-        "relevance_score": 0.05
+        "relevance_score": 0.072
       },
       {
         "table": "Market | Search Spend Growth QoQ | Vertical-Avg Impression Share",
@@ -404,7 +292,7 @@
           "Vertical-Avg Impression Share": "19.0%"
         },
         "source_page": 8,
-        "relevance_score": 0.049
+        "relevance_score": 0.071
       },
       {
         "table": "Market | Search Spend Growth QoQ | Vertical-Avg Impression Share",
@@ -414,7 +302,7 @@
           "Vertical-Avg Impression Share": "22.5%"
         },
         "source_page": 8,
-        "relevance_score": 0.049
+        "relevance_score": 0.071
       },
       {
         "table": "Market | Search Spend Growth QoQ | Vertical-Avg Impression Share",
@@ -424,7 +312,7 @@
           "Vertical-Avg Impression Share": "24.0%"
         },
         "source_page": 8,
-        "relevance_score": 0.048
+        "relevance_score": 0.069
       },
       {
         "table": "Market | Search Spend Growth QoQ | Vertical-Avg Impression Share",
@@ -434,7 +322,7 @@
           "Vertical-Avg Impression Share": "26.0%"
         },
         "source_page": 8,
-        "relevance_score": 0.048
+        "relevance_score": 0.069
       },
       {
         "table": "Market | Search Spend Growth QoQ | Vertical-Avg Impression Share",
@@ -444,7 +332,7 @@
           "Vertical-Avg Impression Share": "33.5%"
         },
         "source_page": 8,
-        "relevance_score": 0.048
+        "relevance_score": 0.069
       },
       {
         "table": "Market | Search Spend Growth QoQ | Vertical-Avg Impression Share",
@@ -454,7 +342,7 @@
           "Vertical-Avg Impression Share": "27.5%"
         },
         "source_page": 8,
-        "relevance_score": 0.047
+        "relevance_score": 0.067
       },
       {
         "table": "Vertical | Highlighted Market | Spend Growth QoQ | Query Demand Growth\nQoQ | Vertical-Avg Impression\nShare",
@@ -466,7 +354,7 @@
           "Vertical-Avg Impression\nShare": "21.0%"
         },
         "source_page": 5,
-        "relevance_score": 0.038
+        "relevance_score": 0.043
       }
     ],
     "QueryScope Insights": [
@@ -485,14 +373,14 @@
       {
         "table": "Keyword | Q4 2025 | Q2 2026 | Q3 2026 | Growth",
         "row": {
-          "Keyword": "cheap auto insurance",
+          "Keyword": "life insurance comparison",
           "Q4 2025": "100",
-          "Q2 2026": "115",
-          "Q3 2026": "133",
-          "Growth": "33%"
+          "Q2 2026": "101",
+          "Q3 2026": "109",
+          "Growth": "9%"
         },
         "source_page": 6,
-        "relevance_score": 0.036
+        "relevance_score": 0.039
       }
     ],
     "Vantage Media Metrics": [
@@ -503,7 +391,47 @@
           "Share of Category Spend": "15%"
         },
         "source_page": 7,
-        "relevance_score": 0.037
+        "relevance_score": 0.047
+      },
+      {
+        "table": "Vertical | Ad Intensity Index | Reach % | Avg Frequency",
+        "row": {
+          "Vertical": "Insurance",
+          "Ad Intensity Index": "112",
+          "Reach %": "64%",
+          "Avg Frequency": "3.2"
+        },
+        "source_page": 5,
+        "relevance_score": 0.047
+      },
+      {
+        "table": "Channel | Share of Category Spend",
+        "row": {
+          "Channel": "Search",
+          "Share of Category Spend": "38%"
+        },
+        "source_page": 7,
+        "relevance_score": 0.043
+      },
+      {
+        "table": "Channel | Share | Measurement Confidence",
+        "row": {
+          "Channel": "Other",
+          "Share": "7%",
+          "Measurement Confidence": "Measured (low-volume)"
+        },
+        "source_page": 17,
+        "relevance_score": 0.041
+      },
+      {
+        "table": "Channel | Share | Measurement Confidence",
+        "row": {
+          "Channel": "Other",
+          "Share": "5%",
+          "Measurement Confidence": "Measured (low-volume)"
+        },
+        "source_page": 17,
+        "relevance_score": 0.041
       },
       {
         "table": "Channel | Share | Measurement Confidence",
@@ -513,161 +441,234 @@
           "Measurement Confidence": "Measured"
         },
         "source_page": 17,
-        "relevance_score": 0.036
+        "relevance_score": 0.039
+      }
+    ],
+    "SignalWatch Competitive Intelligence": [
+      {
+        "table": "Competitor | Spend Share | Active Creatives | Channels",
+        "row": {
+          "Competitor": "Crestfield Direct",
+          "Spend Share": "15%",
+          "Active Creatives": "29",
+          "Channels": "Search, Social"
+        },
+        "source_page": 6,
+        "relevance_score": 0.046
+      },
+      {
+        "table": "Competitor | Spend Share | Active Creatives | Channels",
+        "row": {
+          "Competitor": "Fieldstone Insurance Group",
+          "Spend Share": "6%",
+          "Active Creatives": "13",
+          "Channels": "Search, Display"
+        },
+        "source_page": 6,
+        "relevance_score": 0.043
+      },
+      {
+        "table": "Competitor | Spend Share | Active Creatives | Channels",
+        "row": {
+          "Competitor": "Stonegate Assurance",
+          "Spend Share": "8%",
+          "Active Creatives": "17",
+          "Channels": "Search"
+        },
+        "source_page": 6,
+        "relevance_score": 0.043
+      },
+      {
+        "table": "Competitor | Spend Share | Active Creatives | Channels",
+        "row": {
+          "Competitor": "Bluewave Insurance",
+          "Spend Share": "24%",
+          "Active Creatives": "48",
+          "Channels": "Search, Social, Display"
+        },
+        "source_page": 6,
+        "relevance_score": 0.042
+      },
+      {
+        "table": "Competitor | Spend Share | Active Creatives | Channels",
+        "row": {
+          "Competitor": "Pilot Account (this report)",
+          "Spend Share": "6.0%",
+          "Active Creatives": "--",
+          "Channels": "Search (primary)"
+        },
+        "source_page": 6,
+        "relevance_score": 0.041
+      },
+      {
+        "table": "Competitor | Spend Share | Active Creatives | Channels",
+        "row": {
+          "Competitor": "Nordkreuz Assurance",
+          "Spend Share": "12%",
+          "Active Creatives": "22",
+          "Channels": "Display"
+        },
+        "source_page": 6,
+        "relevance_score": 0.041
       }
     ]
   },
   "ads_analysis": {
-    "account_level_diagnosis": "This account is overwhelmingly rank-constrained, not budget-constrained. Across the key non-brand search campaigns you\u2019re only capturing 5\u20137% search impression share while losing 93\u201395% to rank, despite budget utilization sitting ~56\u201359% and lost IS to budget at 0%. Auction pressure is extreme (competitors top-of-page 73.2% vs your 15.2%; your outranking share 9.1%), and you also have pockets of waste/intent mismatch (e.g., \u201cinsurance company phone number\u201d QS 3.0 at \u20ac2,605.80 with \u20ac1,371.47 cost/conv) that drag effective rank and efficiency.",
+    "account_level_diagnosis": "The account is overwhelmingly rank-constrained in non-brand: the three in-scope non-brand search campaigns are capturing only 5\u20137% search impression share while losing 93\u201395% to rank, despite budget not being the limiter (0% lost to budget and only ~56\u201359% budget utilization). Auction evidence corroborates you\u2019re routinely not in top placements (15.2% top-of-page vs competitors\u2019 73.2%) and are outranked most of the time (9.1% outranking share). Fixes should prioritize improving eligibility to win auctions (bids + quality/intent alignment), and cutting/isolating low-intent spend that drags efficiency while you try to buy rank.",
     "primary_constraint": "rank-constrained",
-    "confidence_0_to_1": 0.9,
+    "confidence_0_to_1": 0.86,
     "notable_patterns": [
-      "Non-brand demand is largely untapped due to rank, not budget: Auto/Home/Life search IS is 6%/5%/7% with lost rank 94%/95%/93% and lost budget 0% in all three, while budget utilization is only 57.2%/58.5%/56.2%.",
-      "Even high-quality keywords aren\u2019t getting served, pointing to insufficient Ad Rank via bids/auction pressure rather than relevance alone: \u201cauto insurance germany\u201d QS 9.0 has only 5.0% IS (95% lost to rank); \u201chome insurance cost\u201d QS 8.5 has 5.5% IS (94.5% lost to rank).",
-      "Competitors consistently win premium placement: average top-of-page rate is 15.2% for you vs 73.2% for competitors; Nordkreuz Assurance is above you 96.5% of the time and at top-of-page 82.6% vs your 17.1%.",
-      "A large slice of impressions is coming from competitor-brand queries that don\u2019t engage: 35,700 competitor-brand zero-click impressions, and 48.3% of search-term impressions are from zero-click competitor terms (e.g., \u201cbluewave insurance\u201d, \u201charborline mutual\u201d, \u201ccrestfield direct\u201d)."
+      "Non-brand search campaigns have extremely low reach driven by rank loss, not budget: Auto IS 6% with 94% lost to rank (0% lost to budget); Home IS 5% with 95% lost to rank; Life IS 7% with 93% lost to rank, all with only ~56\u201359% budget utilization.",
+      "Auction positions are consistently weak versus named competitors: avg top-of-page rate is 15.2% for you vs 73.2% for competitors, with only 9.1% outranking share; Nordkreuz Assurance is above you 96.5% of the time while it hits 82.6% top-of-page.",
+      "There are \u201cgood\u201d keywords that still barely serve, signaling Ad Rank/bid pressure in competitive auctions: e.g., \"auto insurance germany\" QS 9.0 but only 5.0% impression share (95% lost to rank); \"home insurance cost\" QS 8.5 with 5.5% IS (94.5% lost to rank).",
+      "Meaningful waste/intent mismatch exists inside search: \"insurance company phone number\" (QS 3.0) spent 2,605.80 with cost/conv 1,371.47; \"what is life insurance\" (QS 4.5) spent 858.99 with cost/conv 613.56\u2014these soak budget while the core quote/comparison terms can\u2019t win rank."
     ],
     "campaign_findings": [
       {
         "campaign_name": "Non-Brand Search - Auto Insurance",
-        "diagnosis": "You\u2019re only capturing 6% search impression share while losing 94% to rank, with 0% lost to budget and only 57.2% budget utilization\u2014this is an Ad Rank/position problem, not spend caps. Efficiency is also weak (ROAS 0.7) suggesting current coverage is skewing to poorer-intent queries while you miss stronger ones.",
+        "diagnosis": "Reach is severely constrained by rank (6% impression share; 94% lost to rank; 0% lost to budget) while efficiency is poor (ROAS 0.7) and budget isn\u2019t being fully used (57.2% utilization). This points to Ad Rank pressure in auctions plus query mix dragging performance.",
         "primary_constraint": "rank",
         "severity_0_to_1": 0.92,
-        "recommended_action": "Restructure around high-intent quote/comparison terms and raise competitiveness (bids/targets) on the proven high-QS terms (e.g., \u201ccar insurance quote\u201d, \u201cauto insurance germany\u201d) while cutting/negating low-intent leakage; aim to materially lift top-of-page rate and impression share before scaling budget."
+        "recommended_action": "Concentrate spend and bidding power on high-intent quote/comparison terms (e.g., \"car insurance quote\", \"auto insurance germany\") and aggressively exclude/segment low-intent informational/job/phone-number traffic so you can bid to top-of-page on the terms that can pay back."
       },
       {
         "campaign_name": "Non-Brand Search - Home Insurance",
-        "diagnosis": "The campaign is effectively not participating in the auction (5% IS; 95% lost to rank) despite 0% lost to budget and 58.5% budget utilization. Average quality score is low (4.1), which will further suppress Ad Rank and keep CPC inefficient at any meaningful coverage.",
+        "diagnosis": "This campaign is almost not participating (5% impression share; 95% lost to rank; 0% lost to budget) and has weak quality foundations (avg QS 4.1) alongside ROAS 0.75. The combination suggests both Ad Rank and relevance/LP alignment problems.",
         "primary_constraint": "rank",
-        "severity_0_to_1": 0.95,
-        "recommended_action": "Rebuild keyword-to-ad-to-landing alignment to lift QS (starting with ad groups around \u201chome insurance cost\u201d) and only then increase competitiveness on the best-intent segments; remove/negate process/claims informational traffic that\u2019s absorbing spend without proportional returns."
+        "severity_0_to_1": 0.9,
+        "recommended_action": "Rebuild around a tight set of commercial-intent ad groups/landing pages (pricing/quote intent) and reduce exposure to process/claims queries (e.g., \"home insurance claims process\" QS 4.0; cost/conv 244.45) to lift QS and support higher position at sustainable CPCs."
       },
       {
         "campaign_name": "Non-Brand Search - Life Insurance",
-        "diagnosis": "Rank is the binding constraint (7% IS; 93% lost to rank; 0% lost to budget; 56.2% budget utilization), compounded by an extremely low average quality score (2.0) that makes it very hard to win auctions. Current ROAS is 0.89, consistent with paying for low-intent educational queries while missing comparison/quote demand.",
+        "diagnosis": "Life is the worst quality baseline (avg QS 2.0) with 7% impression share and 93% lost to rank (0% lost to budget), so it\u2019s structurally unable to win auctions; ROAS is only 0.89. You\u2019re paying for broad education intent (e.g., \"what is life insurance\") while failing to secure visibility on comparison intent.",
         "primary_constraint": "rank",
-        "severity_0_to_1": 0.97,
-        "recommended_action": "Split informational vs. commercial intent, pause/negate the worst educational terms (e.g., \u201cwhat is life insurance\u201d QS 4.5 with \u20ac613.56 cost/conv), and rebuild RSAs/landing pages for \u201clife insurance comparison\u201d intent to raise QS and regain impression share."
+        "severity_0_to_1": 0.95,
+        "recommended_action": "Split informational vs quote/comparison intent; pause or heavily downbid educational keywords, and rebuild RSA/LP relevance around comparison/quote themes to lift QS from ~2 toward mid-single digits before attempting to buy more volume."
       }
     ],
     "recommendation_cards": [
       {
-        "title": "Win back non-brand impression share by fixing Ad Rank (bids + structure) on the highest-intent terms",
+        "title": "Reallocate and bid up on the highest-intent non-brand terms to buy top-of-page share",
         "affects": "bid",
         "priority": "high",
         "timeframe": "Now",
-        "what_data_shows": "Your three in-scope non-brand campaigns are barely serving (Auto 6% IS / 94% lost to rank; Home 5% / 95%; Life 7% / 93%) with 0% lost to budget and only ~56\u201359% budget utilization\u2014so demand isn\u2019t being capped by budgets. Even strong-QS terms aren\u2019t showing: \u201cauto insurance germany\u201d QS 9.0 has 5% IS with 95% lost to rank; \u201ccar insurance quote\u201d QS 8.0 has 6% IS with 94% lost to rank.",
+        "what_data_shows": "Across non-brand search, impression share is only 5\u20137% while 93\u201395% is lost to rank (Auto: 6% IS / 94% lost to rank; Home: 5% / 95%; Life: 7% / 93%), with 0% lost to budget and only ~56\u201359% budget utilization. You\u2019re also rarely in premium placements (15.2% top-of-page for you vs competitors\u2019 73.2%), indicating you\u2019re not bidding/winning high enough in auctions even when demand exists.",
         "recommended_steps": [
-          "Create separate ad groups (or standalone campaigns if needed) for the high-intent quote/comparison keywords listed (e.g., \u201cauto insurance germany\u201d, \u201ccar insurance quote\u201d, \u201chome insurance cost\u201d, \u201clife insurance comparison\u201d) and isolate them from broader/mixed-intent terms.",
-          "Increase competitiveness specifically on these segments (raise bids / relax efficiency targets) until top-of-page rate materially improves; keep changes scoped so you can measure lift without inflating low-intent traffic.",
-          "Add tighter match types and query controls for these segments so incremental rank is spent on commercial intent rather than informational queries."
+          "Create a dedicated high-intent segment (quote/comparison/pricing) using the proven strong terms (e.g., \"car insurance quote\", \"auto insurance germany\", \"home insurance cost\", \"life insurance comparison\") and apply a more aggressive bid/targeting posture there.",
+          "Move budget out of low-intent ad groups/keywords (see waste list below) into the high-intent segment so you can sustain higher first-page/top-of-page eligibility.",
+          "Monitor position vs the four named competitors and iterate bids until top-of-page rate meaningfully improves (don\u2019t increase spend uniformly; concentrate it where intent is commercial)."
         ],
-        "what_to_watch": "Top-of-page rate moving from 15.2% toward 25\u201330%+ and search impression share in non-brand campaigns rising from ~5\u20137% into the teens without ROAS deteriorating further."
+        "what_to_watch": "Top-of-page rate rising from 15.2% toward 25\u201330%+ while rank-lost impression share in non-brand falls from ~93\u201395% toward <80%."
       },
       {
-        "title": "Cut low-intent spend that is inflating costs and dragging effective rank",
-        "affects": "negative_keywords",
+        "title": "Stop paying for low-intent queries that are crushing efficiency while you\u2019re rank-limited",
+        "affects": "budget_allocation",
         "priority": "high",
         "timeframe": "0-3 days",
-        "what_data_shows": "Several queries/keywords show extremely poor economics: \u201cinsurance company phone number\u201d (QS 3.0) spent \u20ac2,605.80 at \u20ac1,371.47 per conversion; \u201chome insurance claims process\u201d (QS 4.0) spent \u20ac2,248.95 at \u20ac244.45 per conversion; \u201cwhat is life insurance\u201d spent \u20ac858.99 at \u20ac613.56 per conversion. This spend is competing with your quote/comparison terms for auction pressure while your non-brand IS remains ~5\u20137%.",
+        "what_data_shows": "Several low-quality/low-intent keywords are consuming meaningful spend at extreme cost/conv: \"insurance company phone number\" (QS 3.0) spent 2,605.80 with cost/conv 1,371.47; \"home insurance claims process\" (QS 4.0) spent 2,248.95 with cost/conv 244.45; \"what is life insurance\" (QS 4.5) spent 858.99 with cost/conv 613.56. Meanwhile, core commercial terms with high QS still can\u2019t serve due to rank loss (e.g., \"auto insurance germany\" QS 9.0 but only 5% IS; 95% lost to rank).",
         "recommended_steps": [
-          "Add/expand intent negatives (e.g., phone number, customer service, claims, process, what is, definition) in the non-brand campaigns, then re-check search terms after 48\u201372 hours for variants.",
-          "Move any genuinely necessary informational coverage into a separate, tightly capped campaign so it can\u2019t suppress the main quote/comparison coverage.",
-          "Reallocate freed spend headroom into the isolated high-intent ad groups where rank is the limiting factor."
+          "Add/expand intent negatives for support/servicing and research intent (e.g., phone number, claims process, what is, definition, wiki) in non-brand campaigns, or isolate these into a separate low-bid educational campaign if they\u2019re strategically required.",
+          "Pause or sharply reduce bids on the named high-cost/low-conversion keywords until they meet a defined CPA ceiling.",
+          "Use the freed spend to support bids/coverage on quote/comparison terms where you actually want to win auctions."
         ],
-        "what_to_watch": "Cost/conv on non-brand dropping materially (start by eliminating the \u20ac244\u2013\u20ac1,371 cost/conv pockets) while impression share on the high-intent ad groups increases."
+        "what_to_watch": "Cost/conv on non-brand moving down materially from the worst outliers (e.g., eliminate 1,371.47 cost/conv traffic) while conversions hold or improve as spend shifts to quote/comparison intent."
       },
       {
-        "title": "Stop competitor-brand \u201czero-click\u201d leakage and refocus coverage on terms that can convert",
+        "title": "Fix Life/Home relevance to lift Quality Score from structurally low levels",
+        "affects": "quality_score",
+        "priority": "high",
+        "timeframe": "2 weeks",
+        "what_data_shows": "Average quality score is particularly weak in Life (avg QS 2.0) and Home (avg QS 4.1), and both are almost entirely blocked by rank (Life 93% lost to rank; Home 95%). Even with decent ad strength coverage (80% of ads rated Good/Excellent), these QS levels will keep Ad Rank uncompetitive versus rivals that appear top-of-page ~73% of the time.",
+        "recommended_steps": [
+          "Rebuild ad groups tightly by product + intent (e.g., \u201clife insurance comparison/quote\u201d, \u201chome insurance cost/quote\u201d) and align landing pages to the same intent terms in the headline and above-the-fold content.",
+          "Write new ads specifically for comparison/quote themes (pricing, quote, compare, switch) and avoid mixing informational \u201cwhat is/claims process\u201d intent in the same ad groups.",
+          "After restructuring, re-evaluate QS distribution and only then scale bids; otherwise you\u2019ll pay more CPC for the same low position."
+        ],
+        "what_to_watch": "Avg QS in Life moving off ~2.0 toward 4.0+ (and Home from ~4.1 toward 5.0+) alongside a reduction in impression share lost to rank."
+      },
+      {
+        "title": "Cut competitor-brand \u2018zero-click\u2019 leakage; keep only what proves it can convert",
         "affects": "negative_keywords",
         "priority": "medium",
         "timeframe": "0-3 days",
-        "what_data_shows": "Competitor-brand queries are a major volume driver but low engagement: 35,700 competitor-brand zero-click impressions, and 48.3% of search-term impressions come from zero-click competitor terms (e.g., \u201cbluewave insurance\u201d, \u201charborline mutual\u201d, \u201ccrestfield direct\u201d). Only one competitor-brand term is shown converting (\u201cnordkreuz insurance quote\u201d: 1.0 conversion).",
+        "what_data_shows": "Competitor-brand queries account for a large share of impressions with no engagement signal: 35,700 competitor-brand zero-click impressions, and 48.3% of search-term impressions are from zero-click competitor terms (e.g., \"bluewave insurance\", \"harborline mutual\", \"crestfield direct\"). Only one competitor term is shown converting (\"nordkreuz insurance quote\" with 1.0 conversion).",
         "recommended_steps": [
-          "Add competitor brand negatives for the identified zero-click terms (Bluewave/Harborline/Crestfield) at the appropriate level to prevent repeat exposure.",
-          "Keep (or test separately) the one competitor term that has evidence of conversion (\u201cnordkreuz insurance quote\u201d) in a small, controlled ad group with bespoke ad copy.",
-          "After exclusions, review impression mix to ensure reclaimed inventory shifts toward \u201cquote/comparison/cost\u201d intent rather than other low-intent categories."
+          "Add exact/phrase negatives for competitor brands that generate zero-click volume (Bluewave Insurance, Harborline Mutual, Crestfield Direct) to prevent impression wastage.",
+          "Keep a tightly controlled competitor segment only for terms that include strong intent modifiers (e.g., 'quote', 'compare'); start with the proven pattern (\"nordkreuz insurance quote\").",
+          "Review the competitor search-term list weekly and negative out any brand-only terms that continue to show zero-click behavior."
         ],
-        "what_to_watch": "Share of impressions from competitor-brand zero-click terms falling from 48.3% to <20% while overall non-brand conversions hold or improve."
-      },
-      {
-        "title": "Fix the life & home Quality Score bottleneck to make rank gains affordable",
-        "affects": "quality_score",
-        "priority": "medium",
-        "timeframe": "2 weeks",
-        "what_data_shows": "The Home and Life campaigns have weak average quality scores (Home QS 4.1; Life QS 2.0) alongside extreme lost rank (95% and 93%). This combination usually forces you to overpay for position or (as seen here) fail to enter auctions consistently.",
-        "recommended_steps": [
-          "Rebuild RSAs and landing page alignment per intent theme (e.g., separate \u201ccomparison\u201d, \u201ccost\u201d, \u201cquote\u201d from educational intent); ensure the keyword appears in headlines and on-page above the fold for those themes.",
-          "Tighten ad group keyword lists to improve predicted CTR and relevance (fewer, more homogeneous keywords per group).",
-          "After QS lifts, revisit bids/targets to buy back impression share with less CPC inflation."
-        ],
-        "what_to_watch": "Average QS in Life rising from ~2 toward 4+ and Home from ~4.1 toward 6+, accompanied by reduced lost-to-rank percentage in those campaigns."
+        "what_to_watch": "Share of impressions from zero-click competitor terms falling from 48.3% to <20% while overall non-brand conversion volume is maintained or improved."
       }
     ],
     "already_working": [
-      "Budgets are not currently constraining delivery: impression share lost to budget is 0% across every campaign listed, and budget utilization is only ~51\u201359% (e.g., Auto 57.2%, Home 58.5%, Life 56.2%).",
-      "Brand coverage is relatively strong: Brand Search - DE has 85% search impression share with only 15% lost to rank and a healthy ROAS of 4.7.",
-      "Ad asset quality is not the main limiter: 80% of ads are rated Good or Excellent (3 Excellent, 1 Good), so the biggest gains are more about auction competitiveness and query mix than rewriting everything."
+      "Budget is not the limiter right now: every campaign shows 0% impression share lost to budget and only ~51\u201359% budget utilization (e.g., Auto 57.2%, Home 58.5%, Life 56.2%), so increasing budgets alone won\u2019t fix missed impressions.",
+      "Brand search is relatively healthy coverage: 85% impression share with only 15% lost to rank and strong ROAS of 4.7; it\u2019s not the primary drag on account efficiency.",
+      "Ad creation isn\u2019t the main bottleneck: 80% of ads are rated Good/Excellent (3 Excellent, 1 Good), suggesting bigger gains will come from auction competitiveness and query/intent control rather than purely rewriting all ads."
     ]
   },
   "market_mapping": {
-    "why_now_summary": "Non-brand search demand in Germany insurance is rising quickly while competitors are visibly allocating more share and creative volume into search\u2014so staying rank-constrained means continuing to forfeit incremental, high-intent queries precisely as the market expands. With your budgets not limiting delivery, acting now to improve Ad Rank (bids + structure + QS) is the fastest path to reclaim impression share before competitor investment and query growth further harden auction dynamics.",
+    "why_now_summary": "This account\u2019s non-brand search is already demand-available but structurally unable to compete on Ad Rank (93\u201395% lost to rank). That problem becomes more urgent because (1) Germany insurance search is growing quickly right now (both spend and query demand up QoQ), so the opportunity cost of staying under-ranked is increasing, and (2) competitors are allocating meaningful share to search and showing higher overall category ad intensity\u2014meaning auction pressure is unlikely to ease on its own. Acting now to lift rank (bid + quality/intent alignment) and cut low-intent leakage prevents you from falling further behind as the market heats up.",
     "supporting_facts": [
       {
         "vendor": "Ashcroft Research Partners",
-        "fact": "Germany (pilot account market) shows \"Search Spend Growth QoQ\" of 18.0% and \"Vertical-Avg Impression Share\" of 21.0%.",
-        "relevance_to_recommendation": "Your account is capturing only ~5\u20137% IS in core non-brand campaigns while losing ~93\u201395% to rank; the market benchmark IS (21.0%) and rapidly increasing spend (18.0% QoQ) suggest auctions are getting more competitive right now\u2014making rank fixes time-sensitive."
+        "fact": "Insurance in Germany shows \"Spend Growth QoQ\" of 18.0% and \"Query Demand Growth QoQ\" of 12.0%, with \"Vertical-Avg Impression Share\" at 21.0% (table: \"Vertical | Highlighted Market | Spend Growth QoQ | Query Demand Growth QoQ | Vertical-Avg Impression Share\", page 5).",
+        "relevance_to_recommendation": "With auctions heating up (spend + demand rising QoQ), a rank-constrained account that\u2019s only capturing ~5\u20137% impression share risks losing even more coverage unless it improves Ad Rank now (bids and relevance/QS). The 21.0% vertical-average IS also highlights how far below typical coverage the account is today."
       },
       {
         "vendor": "Ashcroft Research Partners",
-        "fact": "For the Insurance vertical in Germany: \"Spend Growth QoQ\" is 18.0% and \"Query Demand Growth QoQ\" is 12.0%, with \"Vertical-Avg Impression Share\" of 21.0%.",
-        "relevance_to_recommendation": "This directly supports the \u2018why now\u2019: demand is expanding (12.0% QoQ) at the same time spend is accelerating (18.0% QoQ). If you remain rank-limited, you miss a growing pool of quote/comparison shoppers while competitors buy up the incremental impressions."
+        "fact": "Germany (pilot account market) has \"Search Spend Growth QoQ\" of 18.0% and \"Vertical-Avg Impression Share\" of 21.0% (table: \"Market | Search Spend Growth QoQ | Vertical-Avg Impression Share\", page 7).",
+        "relevance_to_recommendation": "Rising search investment in Germany implies increasing competition and CPC pressure. Since budget is not the limiter in the account diagnosis, urgency is to reallocate away from low-intent waste and bid/optimize for rank on the highest-intent terms before the market gets more expensive."
+      },
+      {
+        "vendor": "Vantage Media Metrics",
+        "fact": "In the category media mix, \"Search\" accounts for 38% of \"Share of Category Spend\" (table: \"Channel | Share of Category Spend\", page 7).",
+        "relevance_to_recommendation": "Because search is a large share of category spend, competitors are likely prioritizing and defending search visibility. A rank-constrained non-brand program will continue to be suppressed unless it becomes more competitive in auctions (higher bids where it pays back + improved quality/intent alignment)."
+      },
+      {
+        "vendor": "SignalWatch Competitive Intelligence",
+        "fact": "Bluewave Insurance has 24% \"Spend Share\" and runs across \"Search, Social, Display\" with 48 \"Active Creatives\" (table: \"Competitor | Spend Share | Active Creatives | Channels\", page 6).",
+        "relevance_to_recommendation": "A major competitor with high spend share and heavy creative activity signals sustained competitive pressure. If your account is already losing 93\u201395% of non-brand impressions to rank, the cost of waiting is continuing to concede top placements to better-funded competitors."
+      },
+      {
+        "vendor": "SignalWatch Competitive Intelligence",
+        "fact": "Crestfield Direct has 15% \"Spend Share\" with 29 \"Active Creatives\" and runs \"Search, Social\" (table: \"Competitor | Spend Share | Active Creatives | Channels\", page 6).",
+        "relevance_to_recommendation": "Multiple competitors (not just one) are materially invested in performance channels including search\u2014supporting the diagnosis that auction competitiveness is the binding constraint, and strengthening the case to urgently concentrate spend/bids on the highest-intent terms to win rank."
       },
       {
         "vendor": "QueryScope Insights",
-        "fact": "The keyword \"home insurance cost\" index rises from 100 (Q4 2025) to 119 (Q3 2026), labeled \"Growth\" of 19%.",
-        "relevance_to_recommendation": "\u201chome insurance cost\u201d is one of your stated high-intent targets, yet your Home campaign is ~5% IS with ~95% lost to rank; the 19% growth indicates that the exact commercial-intent segment you need is expanding\u2014so improving rank now prevents further opportunity loss."
+        "fact": "The keyword \"home insurance cost\" grows from 100 (Q4 2025) to 119 (Q3 2026), \"Growth\" 19% (table: \"Keyword | Q4 2025 | Q2 2026 | Q3 2026 | Growth\", page 6).",
+        "relevance_to_recommendation": "This directly maps to the account\u2019s issue: even strong commercial-intent terms (like cost/quote queries) are where you need top-of-page presence. Demand growth on \u201chome insurance cost\u201d increases the opportunity cost of staying rank-limited and supports acting now to rebuild Home around pricing/quote intent and lift QS/Ad Rank."
       },
       {
         "vendor": "QueryScope Insights",
-        "fact": "The keyword \"cheap auto insurance\" index rises from 100 (Q4 2025) to 133 (Q3 2026), labeled \"Growth\" of 33%.",
-        "relevance_to_recommendation": "Auto non-brand is also heavily rank-constrained (~6% IS; ~94% lost to rank). A 33% rise in this value-driven, high-intent theme implies increasing volume where you need stronger Ad Rank and tighter intent control to win incrementally profitable traffic."
+        "fact": "The keyword \"life insurance comparison\" grows from 100 (Q4 2025) to 109 (Q3 2026), \"Growth\" 9% (table: \"Keyword | Q4 2025 | Q2 2026 | Q3 2026 | Growth\", page 6).",
+        "relevance_to_recommendation": "Comparison intent is exactly where the account should concentrate bidding power, but Life has very weak QS and is heavily rank-limited. Growing demand for \u201clife insurance comparison\u201d reinforces urgency to split informational vs comparison/quote intent and improve relevance so you can actually enter and win these auctions."
       },
       {
-        "vendor": "SignalWatch Competitive Intelligence",
-        "fact": "Bluewave Insurance has \"Spend Share\" of 24% with \"Active Creatives\" of 48, running across \"Search, Social, Display\".",
-        "relevance_to_recommendation": "You\u2019re facing extreme auction pressure and low top-of-page presence; a competitor with 24% spend share and 48 active creatives signals heavy, active investment that can keep CPC/Ad Rank thresholds elevated\u2014supporting urgency to respond with a more competitive rank strategy in search."
-      },
-      {
-        "vendor": "SignalWatch Competitive Intelligence",
-        "fact": "Harborline Mutual has \"Spend Share\" of 19% with \"Active Creatives\" of 36, running across \"Search, Video\".",
-        "relevance_to_recommendation": "This corroborates that multiple competitors are committing significant share and creative testing that can intensify search auctions. With your delivery not budget-capped, the immediate lever is improving Ad Rank and query mix so you can compete for top positions as competitor activity grows."
-      },
-      {
-        "vendor": "SignalWatch Competitive Intelligence",
-        "fact": "Crestfield Direct has \"Spend Share\" of 15% with \"Active Creatives\" of 29, running across \"Search, Social\".",
-        "relevance_to_recommendation": "Your impression mix currently includes substantial competitor-brand exposure with low engagement; this competitor\u2019s meaningful spend share and active creative footprint reinforces that competitor presence is strong, making it urgent to eliminate zero-intent leakage and reallocate to high-intent non-brand terms where demand is growing."
+        "vendor": "Vantage Media Metrics",
+        "fact": "For the Insurance vertical, \"Ad Intensity Index\" is 112 with \"Reach %\" 64% and \"Avg Frequency\" 3.2 (table: \"Vertical | Ad Intensity Index | Reach % | Avg Frequency\", page 5).",
+        "relevance_to_recommendation": "Above-baseline ad intensity (index 112) supports that competitive pressure is elevated, making a rank-constrained non-brand program even less likely to improve passively. This strengthens the need to act now on Ad Rank levers (bids + quality + intent filtering) rather than waiting for auctions to soften."
       }
     ],
     "urgency_0_to_1": 0.86
   },
   "email_copy": {
-    "subject": "EUR 188,014 sitting behind a rank bottleneck (9.02% IS, 0.0% lost to budget)",
-    "hook": "I took a close look at your paid search account in Germany and one thing jumped out fast: you\u2019re not \u201cout of budget\u201d \u2014 you\u2019re simply not getting into enough of the best auctions. With a daily budget of EUR 52,768, you still have room to capture materially more non-brand demand if we fix position and query mix.",
+    "subject": "You\u2019re missing 91.0% of non-brand demand to rank \u2014 EUR 188,014 on the table this quarter",
+    "hook": "Your paid search account isn\u2019t \u201cbudget capped\u201d \u2014 it\u2019s getting blocked at the auction door. Non-brand is only showing up 9.02% of the time, even though you\u2019re losing 0.0% to budget and running a daily budget of EUR 52,768.",
     "why_now_bullets": [
-      "Germany insurance search is heating up: <b>12.0%</b> query demand growth QoQ at the same time spend is up <b>18.0%</b> QoQ \u2014 auctions tend to harden quickly in that combo.",
-      "Your non-brand coverage is well below where the market is trending: you\u2019re at <b>9.02%</b> impression share versus a <b>21.0%</b> vertical average, and you\u2019re losing <b>91.0%</b> to rank (not budget).",
-      "The highest-intent themes you want are growing: \u201chome insurance cost\u201d is up <b>19%</b> and \u201ccheap auto insurance\u201d up <b>33%</b> \u2014 the exact moments where being rank-constrained is most expensive."
+      "Germany insurance search is heating up (Spend Growth QoQ <b>18.0%</b>, Query Demand Growth QoQ <b>12.0%</b>) \u2014 staying under-ranked now gets more expensive later.",
+      "You\u2019re currently losing <b>91.0%</b> of impression share to rank, not budget \u2014 meaning the fastest wins are Ad Rank levers (intent tightening + bids + relevance), not bigger budgets.",
+      "The category norm is higher coverage (Vertical-Avg Impression Share <b>21.0%</b>) \u2014 you\u2019re competing in a market where others are simply showing up more often. "
     ],
-    "stat_label": "REVENUE OPPORTUNITY (THIS QUARTER)",
-    "stat_sub": "Unlocked by improving Ad Rank and cleaning up intent \u2014 not by raising caps.",
-    "impact_line": "Right now the account is overwhelmingly rank-constrained: only 9.02% impression share with 0.0% lost to budget, but 91.0% lost to rank. That gap translates to EUR 188,014 in incremental revenue opportunity this quarter if we win back premium placement on quote/comparison intent and stop spending impressions on terms that don\u2019t convert.",
-    "scope_intro": "Below is a quick breakdown of where that upside is sitting across your core non-brand campaigns, so you can see where rank and intent fixes will pay back fastest.",
-    "cards_intro": "Here are the specific, high-leverage changes that will move the needle first \u2014 the goal is to buy back visibility on proven commercial intent while preventing low-intent traffic from dragging down effective rank.",
-    "working_intro": "A few things are already in a good place \u2014 which is why this is more of a \u201creposition and refocus\u201d job than a rebuild from scratch.",
-    "opportunity_intro": "If we execute the fixes below, the payoff is straightforward: moving from today\u2019s 9.02% toward a 21.0% share adds meaningful scale (impressions and clicks) while keeping the plan grounded in your current click rate assumptions \u2014 and it ladders directly into the EUR 188,014 upside.",
-    "fix_title": "Want me to map this into a 14-day action plan for your team?",
-    "fix_body": "Reply with <b>\u201cTue\u201d</b> or <b>\u201cThu\u201d</b> and I\u2019ll send two concrete time options for a 20-minute working session. If you\u2019d rather keep it async, just reply <b>\u201cplan\u201d</b> and I\u2019ll share the checklist + priority order in email.",
-    "ps": "PS: If there\u2019s a KPI you\u2019re optimizing hardest for right now (volume vs. efficiency), reply with just <b>\u201cvolume\u201d</b> or <b>\u201cefficiency\u201d</b> \u2014 I\u2019ll tailor the plan to that constraint."
+    "stat_label": "HEADLINE OPPORTUNITY (THIS QUARTER)",
+    "stat_sub": "EUR 188,014",
+    "impact_line": "That EUR 188,014 isn\u2019t coming from \u201cspending more\u201d \u2014 it comes from fixing why non-brand is being shut out of auctions (rank) while budget sits unused, then concentrating spend on quote/comparison intent so you can consistently earn top placements where conversion likelihood is highest.",
+    "scope_intro": "Below is the breakdown of where the opportunity is concentrated across your three non-brand search campaigns, based on what\u2019s being suppressed today.",
+    "cards_intro": "Here are the specific fixes that will move the needle fastest \u2014 first by stopping the leakage that\u2019s dragging efficiency, then by buying back the rank you\u2019re currently missing in the highest-intent auctions.",
+    "working_intro": "Also worth calling out: a few fundamentals are solid, so we can focus effort where it actually changes outcomes (auction competitiveness + intent control).",
+    "opportunity_intro": "If we lift coverage from 9.02% toward 21.0% in the right queries (not everywhere), the upside is meaningful: an estimated 610980 additional impressions and 32802 additional clicks \u2014 the volume base that supports the EUR 188,014 this quarter.",
+    "fix_title": "Want me to map this into a 14-day execution plan?",
+    "fix_body": "Reply with \u201cA\u201d and I\u2019ll send times for Tuesday 10:00 or 15:00, or reply \u201cB\u201d for Wednesday 10:00 or 15:00. If you prefer, just reply \u201cA\u201d or \u201cB\u201d and I\u2019ll adapt to your calendar.",
+    "ps": "PS: Quick sanity check \u2014 are you optimizing non-brand to a CPA target or to ROAS? One word reply (\u201cCPA\u201d or \u201cROAS\u201d) is enough; it changes how we sequence bids vs. quality fixes."
   }
 }

@@ -93,7 +93,7 @@ misc/     -- metadata.xlsx and the approach.html flow diagram
 
 - `{account_id}_full_result.json` (x3) -- every stage's structured output,
   for inspection/debugging.
-- `recommendation_email_llm_{vertical}_{country}.pdf` (x3) -- the finished
+- `recommendation_email_{vertical}_{country}.pdf` (x3) -- the finished
   customer-facing email.
 - `validation_report.md` -- token/cost totals and a per-account summary.
 

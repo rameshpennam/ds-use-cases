@@ -270,7 +270,7 @@ def main():
                                     "competitive-position grain a real analyst actually digs through, which "
                                     "campaign-level aggregates alone cannot show (see Granular Ads Data Dictionary tab)."),
         ("Market data files", "input/marketdata-*.pdf -- one PDF per fictitious vendor, each covering all 3 verticals/accounts."),
-        ("Recommendation emails", "output/recommendation_email_llm_*.pdf -- one AI-drafted output per account, produced "
+        ("Recommendation emails", "output/recommendation_email_*.pdf -- one AI-drafted output per account, produced "
                                   "live by scripts/05_analyze_and_generate_emails.py from everything in input/."),
         ("Pipeline (why the data is shaped this way)",
          "Stage 1 -- analyze the ads data ALONE to detect the issue (rank-constrained vs. "

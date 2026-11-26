@@ -966,7 +966,7 @@ def run_account(account_id, account_cfg, df, granular):
     accent = ACCENTS[account_cfg["vertical"]]
     slug = account_cfg["vertical"].lower() + "_" + account_cfg["country_code"].lower()
     render_email_pdf(account_id, account_cfg, email, ads_analysis, opp_sizing, rollup,   # STEP 10
-                      OUTPUT_DIR / f"recommendation_email_llm_{slug}.pdf", accent)
+                      OUTPUT_DIR / f"recommendation_email_{slug}.pdf", accent)
 
     return {
         "account_id": account_id,
