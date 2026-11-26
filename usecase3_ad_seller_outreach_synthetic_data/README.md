@@ -1,18 +1,14 @@
 # Use Case 3 -- AI-Assisted Seller Outreach: Synthetic Data Package
 
-> **Different shape than Use Cases 1-2:** this one is a synthetic *data*
-> deliverable, not an analysis pipeline -- there's no `02_*.py` analysis step,
-> summary PPT, narration script, or Power BI guide, because the output IS the
-> dataset (campaign data + market research mockups + example emails) that a
-> separate recommendation-engine build would consume. See `scripts/` for the
-> generators instead of a numbered 01/02/03 sequence.
-
 Synthetic data for a market-context-enriched seller outreach concept (3
 accounts, campaign-level ads data + 4 fictitious vendor-style market research
 reports + 3 example recommendation emails). **Everything in this folder is
 synthetic / illustrative.** No real company, account, platform, or
 research-vendor data anywhere in this package -- see the watermark on every
 generated PDF.
+
+Generators live in `scripts/` -- run them in the order listed under
+"Regenerating" below.
 
 ## Why this exists
 
