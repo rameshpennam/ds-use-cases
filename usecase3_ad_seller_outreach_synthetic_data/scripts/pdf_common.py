@@ -1,0 +1,341 @@
+"""
+Shared PDF-building helpers for the 4 fictitious vendor reports: page
+template with watermark footer + page numbers, a real auto-paginating
+table of contents, styled tables, and matplotlib chart embedding.
+
+Every report built with this module gets the same watermark and the same
+visual language (just a different accent color per vendor) so they read
+as a consistent "document family" the way real research-vendor reports do.
+"""
+import os
+import tempfile
+import matplotlib
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
+import matplotlib.ticker as mticker
+
+from reportlab.lib.pagesizes import LETTER
+from reportlab.lib.units import inch
+from reportlab.lib import colors
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.enums import TA_CENTER, TA_LEFT
+from reportlab.platypus import (
+    BaseDocTemplate, PageTemplate, Frame, Paragraph, Spacer, Table, TableStyle,
+    Image, PageBreak, NextPageTemplate, FrameBreak, KeepTogether, HRFlowable,
+)
+from reportlab.platypus.tableofcontents import TableOfContents
+from reportlab.pdfgen import canvas as pdfcanvas
+
+from benchmarks import WATERMARK
+
+PAGE_W, PAGE_H = LETTER
+MARGIN = 0.75 * inch
+CHART_DIR = tempfile.mkdtemp(prefix="pilot_pdf_charts_")
+
+PALETTE_NEUTRAL = ["#2E4057", "#4C7A8C", "#8FA6A3", "#C9A66B", "#B0413E"]
+
+
+def _chart_path(name):
+    return os.path.join(CHART_DIR, name + ".png")
+
+
+def _style_axes(ax):
+    ax.spines["top"].set_visible(False)
+    ax.spines["right"].set_visible(False)
+    ax.grid(axis="y", linestyle="-", linewidth=0.5, alpha=0.3)
+    ax.set_axisbelow(True)
+
+
+def fig_grouped_bar(categories, series, title, ylabel, accent="#2E4057"):
+    fig, ax = plt.subplots(figsize=(6.6, 3.3), dpi=170)
+    n = len(series)
+    width = 0.8 / n
+    x = range(len(categories))
+    palette = [accent, "#A7B8C4", "#C9A66B", "#8FA6A3"]
+    for i, (name, vals) in enumerate(series.items()):
+        offs = [xi + (i - (n - 1) / 2) * width for xi in x]
+        ax.bar(offs, vals, width=width, label=name, color=palette[i % len(palette)])
+    ax.set_xticks(list(x))
+    ax.set_xticklabels(categories, fontsize=8)
+    ax.set_title(title, fontsize=10, fontweight="bold", loc="left")
+    ax.set_ylabel(ylabel, fontsize=8)
+    ax.tick_params(labelsize=8)
+    ax.legend(fontsize=7, frameon=False, loc="upper left")
+    _style_axes(ax)
+    fig.tight_layout()
+    p = _chart_path(f"grouped_{abs(hash(title))}")
+    fig.savefig(p)
+    plt.close(fig)
+    return p
+
+
+def fig_line(categories, series, title, ylabel, accent="#2E4057"):
+    fig, ax = plt.subplots(figsize=(6.6, 3.3), dpi=170)
+    palette = [accent, "#A7B8C4", "#C9A66B", "#B0413E"]
+    for i, (name, vals) in enumerate(series.items()):
+        ax.plot(categories, vals, marker="o", label=name, color=palette[i % len(palette)], linewidth=2)
+    ax.set_title(title, fontsize=10, fontweight="bold", loc="left")
+    ax.set_ylabel(ylabel, fontsize=8)
+    ax.tick_params(labelsize=8)
+    ax.legend(fontsize=7, frameon=False)
+    _style_axes(ax)
+    fig.tight_layout()
+    p = _chart_path(f"line_{abs(hash(title))}")
+    fig.savefig(p)
+    plt.close(fig)
+    return p
+
+
+def fig_horizontal_bar(labels, values, title, xlabel, accent="#2E4057", highlight_last=False):
+    fig, ax = plt.subplots(figsize=(6.6, 3.0), dpi=170)
+    colors_list = [accent] * len(values)
+    if highlight_last:
+        colors_list[-1] = "#B0413E"
+    y = range(len(labels))
+    ax.barh(list(y), values, color=colors_list)
+    ax.set_yticks(list(y))
+    ax.set_yticklabels(labels, fontsize=8)
+    ax.invert_yaxis()
+    ax.set_title(title, fontsize=10, fontweight="bold", loc="left")
+    ax.set_xlabel(xlabel, fontsize=8)
+    ax.tick_params(labelsize=8)
+    ax.xaxis.set_major_formatter(mticker.PercentFormatter(decimals=0) if "%" in xlabel else mticker.ScalarFormatter())
+    _style_axes(ax)
+    fig.tight_layout()
+    p = _chart_path(f"hbar_{abs(hash(title))}")
+    fig.savefig(p)
+    plt.close(fig)
+    return p
+
+
+def fig_stacked_bar(categories, series, title, ylabel, accent="#2E4057"):
+    fig, ax = plt.subplots(figsize=(6.6, 3.3), dpi=170)
+    palette = PALETTE_NEUTRAL
+    bottom = [0] * len(categories)
+    for i, (name, vals) in enumerate(series.items()):
+        ax.bar(categories, vals, bottom=bottom, label=name, color=palette[i % len(palette)])
+        bottom = [b + v for b, v in zip(bottom, vals)]
+    ax.set_title(title, fontsize=10, fontweight="bold", loc="left")
+    ax.set_ylabel(ylabel, fontsize=8)
+    ax.tick_params(labelsize=8)
+    ax.legend(fontsize=7, frameon=False, ncol=3, loc="upper center", bbox_to_anchor=(0.5, -0.12))
+    _style_axes(ax)
+    fig.tight_layout()
+    p = _chart_path(f"stacked_{abs(hash(title))}")
+    fig.savefig(p)
+    plt.close(fig)
+    return p
+
+
+def key_takeaways(title, bullets, styles, accent):
+    """The boxed 'Key Takeaways' bullet list that opens most sections in a
+    real analyst/research report -- lets a skimming reader get the point
+    without reading the full narrative underneath."""
+    rows = [[Paragraph(f"<b>{title}</b>", styles["H3"])]]
+    for b in bullets:
+        rows.append([Paragraph("&bull;&nbsp;&nbsp;" + b, styles["Body"])])
+    t = Table(rows, colWidths=[6.5 * inch])
+    t.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, -1), colors.HexColor("#F2EFE7")),
+        ("LINEBEFORE", (0, 0), (0, -1), 3, colors.HexColor(accent)),
+        ("LEFTPADDING", (0, 0), (-1, -1), 12),
+        ("TOPPADDING", (0, 0), (-1, -1), 3),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 3),
+        ("TOPPADDING", (0, 0), (0, 0), 8),
+        ("BOTTOMPADDING", (0, -1), (0, -1), 8),
+    ]))
+    return t
+
+
+def big_stat_callout(label, value_text, sublabel, styles, accent):
+    """The single pulled-out number that leads a response-driven email --
+    one glance tells a skimming exec what's at stake, before they read a
+    word of the supporting bullets."""
+    big_style = ParagraphStyle("BigStat", parent=styles["Normal"], fontSize=26, leading=30,
+                                fontName="Helvetica-Bold", textColor=colors.white, alignment=TA_CENTER)
+    label_style = ParagraphStyle("BigStatLabel", parent=styles["Normal"], fontSize=10, leading=13,
+                                  textColor=colors.white, alignment=TA_CENTER)
+    sub_style = ParagraphStyle("BigStatSub", parent=styles["Normal"], fontSize=8.5, leading=11,
+                                textColor=colors.HexColor("#E8E8E8"), alignment=TA_CENTER)
+    rows = [[Paragraph(label, label_style)], [Paragraph(value_text, big_style)], [Paragraph(sublabel, sub_style)]]
+    t = Table(rows, colWidths=[6.5 * inch])
+    t.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, -1), colors.HexColor(accent)),
+        ("TOPPADDING", (0, 0), (0, 0), 12),
+        ("BOTTOMPADDING", (0, 0), (0, 0), 2),
+        ("TOPPADDING", (0, 1), (0, 1), 2),
+        ("BOTTOMPADDING", (0, 1), (0, 1), 2),
+        ("TOPPADDING", (0, 2), (0, 2), 2),
+        ("BOTTOMPADDING", (0, 2), (0, 2), 12),
+    ]))
+    return t
+
+
+def campaign_card(name, diagnosis, note_text, opportunity_text, styles, accent):
+    """One clearly-bordered card per in-scope campaign -- deliberately a
+    different visual weight than key_takeaways' solid-fill callout, so the
+    eye reads 'evidence' here and 'action' there."""
+    name_style = ParagraphStyle("CardName", parent=styles["Normal"], fontSize=11, leading=14,
+                                 fontName="Helvetica-Bold", textColor=colors.HexColor(accent))
+    rows = [[Paragraph(name, name_style)], [Paragraph(diagnosis, styles["Body"])]]
+    if note_text:
+        rows.append([Paragraph(f"<i>{note_text}</i>", styles["Caption"])])
+    rows.append([Paragraph(opportunity_text, styles["Body"])])
+    t = Table(rows, colWidths=[6.3 * inch])
+    style_cmds = [
+        ("BOX", (0, 0), (-1, -1), 0.9, colors.HexColor(accent)),
+        ("BACKGROUND", (0, 0), (-1, -1), colors.white),
+        ("LEFTPADDING", (0, 0), (-1, -1), 12),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 12),
+        ("TOPPADDING", (0, 0), (-1, -1), 3),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 3),
+        ("TOPPADDING", (0, 0), (0, 0), 9),
+        ("BOTTOMPADDING", (0, -1), (0, -1), 9),
+    ]
+    t.setStyle(TableStyle(style_cmds))
+    return t
+
+
+def chart_image(path, width=6.5 * inch):
+    img = Image(path)
+    aspect = img.imageHeight / float(img.imageWidth)
+    img.drawWidth = width
+    img.drawHeight = width * aspect
+    return img
+
+
+# ---------------------------------------------------------------------------
+# Styles
+# ---------------------------------------------------------------------------
+
+def get_styles(accent="#2E4057"):
+    ss = getSampleStyleSheet()
+    ss.add(ParagraphStyle("CoverTitle", parent=ss["Title"], fontSize=28, leading=32,
+                           textColor=colors.HexColor(accent), spaceAfter=6))
+    ss.add(ParagraphStyle("CoverSubtitle", parent=ss["Normal"], fontSize=14, leading=18,
+                           textColor=colors.HexColor("#555555"), spaceAfter=4))
+    ss.add(ParagraphStyle("CoverMeta", parent=ss["Normal"], fontSize=10, leading=14,
+                           textColor=colors.HexColor("#777777")))
+    ss.add(ParagraphStyle("H1", parent=ss["Heading1"], fontSize=17, spaceBefore=18, spaceAfter=10,
+                           textColor=colors.HexColor(accent)))
+    ss.add(ParagraphStyle("H2", parent=ss["Heading2"], fontSize=13, spaceBefore=12, spaceAfter=6,
+                           textColor=colors.HexColor(accent)))
+    ss.add(ParagraphStyle("H3", parent=ss["Heading3"], fontSize=11, spaceBefore=8, spaceAfter=4,
+                           textColor=colors.HexColor("#333333")))
+    ss.add(ParagraphStyle("Body", parent=ss["Normal"], fontSize=9.5, leading=14, spaceAfter=8,
+                           alignment=TA_LEFT))
+    ss.add(ParagraphStyle("Callout", parent=ss["Normal"], fontSize=9.5, leading=14,
+                           backColor=colors.HexColor("#F2EFE7"), borderPadding=8,
+                           leftIndent=4, rightIndent=4, spaceAfter=10))
+    ss.add(ParagraphStyle("TableCell", parent=ss["Normal"], fontSize=8, leading=10))
+    ss.add(ParagraphStyle("TableHeader", parent=ss["Normal"], fontSize=8, leading=10,
+                           textColor=colors.white, fontName="Helvetica-Bold"))
+    ss.add(ParagraphStyle("Caption", parent=ss["Normal"], fontSize=8, leading=11,
+                           textColor=colors.HexColor("#777777"), spaceAfter=10))
+    ss.add(ParagraphStyle("TOCHeading1", parent=ss["Normal"], fontSize=11, leading=16,
+                           textColor=colors.HexColor(accent)))
+    ss.add(ParagraphStyle("TOCHeading2", parent=ss["Normal"], fontSize=9.5, leading=13,
+                           leftIndent=14, textColor=colors.HexColor("#444444")))
+    return ss
+
+
+def data_table(header, rows, col_widths=None, styles=None, accent="#2E4057", small=False):
+    fs = 7.3 if small else 8
+    header_para = [Paragraph(str(h), styles["TableHeader"]) for h in header]
+    body = [[Paragraph(str(c), ParagraphStyle("c", parent=styles["TableCell"], fontSize=fs)) for c in r] for r in rows]
+    t = Table([header_para] + body, colWidths=col_widths, repeatRows=1)
+    t.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor(accent)),
+        ("GRID", (0, 0), (-1, -1), 0.4, colors.HexColor("#CCCCCC")),
+        ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#F7F6F2")]),
+        ("VALIGN", (0, 0), (-1, -1), "TOP"),
+        ("TOPPADDING", (0, 0), (-1, -1), 3),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 3),
+    ]))
+    return t
+
+
+# ---------------------------------------------------------------------------
+# Document with footer watermark + page numbers + real TOC
+# ---------------------------------------------------------------------------
+
+class VendorDocTemplate(BaseDocTemplate):
+    def __init__(self, filename, accent, footer_note, header_left=None, header_right=None, **kw):
+        super().__init__(filename, pagesize=LETTER,
+                          leftMargin=MARGIN, rightMargin=MARGIN,
+                          topMargin=1.05 * inch, bottomMargin=MARGIN, **kw)
+        self.accent = accent
+        self.footer_note = footer_note
+        self.header_left = header_left or ""
+        self.header_right = header_right or ""
+        frame = Frame(MARGIN, MARGIN, PAGE_W - 2 * MARGIN, PAGE_H - 1.05 * inch - MARGIN, id="main")
+        cover_frame = Frame(MARGIN, MARGIN, PAGE_W - 2 * MARGIN, PAGE_H - 2 * MARGIN, id="cover")
+        self.addPageTemplates([
+            PageTemplate(id="Cover", frames=[cover_frame], onPage=self._draw_cover_decor),
+            PageTemplate(id="Normal", frames=[frame], onPage=self._draw_header_footer),
+        ])
+
+    def _draw_header_footer(self, canv, doc):
+        canv.saveState()
+        # running header
+        canv.setStrokeColor(colors.HexColor("#DDDDDD"))
+        canv.setLineWidth(0.6)
+        canv.line(MARGIN, PAGE_H - 0.78 * inch, PAGE_W - MARGIN, PAGE_H - 0.78 * inch)
+        canv.setFont("Helvetica-Bold", 8)
+        canv.setFillColor(colors.HexColor(self.accent))
+        canv.drawString(MARGIN, PAGE_H - 0.65 * inch, self.header_left)
+        canv.setFont("Helvetica", 8)
+        canv.setFillColor(colors.HexColor("#888888"))
+        canv.drawRightString(PAGE_W - MARGIN, PAGE_H - 0.65 * inch, self.header_right)
+        # footer
+        canv.setStrokeColor(colors.HexColor(self.accent))
+        canv.setLineWidth(1.4)
+        canv.line(MARGIN, 0.62 * inch, PAGE_W - MARGIN, 0.62 * inch)
+        canv.setFont("Helvetica", 6.6)
+        canv.setFillColor(colors.HexColor("#B0413E"))
+        canv.drawCentredString(PAGE_W / 2, 0.47 * inch, WATERMARK)
+        canv.setFillColor(colors.HexColor("#888888"))
+        canv.setFont("Helvetica", 7.5)
+        canv.drawString(MARGIN, 0.33 * inch, self.footer_note)
+        canv.drawRightString(PAGE_W - MARGIN, 0.33 * inch, f"Page {doc.page}")
+        canv.restoreState()
+
+    def _draw_cover_decor(self, canv, doc):
+        canv.saveState()
+        canv.setFillColor(colors.HexColor(self.accent))
+        canv.rect(0, PAGE_H - 0.35 * inch, PAGE_W, 0.35 * inch, fill=1, stroke=0)
+        canv.rect(0, 0, PAGE_W, 0.35 * inch, fill=1, stroke=0)
+        canv.setFillColor(colors.HexColor("#B0413E"))
+        canv.setFont("Helvetica-Bold", 8.5)
+        canv.drawCentredString(PAGE_W / 2, 0.14 * inch, WATERMARK)
+        canv.restoreState()
+
+    def afterFlowable(self, flowable):
+        if not isinstance(flowable, Paragraph):
+            return
+        style = flowable.style.name
+        text = flowable.getPlainText()
+        if style == "H1":
+            self.canv.bookmarkPage(text)
+            self.notify("TOCEntry", (0, text, self.page, text))
+        elif style == "H2":
+            self.canv.bookmarkPage(text)
+            self.notify("TOCEntry", (1, text, self.page, text))
+
+
+def make_toc(styles):
+    toc = TableOfContents()
+    toc.levelStyles = [styles["TOCHeading1"], styles["TOCHeading2"]]
+    return toc
+
+
+def build_pdf(filename, accent, footer_note, flowables, header_left=None, header_right=None):
+    doc = VendorDocTemplate(filename, accent=accent, footer_note=footer_note,
+                             header_left=header_left, header_right=header_right)
+    doc.multiBuild(flowables)
+    return filename
+
+
+def page_count(path):
+    from pypdf import PdfReader
+    return len(PdfReader(path).pages)

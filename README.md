@@ -8,6 +8,7 @@ full walkthrough script, and a Power BI build guide. Currently:
 |---|---|
 | `usecase1_csat_nlp_rootcause/` | NLP root-cause & sentiment driver analysis on customer survey verbatim (chat/email/voice) |
 | `usecase2_demand_forecasting/` | Contact-volume forecasting → required staffing (FTE) vs current roster |
+| `usecase3_ad_seller_outreach_synthetic_data/` | Synthetic data package (not an analysis pipeline — see its own README): campaign-level ad account data, 4 fictitious market-research report mockups, and 3 example AI-drafted seller outreach emails, for prototyping a market-context-enriched recommendation engine |
 
 ## Per use case, in order
 No virtual environment needed (dedicated single-purpose machine, nothing to
