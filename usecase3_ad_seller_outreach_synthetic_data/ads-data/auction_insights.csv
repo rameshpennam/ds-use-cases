@@ -1,0 +1,13 @@
+account_id,competitor_name,competitor_impression_share_pct,overlap_rate_pct,position_above_rate_pct,top_of_page_rate_pct_self,top_of_page_rate_pct_competitor,outranking_share_pct_self
+DE-INS-001,Bluewave Insurance,25.37196829793537,76.1,78.6,12.1,76.7,10.9
+DE-INS-001,Harborline Mutual,18.152522456315715,60.2,89.7,13.0,66.7,10.5
+DE-INS-001,Crestfield Direct,15.157233337533624,77.6,76.8,18.4,66.7,5.4
+DE-INS-001,Nordkreuz Assurance,12.407049279157821,79.2,96.5,17.1,82.6,9.7
+US-RET-001,Metro Retail Co,27.350077877119322,55.6,54.1,47.0,41.4,56.4
+US-RET-001,Northfield Mercantile,20.664578707054783,74.5,51.9,53.5,43.2,55.3
+US-RET-001,Union Square Goods,16.936659808202528,77.9,49.8,46.3,43.8,52.4
+US-RET-001,Fairmont Outfitters,13.498104320329109,58.3,47.2,51.4,41.1,47.5
+UK-TRV-001,Skyline Journeys,21.32403736704767,59.7,49.1,73.7,53.6,59.2
+UK-TRV-001,Coastal Getaways,19.640134518973102,69.7,40.4,65.8,56.7,64.9
+UK-TRV-001,Horizon Holidays,17.11383617330041,67.6,40.2,63.9,54.8,59.6
+UK-TRV-001,Trailmark Travel,10.242477645905483,74.1,32.0,61.9,50.3,61.7

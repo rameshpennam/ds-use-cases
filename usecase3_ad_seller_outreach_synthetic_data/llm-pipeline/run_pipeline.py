@@ -8,12 +8,19 @@ What this does, in order (search for "STEP N" to jump to any stage):
   STEP 1  Read input data           -- load ads-data/campaigns.csv
   STEP 2  Pre-processing            -- per-account slicing, derived columns
   STEP 3  EDA / ML analysis         -- correlations, anomaly detection, clustering,
-                                       materiality ranking (pure statistics, no LLM)
+                                       materiality ranking, PLUS keyword/search-term/
+                                       negative-keyword/ad-strength/auction-insight
+                                       evidence (compute_granular_eda) -- the deeper
+                                       grain a real analyst digs through, not just
+                                       campaign-level aggregates. Pure statistics, no LLM.
   STEP 4  Parse market PDFs         -- real pdfplumber table extraction from the
                                        4 vendor reports (not read from benchmarks.py)
   STEP 5  Pydantic output schemas   -- structured-JSON contracts for every GenAI call
   STEP 6  GenAI: ads-data analysis  -- diagnoses each account from the raw campaign
-                                       data + the EDA evidence
+                                       data + ALL of step 3's evidence, producing a
+                                       prioritized recommendation_cards list and an
+                                       already_working list -- not just a diagnosis
+                                       paragraph
   STEP 7  NLP: relevance ranking    -- TF-IDF + cosine similarity scores every
                                        extracted market fact against THIS account's
                                        stage-6 diagnosis text; only the closest
@@ -67,6 +74,7 @@ Needs: OPENAI_API_KEY only -- deliberately single-provider (see the call-layer
 """
 import json
 import os
+import re
 import sys
 import time
 from dataclasses import dataclass, field
@@ -105,6 +113,16 @@ MATERIALITY_CUTOFF = 0.70
 
 def load_campaigns():
     return pd.read_csv(ROOT / "ads-data" / "campaigns.csv")
+
+
+GRANULAR_FILES = ["keywords", "search_terms", "negative_keyword_conflicts", "ads", "auction_insights"]
+
+
+def load_granular_data():
+    """The keyword / search-term / negative-keyword / ad-strength / auction-
+    insight grain a real analyst actually digs through -- campaigns.csv alone
+    only has account/campaign-level aggregates. Returns {name: DataFrame}."""
+    return {name: pd.read_csv(ROOT / "ads-data" / f"{name}.csv") for name in GRANULAR_FILES}
 
 
 # ============================================================================
@@ -194,6 +212,76 @@ def compute_eda(g):
     }
 
 
+# ---------------------------------------------------------------------------
+# Granular EDA: the keyword / search-term / negative-keyword / ad-strength /
+# auction-insight evidence a real analyst actually digs through before
+# writing a recommendation -- campaign-level stats alone can't surface a
+# single keyword that scores 9/10 on quality but sits at 5% impression
+# share, or a competitor-brand search term pulling thousands of zero-click
+# impressions. Still pure statistics, no LLM -- this is evidence for stage 6.
+# ---------------------------------------------------------------------------
+
+def compute_granular_eda(account_id, granular):
+    kw = granular["keywords"][granular["keywords"].account_id == account_id]
+    st = granular["search_terms"][granular["search_terms"].account_id == account_id]
+    neg = granular["negative_keyword_conflicts"][granular["negative_keyword_conflicts"].account_id == account_id]
+    ads = granular["ads"][granular["ads"].account_id == account_id]
+    auc = granular["auction_insights"][granular["auction_insights"].account_id == account_id]
+
+    keyword_level = {"note": "Top keywords by story relevance, not an exhaustive export of every live keyword."}
+    if len(kw) >= 3:
+        r_qs_is, p_qs_is = stats.pearsonr(kw["quality_score"], kw["impression_share_pct"])
+        r_qs_cpa, p_qs_cpa = stats.pearsonr(kw["quality_score"], kw["cost_per_conversion"].fillna(kw["cost_per_conversion"].median()))
+        keyword_level["correlation_quality_score_vs_impression_share"] = {"pearson_r": round(float(r_qs_is), 3), "p_value": round(float(p_qs_is), 4)}
+        keyword_level["correlation_quality_score_vs_cost_per_conversion"] = {"pearson_r": round(float(r_qs_cpa), 3), "p_value": round(float(p_qs_cpa), 4)}
+    high_qs_low_is = kw[kw.quality_score >= 7].sort_values("impression_share_pct").head(4)
+    low_qs_high_spend = kw[kw.quality_score < 5].sort_values("spend", ascending=False).head(4)
+    keyword_level["high_quality_low_impression_share"] = high_qs_low_is[
+        ["keyword_text", "quality_score", "impression_share_pct", "impression_share_lost_rank_pct"]].to_dict(orient="records")
+    keyword_level["low_quality_high_spend"] = low_qs_high_spend[
+        ["keyword_text", "quality_score", "spend", "cost_per_conversion"]].to_dict(orient="records")
+
+    brand_zero_click = st[(st.is_competitor_brand_term) & (st.clicks == 0)]
+    brand_converting = st[(st.is_competitor_brand_term) & (st.clicks > 0)]
+    search_term_level = {
+        "competitor_brand_zero_click_impressions": int(brand_zero_click["impressions"].sum()),
+        "competitor_brand_zero_click_terms": brand_zero_click["search_term"].tolist(),
+        "competitor_brand_terms_that_convert": brand_converting[["search_term", "conversions"]].to_dict(orient="records"),
+        "pct_of_search_term_impressions_from_zero_click_competitor_terms":
+            round(100 * brand_zero_click["impressions"].sum() / st["impressions"].sum(), 1) if len(st) else 0.0,
+    }
+
+    negative_keyword_level = {
+        "conflict_count": int(len(neg)),
+        "estimated_total_blocked_impressions": int(neg["estimated_blocked_impressions"].sum()) if len(neg) else 0,
+        "conflicts": neg[["negative_keyword", "blocked_keyword_text", "blocked_campaign_name",
+                           "estimated_blocked_impressions"]].to_dict(orient="records"),
+    }
+
+    ad_strength = {
+        "total_ads": int(len(ads)),
+        "pct_excellent_or_good": round(100 * ads.ad_strength_rating.isin(["Excellent", "Good"]).mean(), 1) if len(ads) else None,
+        "rating_counts": ads.ad_strength_rating.value_counts().to_dict(),
+    }
+
+    auction_insights = {
+        "avg_position_above_rate_pct": round(float(auc["position_above_rate_pct"].mean()), 1) if len(auc) else None,
+        "avg_top_of_page_rate_pct_self": round(float(auc["top_of_page_rate_pct_self"].mean()), 1) if len(auc) else None,
+        "avg_top_of_page_rate_pct_competitor": round(float(auc["top_of_page_rate_pct_competitor"].mean()), 1) if len(auc) else None,
+        "avg_outranking_share_pct_self": round(float(auc["outranking_share_pct_self"].mean()), 1) if len(auc) else None,
+        "by_competitor": auc[["competitor_name", "position_above_rate_pct", "top_of_page_rate_pct_self",
+                               "top_of_page_rate_pct_competitor"]].to_dict(orient="records"),
+    }
+
+    return {
+        "keyword_level": keyword_level,
+        "search_term_level": search_term_level,
+        "negative_keyword_level": negative_keyword_level,
+        "ad_strength": ad_strength,
+        "auction_insights": auction_insights,
+    }
+
+
 # ============================================================================
 # STEP 4 -- Parse the 4 vendor market-report PDFs (real table extraction,
 # not a read of benchmarks.py -- a production pipeline only has the PDFs)
@@ -259,14 +347,41 @@ class CampaignFinding(BaseModel):
     recommended_action: str
 
 
+class RecommendationCard(BaseModel):
+    """One prioritized, actionable recommendation -- the account-level
+    synthesis across campaign, keyword, search-term, negative-keyword, and
+    auction-insight evidence. Modeled on how a human analyst actually writes
+    these up: a claim backed by a specific number, not a generic tip."""
+    title: str = Field(description="Short imperative headline, e.g. 'Remove the bid caps blocking automated bidding'")
+    affects: Literal["bid", "quality_score", "budget_allocation", "negative_keywords"]
+    priority: Literal["high", "medium", "low"]
+    timeframe: str = Field(description="Short label for how soon this can be acted on, e.g. 'Now', '0-3 days', '2 weeks'")
+    what_data_shows: str = Field(description="1-2 sentences citing the SPECIFIC numbers from the evidence given -- "
+                                              "keyword names, quality scores, impression shares, dollar figures")
+    recommended_steps: list[str] = Field(description="2-3 short imperative steps, concrete enough to action directly")
+    what_to_watch: str = Field(description="One leading-indicator metric and a rough target, e.g. "
+                                            "'click rate moving from 1.3% toward 2.0%+'")
+
+
 class AdsAnalysis(BaseModel):
-    """Stage 6 output: the model's OWN analysis of the raw campaign data,
+    """Stage 6 output: the model's OWN analysis of the raw campaign AND
+    keyword/search-term/negative-keyword/ad-strength/auction-insight data,
     using the EDA stats as evidence -- not a rephrasing of them."""
     account_level_diagnosis: str
     primary_constraint: Literal["rank-constrained", "budget-constrained", "healthy-demand-surge"]
     confidence_0_to_1: float
     notable_patterns: list[str] = Field(description="2-4 specific observations citing actual numbers from the data provided")
     campaign_findings: list[CampaignFinding]
+    recommendation_cards: list[RecommendationCard] = Field(description="3-5 prioritized recommendations synthesized "
+                                                                        "across ALL evidence given (campaign, keyword, "
+                                                                        "search-term, negative-keyword, ad-strength, "
+                                                                        "auction-insight) -- not one per data source, "
+                                                                        "one per actual issue worth fixing")
+    already_working: list[str] = Field(description="2-3 things the evidence shows are already fine and need no "
+                                                     "changes -- cite the specific number proving it (e.g. an ad "
+                                                     "strength %, budget headroom, a campaign with strong cost per "
+                                                     "conversion). Builds credibility that the fix list is short "
+                                                     "because the rest is solid, not because it wasn't checked.")
 
 
 class MarketFact(BaseModel):
@@ -293,6 +408,14 @@ class EmailCopy(BaseModel):
     impact_line: str = Field(description="A full 1-2 sentence explanation of what's behind the headline number -- "
                                           "never just the number by itself, never a one-word or sub-5-word answer")
     scope_intro: str = Field(description="One sentence introducing the per-campaign breakdown that follows")
+    cards_intro: str = Field(description="One punchy sentence introducing the prioritized fix list (the "
+                                          "recommendation cards) that follows -- make it sound like a short, "
+                                          "credible diagnosis was just delivered, not a generic 'here are some tips'")
+    working_intro: str = Field(description="One short, confident sentence introducing the 'what's already working' "
+                                            "strip -- this should read as reassuring and credible, not an afterthought")
+    opportunity_intro: str = Field(description="One sentence framing the opportunity-sizing numbers that follow as "
+                                                "the payoff for acting -- tie it to the headline revenue number, "
+                                                "don't just restate the stats")
     fix_title: str
     fix_body: str = Field(description="A low-friction, binary-choice call to action plus a one-word-reply fallback. "
                                        "Do NOT restate the per-campaign dollar breakdown -- that is already shown in "
@@ -372,6 +495,53 @@ class UsageLedger:
 LEDGER = UsageLedger()
 
 
+def _fix_pdf_unsupported_glyphs(obj):
+    """ReportLab's base-14 Helvetica (WinAnsi encoding) has no glyph for
+    several Unicode characters models reach for -- hyphen variants
+    (U+2010/U+2011/U+2012, used in compound words like "Non-Brand") and
+    arrows (U+2192/U+2190, used in "100 -> 151" style call-outs). Seen live
+    as "Non-Brand" rendering as "NonnBrand" and "->" rendering as "fi" in a
+    PDF. Fixed once, here, for every structured GenAI response, rather than
+    patched per call site."""
+    if isinstance(obj, str):
+        return (obj.replace("‐", "-").replace("‑", "-").replace("‒", "-")
+                   .replace("→", "->").replace("←", "<-"))
+    if isinstance(obj, list):
+        return [_fix_pdf_unsupported_glyphs(x) for x in obj]
+    if isinstance(obj, dict):
+        return {k: _fix_pdf_unsupported_glyphs(v) for k, v in obj.items()}
+    return obj
+
+
+# Prompts instruct every stage not to name a real platform/vendor (see
+# STAGE6_SYSTEM / STAGE9_SYSTEM), but a model can still slip one in --
+# live-caught: stage 6 once wrote "validate in the Google Ads 'Negative
+# keyword conflicts' view". This is the mechanical backstop, same pattern
+# as _fix_pdf_unsupported_glyphs: fixed once at the call layer, not
+# patched per prompt. Longer phrases first so "Google Ads" doesn't get
+# half-replaced by the standalone "Google" rule first.
+_BRAND_NAME_SCRUB = [
+    (r"\bGoogle\s+Ads\b", "the platform"), (r"\bGoogle\s+AdWords\b", "the platform"),
+    (r"\bMicrosoft\s+Ads\b", "the platform"), (r"\bMicrosoft\s+Advertising\b", "the platform"),
+    (r"\bBing\s+Ads\b", "the platform"), (r"\bMeta\s+Ads\b", "the platform"),
+    (r"\bFacebook\s+Ads\b", "the platform"), (r"\bAdWords\b", "the platform"),
+    (r"\bGoogle\b", "the platform"), (r"\bMicrosoft\b", "the platform"), (r"\bBing\b", "the platform"),
+    (r"\bConcentrix\b", "[redacted]"),
+]
+
+
+def _scrub_real_brand_names(obj):
+    if isinstance(obj, str):
+        for pattern, replacement in _BRAND_NAME_SCRUB:
+            obj = re.sub(pattern, replacement, obj, flags=re.IGNORECASE)
+        return obj
+    if isinstance(obj, list):
+        return [_scrub_real_brand_names(x) for x in obj]
+    if isinstance(obj, dict):
+        return {k: _scrub_real_brand_names(v) for k, v in obj.items()}
+    return obj
+
+
 def _call_openai(label, model, system, user_content, output_model, max_tokens):
     resp = _openai_client.chat.completions.parse(
         model=model,
@@ -382,7 +552,9 @@ def _call_openai(label, model, system, user_content, output_model, max_tokens):
     if choice.message.refusal:
         raise RuntimeError(f"{label} ({model}): refused -- {choice.message.refusal}")
     LEDGER.record(label, model, resp.usage.prompt_tokens, resp.usage.completion_tokens)
-    return choice.message.parsed
+    cleaned = _fix_pdf_unsupported_glyphs(choice.message.parsed.model_dump())
+    cleaned = _scrub_real_brand_names(cleaned)
+    return output_model(**cleaned)
 
 
 def _is_non_retryable(e):
@@ -438,20 +610,60 @@ def account_rollup(g, account_cfg):
     }
 
 
+def opportunity_sizing(g, rollup):
+    """How big the fix is worth, in the account's own current terms -- not a
+    model guess. Target impression share is the account's own vertical
+    benchmark (already in campaigns.csv), additional clicks are projected at
+    TODAY's click rate (deliberately the cautious version, same as a real
+    analyst would quote -- click rate should improve once the quality fixes
+    land, but this number doesn't assume that yet)."""
+    current_is_pct = rollup["is_pct"]
+    target_is_pct = float((g["vertical_benchmark_impression_share_pct"] * g["eligible_impressions"]).sum()
+                           / g["eligible_impressions"].sum())
+    target_is_pct = max(target_is_pct, current_is_pct)
+
+    total_eligible = g["eligible_impressions"].sum()
+    additional_impressions = round(total_eligible * (target_is_pct - current_is_pct) / 100)
+
+    wi = g["impressions"]
+    ctr_pct = (g["ctr_pct"] * wi).sum() / wi.sum()
+    additional_clicks = round(additional_impressions * ctr_pct / 100)
+
+    return {
+        "current_impression_share_pct": round(current_is_pct, 2),
+        "target_impression_share_pct": round(target_is_pct, 2),
+        "additional_impressions_estimate": int(additional_impressions),
+        "additional_clicks_estimate": int(additional_clicks),
+        "basis": f"Projected at today's click rate of {ctr_pct:.2f}% -- deliberately the cautious "
+                 f"version, since click rate should improve once the quality fixes land.",
+    }
+
+
 # ============================================================================
 # STEP 6 -- GenAI: ads-data analysis (one call per account, model = MODEL)
 # ============================================================================
 
 STAGE6_SYSTEM = (
     "You are a senior paid-search performance analyst. You will be given one advertiser "
-    "account's campaign-level performance data for the current quarter, plus some "
-    "supporting exploratory statistics (correlations, anomaly scores, cluster labels) "
-    "computed separately. Treat the statistics as EVIDENCE to weigh, not as conclusions "
-    "to restate -- form your own diagnosis directly from the raw numbers, citing specific "
-    "figures. Identify whether the account's missed opportunity is primarily a rank "
+    "account's campaign-level performance data for the current quarter, PLUS the deeper "
+    "grain a human analyst actually digs through before writing a recommendation: "
+    "individual keyword quality scores and impression shares, the literal search queries "
+    "that triggered ads (including competitor-brand leakage), negative-keyword conflicts "
+    "blocking the account's own keywords, ad-copy strength ratings, and this account's "
+    "head-to-head auction position against its named competitors. Some supporting "
+    "exploratory statistics (correlations, anomaly scores, cluster labels) are computed "
+    "separately. Treat ALL of this as EVIDENCE to weigh, not as conclusions to restate -- "
+    "form your own diagnosis directly from the raw numbers, citing specific figures "
+    "(keyword text, quality scores, dollar amounts, percentages) rather than speaking in "
+    "generalities. Identify whether the account's missed opportunity is primarily a rank "
     "problem (outranked on quality/bid, budget isn't the constraint), a budget problem "
     "(daily budget caps the account before it exhausts demand), or the account is "
-    "already healthy and riding a demand surge."
+    "already healthy and riding a demand surge. Your recommendation_cards should read "
+    "like a real paid-search analyst's prioritized fix list, not a generic checklist -- "
+    "each one must trace to a specific number in the evidence given. "
+    "Do not name any real advertising platform, product, or report/view within one (e.g. "
+    "no 'Google Ads', 'Microsoft Ads', 'Bing Ads', 'Meta Ads', or any real vendor name) -- "
+    "refer to it generically ('the platform', 'the negative-keyword conflicts report')."
 )
 
 
@@ -463,18 +675,28 @@ STAGE6_COLS = [
 ]
 
 
-def run_stage6(account_id, account_cfg, g, eda_result):
+def run_stage6(account_id, account_cfg, g, eda_result, granular_eda):
     campaign_json = g[STAGE6_COLS].to_json(orient="records")
     user = (
         f"Account: {account_cfg['account_name']} -- vertical: {account_cfg['vertical']}, "
         f"market: {account_cfg['country']}. Reporting period: {REPORT_PERIOD} vs {PRIOR_PERIOD}.\n\n"
         f"Campaign-level data (JSON, one object per campaign):\n{campaign_json}\n\n"
-        f"Exploratory statistics computed separately (evidence, not a conclusion):\n"
+        f"Campaign-level exploratory statistics (evidence, not a conclusion):\n"
         f"{json.dumps(eda_result)}\n\n"
+        f"Keyword-level evidence:\n{json.dumps(granular_eda['keyword_level'])}\n\n"
+        f"Search-term-level evidence (literal queries, including competitor-brand leakage):\n"
+        f"{json.dumps(granular_eda['search_term_level'])}\n\n"
+        f"Negative-keyword conflicts (own keywords blocked by the account's own negatives):\n"
+        f"{json.dumps(granular_eda['negative_keyword_level'])}\n\n"
+        f"Ad-copy strength ratings:\n{json.dumps(granular_eda['ad_strength'])}\n\n"
+        f"Auction-insight position vs. named competitors:\n{json.dumps(granular_eda['auction_insights'])}\n\n"
         "Analyze this account. Only include campaign_findings for campaigns the data "
-        "shows are materially worth acting on -- not every campaign in the account."
+        "shows are materially worth acting on -- not every campaign in the account. "
+        "Build recommendation_cards from whichever evidence above is most material for "
+        "THIS account -- do not force one card per data source if the evidence doesn't "
+        "support it."
     )
-    return structured_call(f"stage6:{account_id}", MODEL, STAGE6_SYSTEM, user, AdsAnalysis, max_tokens=6000)
+    return structured_call(f"stage6:{account_id}", MODEL, STAGE6_SYSTEM, user, AdsAnalysis, max_tokens=9000)
 
 
 # ============================================================================
@@ -547,13 +769,20 @@ def run_stage8(account_id, account_cfg, ads_analysis: AdsAnalysis, ranked_market
 
 STAGE9_SYSTEM = (
     "You are an expert B2B sales copywriter drafting a seller-to-customer email about "
-    "their paid search advertising account. Write elegant, response-optimized copy: a "
-    "personalized hook (not a market-stat recitation), a 'why now' case grounded in the "
-    "market evidence given, and a low-friction call to action (a binary time choice plus "
-    "a one-word-reply fallback -- never an open-ended 'worth a call?'). "
-    "CRITICAL: the dollar figures given to you below (the headline revenue opportunity "
-    "and each campaign's share of it) are exact and MUST be used verbatim in your copy -- "
-    "do not recalculate, round differently, or invent any other dollar figure. "
+    "their paid search advertising account. The underlying analysis is already genuinely "
+    "deep (keyword-level, search-term-level, competitive auction position) -- your job is "
+    "NOT to dump that depth into dry audit prose. Write elegant, response-optimized copy "
+    "that makes the reader want to reply: a personalized hook (not a market-stat "
+    "recitation), a 'why now' case grounded in the market evidence given, short punchy "
+    "intro lines for the deeper sections that follow (the template renders the actual "
+    "recommendation cards and numbers -- your job is just the connective tissue between "
+    "them), and a low-friction call to action (a binary time choice plus a one-word-reply "
+    "fallback -- never an open-ended 'worth a call?'). Confident and consultative, never "
+    "a wall of findings -- this is a sales email that happens to be backed by real depth, "
+    "not an internal audit report. "
+    "CRITICAL: the dollar and percentage figures given to you below are exact and MUST be "
+    "used verbatim in your copy -- do not recalculate, round differently, or invent any "
+    "other number. "
     "Do not mention any company, platform, or vendor name anywhere in the copy -- keep "
     "it fully generic ('your paid search account')."
 )
@@ -565,7 +794,6 @@ def _clean_email_copy(email: "EmailCopy") -> "EmailCopy":
     hook, an impact_line that was just the bare dollar figure, and a
     fix_body that re-dumped the per-campaign breakdown with a doubled
     bullet). Cheap to fix in Python; cheaper than another model round-trip."""
-    import re
     hook = re.sub(r"^\s*hi\s*\[customer name\]\s*,?\s*", "", email.hook, flags=re.IGNORECASE).strip()
     email.hook = hook or email.hook
 
@@ -581,9 +809,9 @@ def _clean_email_copy(email: "EmailCopy") -> "EmailCopy":
     return email
 
 
-def run_stage9(account_id, account_cfg, ads_analysis, market_mapping, rollup):
-    # Pre-formatted (not raw floats): stage 8's copy and the campaign cards
-    # rendered in step 9 must show identical formatting for the same
+def run_stage9(account_id, account_cfg, ads_analysis, market_mapping, rollup, opp_sizing):
+    # Pre-formatted (not raw floats): stage 9's copy and the campaign cards
+    # rendered in step 10 must show identical formatting for the same
     # number, so the model is handed the exact string to echo rather than
     # a float it might round or format differently on its own.
     campaign_revenue_fmt = {name: f"{account_cfg['currency_symbol']} {amount:,.0f}"
@@ -593,7 +821,14 @@ def run_stage9(account_id, account_cfg, ads_analysis, market_mapping, rollup):
         f"Currency: {account_cfg['currency_symbol']}.\n\n"
         f"Diagnosis: {ads_analysis.model_dump_json()}\n\n"
         f"Market context: {market_mapping.model_dump_json()}\n\n"
-        f"EXACT figures to use verbatim (do not recompute, do not reformat):\n"
+        f"The recommendation cards, 'already working' findings, and opportunity-sizing "
+        f"numbers below will be rendered directly by the template as their own sections -- "
+        f"you are writing the intro lines for them (cards_intro, working_intro, "
+        f"opportunity_intro), not reproducing their content:\n"
+        f"- Recommendation cards (titles only): {[c.title for c in ads_analysis.recommendation_cards]}\n"
+        f"- Already working: {ads_analysis.already_working}\n"
+        f"- Opportunity sizing: {json.dumps(opp_sizing)}\n\n"
+        f"EXACT figures to use verbatim elsewhere in your copy (do not recompute, do not reformat):\n"
         f"- Headline revenue opportunity this quarter: {account_cfg['currency_symbol']} "
         f"{rollup['inc_revenue']:,.0f}\n"
         f"- Per-campaign share of that opportunity (already shown to the reader in separate cards -- "
@@ -603,7 +838,7 @@ def run_stage9(account_id, account_cfg, ads_analysis, market_mapping, rollup):
         f"- Daily budget: {account_cfg['currency_symbol']} {rollup['daily_budget']:,.0f}\n\n"
         "Draft the email copy now."
     )
-    email = structured_call(f"stage9:{account_id}", MODEL, STAGE9_SYSTEM, user, EmailCopy, max_tokens=4500)
+    email = structured_call(f"stage9:{account_id}", MODEL, STAGE9_SYSTEM, user, EmailCopy, max_tokens=5000)
     return _clean_email_copy(email)
 
 
@@ -613,7 +848,7 @@ def run_stage9(account_id, account_cfg, ads_analysis, market_mapping, rollup):
 # cards, the big-stat callout) -- no second rendering engine.
 # ============================================================================
 
-def render_email_pdf(account_id, account_cfg, email: EmailCopy, rollup, out_path, accent):
+def render_email_pdf(account_id, account_cfg, email: EmailCopy, ads_analysis, opp_sizing, rollup, out_path, accent):
     styles = pc.get_styles(accent)
     from reportlab.platypus import (BaseDocTemplate, PageTemplate, Frame, Paragraph,
                                      Spacer, Table, TableStyle, HRFlowable, KeepTogether)
@@ -644,7 +879,40 @@ def render_email_pdf(account_id, account_cfg, email: EmailCopy, rollup, out_path
         opp_text = f"Estimated opportunity here: <b>{account_cfg['currency_symbol']} {rev:,.0f}</b>"
         card = pc.campaign_card(name, diag, None, opp_text, styles, accent)
         flow.append(KeepTogether([card, Spacer(1, 0.08 * inch)]))
-    flow.append(Spacer(1, 0.04 * inch))
+    flow.append(Spacer(1, 0.1 * inch))
+
+    # What's holding you back -- the prioritized recommendation cards, the
+    # deeper keyword/search-term/negative-keyword/auction-insight analysis
+    # made actionable. This is the "tempting, not a dry audit" section: a
+    # short, confident intro line (stage 9's copy) followed by cards that
+    # are chip-first so a skimming reader can triage before reading prose.
+    flow.append(Paragraph("<b>What's holding you back</b>", styles["Body"]))
+    flow.append(Paragraph(email.cards_intro, styles["Caption"]))
+    flow.append(Spacer(1, 0.05 * inch))
+    for card in ads_analysis.recommendation_cards:
+        flow.append(KeepTogether([pc.recommendation_card(card.model_dump(), styles, accent), Spacer(1, 0.08 * inch)]))
+
+    # Already working -- reassurance that the fix list is short because the
+    # rest is solid, not because it wasn't checked. Fixed green accent
+    # (distinct from the vertical accent) so it reads visually as "good news."
+    if ads_analysis.already_working:
+        flow.append(Spacer(1, 0.04 * inch))
+        flow.append(Paragraph(email.working_intro, styles["Caption"]))
+        flow.append(KeepTogether([pc.key_takeaways("Already working in your favor",
+                                                     ads_analysis.already_working, styles, "#3F7D54")]))
+
+    # The payoff -- what closing the gap is worth, in the account's own
+    # terms (current/target impression share, additional impressions and
+    # clicks projected at today's click rate -- computed in Python, not by the LLM).
+    flow.append(Spacer(1, 0.12 * inch))
+    flow.append(Paragraph(email.opportunity_intro, styles["Body"]))
+    flow.append(pc.opportunity_stat_strip([
+        (f"+{opp_sizing['additional_impressions_estimate']:,}", "More impressions this quarter"),
+        (f"+{opp_sizing['additional_clicks_estimate']:,}", "More clicks at today's click rate"),
+        (f"{opp_sizing['target_impression_share_pct']:.0f}%", f"Impression share target (from {opp_sizing['current_impression_share_pct']:.0f}%)"),
+    ], styles, accent))
+    flow.append(Spacer(1, 0.14 * inch))
+
     flow.append(KeepTogether([pc.key_takeaways(email.fix_title, [email.fix_body], styles, accent)]))
     flow += [Spacer(1, 0.12 * inch), Paragraph("Best regards,<br/>[Seller name]", styles["Body"]),
              Spacer(1, 0.04 * inch), Paragraph(email.ps, styles["Caption"])]
@@ -677,29 +945,33 @@ def render_email_pdf(account_id, account_cfg, email: EmailCopy, rollup, out_path
 ACCENTS = {"Insurance": "#2E4057", "Retail": "#B0413E", "Travel": "#4C7A8C"}
 
 
-def run_account(account_id, account_cfg, df):
+def run_account(account_id, account_cfg, df, granular):
     g = preprocess_account(df, account_id)                                    # STEP 2
     eda_result = compute_eda(g)                                               # STEP 3 (ML)
+    granular_eda = compute_granular_eda(account_id, granular)                 # STEP 3 (ML, deeper grain)
     market_evidence = extract_market_evidence(account_cfg["vertical"])        # STEP 4
     rollup = account_rollup(g, account_cfg)                                   # deterministic revenue math
+    opp_sizing = opportunity_sizing(g, rollup)                                # deterministic opportunity sizing
 
-    ads_analysis = run_stage6(account_id, account_cfg, g, eda_result)         # STEP 6 (GenAI)
+    ads_analysis = run_stage6(account_id, account_cfg, g, eda_result, granular_eda)  # STEP 6 (GenAI)
 
     diagnosis_text = ads_analysis.account_level_diagnosis + " " + " ".join(ads_analysis.notable_patterns)
     ranked_evidence = rank_evidence_by_relevance(market_evidence, diagnosis_text)  # STEP 7 (NLP)
 
     market_mapping = run_stage8(account_id, account_cfg, ads_analysis, ranked_evidence)  # STEP 8 (GenAI)
-    email = run_stage9(account_id, account_cfg, ads_analysis, market_mapping, rollup)     # STEP 9 (GenAI)
+    email = run_stage9(account_id, account_cfg, ads_analysis, market_mapping, rollup, opp_sizing)  # STEP 9 (GenAI)
 
     accent = ACCENTS[account_cfg["vertical"]]
     slug = account_cfg["vertical"].lower() + "_" + account_cfg["country_code"].lower()
-    render_email_pdf(account_id, account_cfg, email, rollup,                  # STEP 10
+    render_email_pdf(account_id, account_cfg, email, ads_analysis, opp_sizing, rollup,   # STEP 10
                       OUTPUT_DIR / f"recommendation_email_llm_{slug}.pdf", accent)
 
     return {
         "account_id": account_id,
         "model": MODEL,
         "eda": eda_result,
+        "granular_eda": granular_eda,
+        "opportunity_sizing": opp_sizing,
         "market_evidence_ranked": ranked_evidence,
         "ads_analysis": ads_analysis.model_dump(),
         "market_mapping": market_mapping.model_dump(),
@@ -731,7 +1003,10 @@ def write_validation_report(all_results, elapsed_seconds):
     for r in all_results:
         lines.append(f"- **{r['account_id']}**: constraint = {r['ads_analysis']['primary_constraint']}, "
                       f"confidence = {r['ads_analysis']['confidence_0_to_1']}, "
-                      f"campaign findings = {len(r['ads_analysis']['campaign_findings'])}")
+                      f"campaign findings = {len(r['ads_analysis']['campaign_findings'])}, "
+                      f"recommendation cards = {len(r['ads_analysis']['recommendation_cards'])}, "
+                      f"already working = {len(r['ads_analysis']['already_working'])}, "
+                      f"opportunity = +{r['opportunity_sizing']['additional_impressions_estimate']:,} impressions")
     report_path = OUTPUT_DIR / "validation_report.md"
     report_path.write_text("\n".join(lines), encoding="utf-8")
     return report_path
@@ -740,12 +1015,14 @@ def write_validation_report(all_results, elapsed_seconds):
 def main():
     t0 = time.time()
     df = load_campaigns()  # STEP 1
+    granular = load_granular_data()  # STEP 1 (keyword/search-term/negative/ad/auction grain)
     all_results = []
     for account_id, account_cfg in ACCOUNTS.items():
         print(f"\n=== {account_id} ({account_cfg['vertical']}) ===")
-        result = run_account(account_id, account_cfg, df)
+        result = run_account(account_id, account_cfg, df, granular)
         all_results.append(result)
-        print(f"  constraint: {result['ads_analysis']['primary_constraint']}")
+        print(f"  constraint: {result['ads_analysis']['primary_constraint']}  "
+              f"recommendation_cards: {len(result['ads_analysis']['recommendation_cards'])}")
         (OUTPUT_DIR / f"{account_id}_full_result.json").write_text(json.dumps(result, indent=2), encoding="utf-8")
 
     report_path = write_validation_report(all_results, time.time() - t0)

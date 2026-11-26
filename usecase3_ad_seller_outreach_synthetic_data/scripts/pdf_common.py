@@ -196,6 +196,84 @@ def campaign_card(name, diagnosis, note_text, opportunity_text, styles, accent):
     return t
 
 
+PRIORITY_COLORS = {"high": "#B0413E", "medium": "#C9A66B", "low": "#6E8B74"}
+
+AFFECTS_LABELS = {"bid": "Bid", "quality_score": "Quality", "budget_allocation": "Budget",
+                   "negative_keywords": "Negatives"}
+
+
+def chip_row(chips, styles):
+    """A row of small colored tag badges (PRIORITY / TIMEFRAME / AFFECTS
+    style), the same visual language a real analyst deep-dive uses to let a
+    skimming reader triage without reading every word. Width is sized
+    generously per character and wrap is disabled -- a chip that wraps
+    mid-word ("HIG" / "H") defeats the point of a quick-scan tag."""
+    chip_style = ParagraphStyle("Chip", parent=styles["Normal"], fontSize=7.3, leading=9,
+                                 fontName="Helvetica-Bold", textColor=colors.white, alignment=TA_CENTER)
+    cells = [Paragraph(label.upper(), chip_style) for label, _color in chips]
+    widths = [0.5 * inch + 0.095 * inch * len(label) for label, _ in chips]
+    t = Table([cells], colWidths=widths)
+    style_cmds = [("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+                  ("TOPPADDING", (0, 0), (-1, -1), 3), ("BOTTOMPADDING", (0, 0), (-1, -1), 3),
+                  ("LEFTPADDING", (0, 0), (-1, -1), 6), ("RIGHTPADDING", (0, 0), (-1, -1), 6)]
+    for i, (_label, color_hex) in enumerate(chips):
+        style_cmds.append(("BACKGROUND", (i, 0), (i, 0), colors.HexColor(color_hex)))
+    t.setStyle(TableStyle(style_cmds))
+    t.hAlign = "LEFT"
+    return t
+
+
+def recommendation_card(card, styles, accent):
+    """One prioritized recommendation, chips-first so a skimming reader
+    triages before reading prose -- title, the specific evidence behind it,
+    the concrete steps, and the one metric to watch."""
+    chips = [(card["priority"], PRIORITY_COLORS.get(card["priority"], accent)),
+             (card["timeframe"], "#777777"),
+             (AFFECTS_LABELS.get(card["affects"], card["affects"]), accent)]
+    title_style = ParagraphStyle("RecTitle", parent=styles["Normal"], fontSize=10.5, leading=13,
+                                  fontName="Helvetica-Bold", textColor=colors.HexColor("#222222"), spaceBefore=4)
+    steps_text = "".join(f"&bull;&nbsp;&nbsp;{s}<br/>" for s in card["recommended_steps"]).rstrip("<br/>")
+    rows = [
+        [chip_row(chips, styles)],
+        [Paragraph(card["title"], title_style)],
+        [Paragraph(card["what_data_shows"], styles["Body"])],
+        [Paragraph(steps_text, styles["Body"])],
+        [Paragraph(f"<b>What to watch:</b> {card['what_to_watch']}", styles["Caption"])],
+    ]
+    t = Table(rows, colWidths=[6.3 * inch])
+    t.setStyle(TableStyle([
+        ("BOX", (0, 0), (-1, -1), 0.9, colors.HexColor(accent)),
+        ("LINEBEFORE", (0, 0), (0, -1), 3, colors.HexColor(PRIORITY_COLORS.get(card["priority"], accent))),
+        ("BACKGROUND", (0, 0), (-1, -1), colors.white),
+        ("LEFTPADDING", (0, 0), (-1, -1), 12), ("RIGHTPADDING", (0, 0), (-1, -1), 12),
+        ("TOPPADDING", (0, 0), (-1, -1), 4), ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
+        ("TOPPADDING", (0, 0), (0, 0), 10), ("BOTTOMPADDING", (0, -1), (0, -1), 10),
+    ]))
+    return t
+
+
+def opportunity_stat_strip(stat_cells, styles, accent):
+    """Three (or so) numbers in a row -- the payoff framing a response-
+    driven email ends on, distinct in shape from the single big_stat_callout
+    so the reader's eye recognizes 'this is the ROI summary' at a glance."""
+    val_style = ParagraphStyle("StripVal", parent=styles["Normal"], fontSize=17, leading=20,
+                                fontName="Helvetica-Bold", textColor=colors.HexColor(accent), alignment=TA_CENTER)
+    label_style = ParagraphStyle("StripLabel", parent=styles["Normal"], fontSize=7.6, leading=10,
+                                  textColor=colors.HexColor("#666666"), alignment=TA_CENTER)
+    col = [[Paragraph(value, val_style), Paragraph(label, label_style)] for value, label in stat_cells]
+    row = [list(pair) for pair in zip(*col)]  # transpose: row0 = values, row1 = labels
+    width = 6.5 * inch / len(stat_cells)
+    t = Table(row, colWidths=[width] * len(stat_cells))
+    t.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, -1), colors.HexColor("#F7F6F2")),
+        ("BOX", (0, 0), (-1, -1), 0.7, colors.HexColor("#DDDDDD")),
+        ("LINEAFTER", (0, 0), (-2, -1), 0.7, colors.HexColor("#DDDDDD")),
+        ("TOPPADDING", (0, 0), (-1, 0), 10), ("BOTTOMPADDING", (0, 0), (-1, 0), 2),
+        ("TOPPADDING", (0, 1), (-1, 1), 2), ("BOTTOMPADDING", (0, 1), (-1, 1), 10),
+    ]))
+    return t
+
+
 def chart_image(path, width=6.5 * inch):
     img = Image(path)
     aspect = img.imageHeight / float(img.imageWidth)

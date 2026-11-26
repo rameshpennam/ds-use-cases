@@ -1,0 +1,20 @@
+account_id,campaign_name,ad_group_name,ad_id,ad_strength_rating,headlines_count,descriptions_count
+DE-INS-001,Non-Brand Search - Auto Insurance,Generic - Auto Insurance,DE-INS-001-AD001,Excellent,10,3
+DE-INS-001,Brand Search - DE,Generic - Home Insurance,DE-INS-001-AD002,Excellent,14,4
+DE-INS-001,Non-Brand Search - Auto Insurance,Generic - Life Insurance,DE-INS-001-AD003,Excellent,14,3
+DE-INS-001,Non-Brand Search - Life Insurance,Brand Terms,DE-INS-001-AD004,Average,11,3
+DE-INS-001,Non-Brand Search - Life Insurance,Brand Terms,DE-INS-001-AD005,Good,10,4
+US-RET-001,Dynamic Search Ads - Catalog,Brand Terms,US-RET-001-AD006,Excellent,13,3
+US-RET-001,Shopping - Apparel,Seasonal - Apparel,US-RET-001-AD007,Excellent,10,3
+US-RET-001,Shopping - Apparel,Seasonal - Apparel,US-RET-001-AD008,Excellent,9,3
+US-RET-001,Non-Brand Search - Seasonal Promo,Seasonal - Electronics,US-RET-001-AD009,Excellent,14,3
+US-RET-001,Non-Brand Search - Seasonal Promo,Seasonal - Electronics,US-RET-001-AD010,Good,9,4
+US-RET-001,Shopping - Electronics,Seasonal - Home,US-RET-001-AD011,Good,11,4
+US-RET-001,Audience Network - Lookalike Prospecting,Seasonal - General,US-RET-001-AD012,Good,9,4
+US-RET-001,Audience Network - Lookalike Prospecting,Seasonal - General,US-RET-001-AD013,Good,12,4
+UK-TRV-001,Performance Max - Destinations,Generic - Flights,UK-TRV-001-AD014,Average,11,4
+UK-TRV-001,Audience Network - Retargeting,Generic - Hotels,UK-TRV-001-AD015,Excellent,11,3
+UK-TRV-001,Audience Network - Retargeting,Generic - Hotels,UK-TRV-001-AD016,Good,14,3
+UK-TRV-001,Non-Brand Search - Hotels & Packages,Generic - Packages,UK-TRV-001-AD017,Excellent,15,4
+UK-TRV-001,Non-Brand Search - Flights,Brand Terms,UK-TRV-001-AD018,Excellent,9,4
+UK-TRV-001,Non-Brand Search - Flights,Brand Terms,UK-TRV-001-AD019,Excellent,8,4

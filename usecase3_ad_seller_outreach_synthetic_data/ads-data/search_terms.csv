@@ -1,0 +1,25 @@
+account_id,campaign_id,campaign_name,search_term,matched_keyword_text,match_type,impressions,clicks,ctr_pct,is_competitor_brand_term,conversions
+DE-INS-001,DE-INS-001-C02,Non-Brand Search - Auto Insurance,car insurance quote,car insurance quote,Broad,11992,540,4.5,False,14.9
+DE-INS-001,DE-INS-001-C02,Non-Brand Search - Auto Insurance,home insurance cost,home insurance cost,Broad,8809,335,3.8,False,11.9
+DE-INS-001,DE-INS-001-C02,Non-Brand Search - Auto Insurance,life insurance comparison,life insurance comparison,Broad,5605,174,3.1,False,7.8
+DE-INS-001,DE-INS-001-C02,Non-Brand Search - Auto Insurance,cheap auto insurance,cheap auto insurance,Broad,8213,337,4.1,False,15.4
+DE-INS-001,DE-INS-001-C02,Non-Brand Search - Auto Insurance,bluewave insurance,car insurance quote,Broad,16065,0,0.0,True,0.0
+DE-INS-001,DE-INS-001-C02,Non-Brand Search - Auto Insurance,harborline mutual,car insurance quote,Broad,12495,0,0.0,True,0.0
+DE-INS-001,DE-INS-001-C02,Non-Brand Search - Auto Insurance,crestfield direct,car insurance quote,Broad,7140,0,0.0,True,0.0
+DE-INS-001,DE-INS-001-C02,Non-Brand Search - Auto Insurance,nordkreuz insurance quote,car insurance quote,Broad,3570,4,0.11,True,1.0
+US-RET-001,US-RET-001-C02,Shopping - Apparel,mens running shoes,mens running shoes,Broad,2233,116,5.19,False,3.5
+US-RET-001,US-RET-001-C02,Shopping - Apparel,wireless headphones,wireless headphones,Broad,1875,88,4.69,False,2.3
+US-RET-001,US-RET-001-C02,Shopping - Apparel,winter jacket sale,winter jacket sale,Broad,1639,90,5.49,False,2.5
+US-RET-001,US-RET-001-C02,Shopping - Apparel,kitchen appliances deals,kitchen appliances deals,Broad,1365,45,3.3,False,0.9
+US-RET-001,US-RET-001-C02,Shopping - Apparel,metro retail co,mens running shoes,Broad,3726,0,0.0,True,0.0
+US-RET-001,US-RET-001-C02,Shopping - Apparel,northfield mercantile,mens running shoes,Broad,2898,0,0.0,True,0.0
+US-RET-001,US-RET-001-C02,Shopping - Apparel,union square goods,mens running shoes,Broad,1656,0,0.0,True,0.0
+US-RET-001,US-RET-001-C02,Shopping - Apparel,fairmont retail quote,mens running shoes,Broad,828,1,0.12,True,0.2
+UK-TRV-001,UK-TRV-001-C02,Non-Brand Search - Flights,flights to spain,flights to spain,Broad,2659,162,6.09,False,7.2
+UK-TRV-001,UK-TRV-001-C02,Non-Brand Search - Flights,all inclusive holidays,all inclusive holidays,Broad,3051,177,5.8,False,5.1
+UK-TRV-001,UK-TRV-001-C02,Non-Brand Search - Flights,cheap hotel deals,cheap hotel deals,Broad,2404,118,4.91,False,4.7
+UK-TRV-001,UK-TRV-001-C02,Non-Brand Search - Flights,weekend city breaks,weekend city breaks,Broad,2124,93,4.38,False,3.6
+UK-TRV-001,UK-TRV-001-C02,Non-Brand Search - Flights,skyline journeys,flights to spain,Broad,4788,0,0.0,True,0.0
+UK-TRV-001,UK-TRV-001-C02,Non-Brand Search - Flights,coastal getaways,flights to spain,Broad,3724,0,0.0,True,0.0
+UK-TRV-001,UK-TRV-001-C02,Non-Brand Search - Flights,horizon holidays,flights to spain,Broad,2128,0,0.0,True,0.0
+UK-TRV-001,UK-TRV-001-C02,Non-Brand Search - Flights,trailmark travel quote,flights to spain,Broad,1064,2,0.19,True,0.5

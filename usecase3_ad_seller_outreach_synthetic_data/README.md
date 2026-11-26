@@ -1,14 +1,10 @@
-# Use Case 3 -- AI-Assisted Seller Outreach: Synthetic Data Package
+# Pilot Synthetic Data Package
 
-Synthetic data for a market-context-enriched seller outreach concept (3
-accounts, campaign-level ads data + 4 fictitious vendor-style market research
-reports + 3 example recommendation emails). **Everything in this folder is
-synthetic / illustrative.** No real company, account, platform, or
-research-vendor data anywhere in this package -- see the watermark on every
-generated PDF.
-
-Generators live in `scripts/` -- run them in the order listed under
-"Regenerating" below.
+Synthetic data for the market-context-enriched seller outreach pilot (3 accounts,
+campaign-level ads data + 4 fictitious vendor-style market research reports +
+3 example recommendation emails). **Everything in this folder is synthetic /
+illustrative.** No real company, account, platform, or research-vendor data
+anywhere in this package -- see the watermark on every generated PDF.
 
 ## Why this exists
 
@@ -35,6 +31,16 @@ this package lets a developer build and test that join end to end.
   (5 Travel / 7 Insurance / 10 Retail campaigns -- deliberately uneven,
   matching how a single-product-line vertical vs. a multi-category catalog
   actually differ in campaign count).
+- **`ads-data/keywords.csv`, `search_terms.csv`, `negative_keyword_conflicts.csv`,
+  `ads.csv`, `auction_insights.csv`** -- the keyword/query/negative-keyword/
+  ad-copy/competitive-position grain a real paid-search analyst actually digs
+  through, which campaign-level aggregates alone can't show (a keyword
+  scoring 9/10 on quality but stuck at 5% impression share; a competitor
+  brand name pulling thousands of zero-click impressions; a generic negative
+  accidentally blocking the advertiser's own keyword). Built by
+  `scripts/generate_granular_ads_data.py`, which reads `campaigns.csv` back
+  in so the two can never disagree. See the "Granular Ads Data Dictionary"
+  tab in `metadata.xlsx` for the full column reference.
 - **`market-reports/`** -- 4 fictitious vendor-style PDFs, each covering all
   3 verticals:
   - *Ashcroft Research Partners* -- Vertical Digital Advertising Trends (analyst/category benchmarks)
@@ -70,6 +76,9 @@ this package lets a developer build and test that join end to end.
     from, so the ads data, the 4 reports, and the 3 emails can never drift
     apart on a number.
   - `generate_ads_data.py` -- builds `campaigns.csv`.
+  - `generate_granular_ads_data.py` -- builds the 5 keyword/search-term/
+    negative-keyword/ad-strength/auction-insight files (run after
+    `generate_ads_data.py`, since it reads `campaigns.csv` back in).
   - `generate_market_pdfs.py` -- builds the 4 vendor reports.
   - `generate_emails.py` -- builds the 3 recommendation emails (reads back
     from `campaigns.csv`, same as a real downstream consumer would).
@@ -82,10 +91,12 @@ this package lets a developer build and test that join end to end.
 ```
 cd scripts
 python generate_ads_data.py
+python generate_granular_ads_data.py
 python generate_market_pdfs.py
 python generate_emails.py
 python generate_metadata_xlsx.py
 ```
 
-Run in that order -- `generate_emails.py` reads `ads-data/campaigns.csv` back
-in rather than recomputing its own numbers, the same way a real pipeline would.
+Run in that order -- `generate_granular_ads_data.py` and `generate_emails.py`
+both read `ads-data/campaigns.csv` back in rather than recomputing its own
+numbers, the same way a real pipeline would.

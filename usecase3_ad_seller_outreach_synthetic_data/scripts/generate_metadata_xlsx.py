@@ -221,6 +221,38 @@ MARKET_DICT = [
     ("QueryScope", "serp_competitive_density_index", "integer", "How crowded the results page is for that keyword, base 100", "competitive_density_index"),
 ]
 
+GRANULAR_DICT = [
+    # (file, column, type, description)
+    ("keywords.csv", "account_id / campaign_id / campaign_name", "string", "Links back to campaigns.csv -- only populated for Search / Dynamic Search Ads campaigns (keyword_count > 0 there), same as the real platforms this mirrors"),
+    ("keywords.csv", "ad_group_name", "string", "Ad group the keyword lives in"),
+    ("keywords.csv", "keyword_text", "string", "The advertiser's own bid keyword (not the literal search query -- see search_terms.csv for that)"),
+    ("keywords.csv", "match_type", "string", "Exact / Phrase / Broad"),
+    ("keywords.csv", "quality_score", "float", "1-10 keyword-level quality signal. NOT an average -- individual keywords, so a 9.0 next to a 3.0 in the same campaign is visible, which the campaign-level avg_quality_score in campaigns.csv cannot show"),
+    ("keywords.csv", "impression_share_pct / impression_share_lost_rank_pct", "float", "This keyword's own auction performance -- a high-quality-score keyword can still sit at single-digit impression share if the bid can't clear the auction"),
+    ("keywords.csv", "impressions / clicks / ctr_pct / avg_cpc / spend / conversions / cost_per_conversion", "numeric", "Standard performance fields at keyword grain"),
+    ("keywords.csv", "(file scope)", "note", "Top keywords by story relevance, NOT an exhaustive export of every live keyword -- same as a real analyst report only lists the keywords worth acting on"),
+
+    ("search_terms.csv", "search_term", "string", "The literal query a user typed -- can differ from any keyword_text when match type is Broad/Phrase"),
+    ("search_terms.csv", "matched_keyword_text", "string", "Which of the account's own keywords this query matched under"),
+    ("search_terms.csv", "is_competitor_brand_term", "boolean", "True when the query contains a competitor's name (fictitious competitor list, same ones in SignalWatch's market-report data) rather than a category term"),
+    ("search_terms.csv", "impressions / clicks / ctr_pct / conversions", "numeric", "Zero-click, high-impression competitor-brand rows are the evidence behind a negative-keyword recommendation; a competitor term that DOES convert is deliberately left out of that pattern, matching the real rule of 'block the dead ones, keep what works'"),
+
+    ("negative_keyword_conflicts.csv", "negative_keyword / negative_match_type", "string", "A generic negative (e.g. a word meant to exclude unrelated searches) that is too broad"),
+    ("negative_keyword_conflicts.csv", "blocked_keyword_text / blocked_campaign_name", "string", "The advertiser's own live keyword that negative is accidentally blocking from ever reaching an auction"),
+    ("negative_keyword_conflicts.csv", "estimated_blocked_impressions", "integer", "Impressions that keyword would have been eligible for had the negative not blocked it -- a blocked keyword shows 100% lost-to-rank by definition, since it never enters the auction"),
+
+    ("ads.csv", "ad_group_name / ad_id", "string", "One row per live ad"),
+    ("ads.csv", "ad_strength_rating", "string", "Poor / Average / Good / Excellent -- the platform's own creative-quality rating. Skewed toward Good/Excellent across all 3 accounts on purpose: ad copy is deliberately NOT the bottleneck in this synthetic story, same as the 'three things that need no work' pattern real analyst reviews surface before the fix list"),
+    ("ads.csv", "headlines_count / descriptions_count", "integer", "Asset counts feeding the strength rating"),
+
+    ("auction_insights.csv", "competitor_name", "string", "Fictitious named competitor -- same identity used in SignalWatch's market-report data, so the two can be cross-referenced"),
+    ("auction_insights.csv", "overlap_rate_pct", "float", "% of this account's auctions where that competitor also showed"),
+    ("auction_insights.csv", "position_above_rate_pct", "float", "Of the auctions where both showed, % of the time the competitor's ad ranked above this account's"),
+    ("auction_insights.csv", "top_of_page_rate_pct_self / top_of_page_rate_pct_competitor", "float", "% of impressions reaching the very top of the page, for this account vs. that competitor -- the gap between these two numbers is the real story, not either one alone"),
+    ("auction_insights.csv", "outranking_share_pct_self", "float", "% of shared auctions this account's ad ranked above that competitor's -- the account's own side of position_above_rate_pct"),
+    ("auction_insights.csv", "(file scope)", "note", "Rows are account-level, blended across in-scope Search campaigns -- not broken out per-campaign, since that is how a seller would actually look at it first"),
+]
+
 
 def main():
     overview_rows = [
@@ -230,6 +262,10 @@ def main():
         ("Ads data file", "ads-data/campaigns.csv -- one row per campaign, 143 columns, 22 rows "
                           "(5/7/10 campaigns across the 3 accounts -- deliberately uneven, matching how a "
                           "single-product-line vertical vs. a multi-category catalog actually differ in campaign count)."),
+        ("Granular ads data files", "ads-data/keywords.csv, search_terms.csv, negative_keyword_conflicts.csv, "
+                                    "ads.csv, auction_insights.csv -- the keyword/query/negative-keyword/ad-copy/"
+                                    "competitive-position grain a real analyst actually digs through, which "
+                                    "campaign-level aggregates alone cannot show (see Granular Ads Data Dictionary tab)."),
         ("Market data files", "market-reports/*.pdf -- one PDF per fictitious vendor, each covering all 3 verticals/accounts."),
         ("Recommendation emails", "recommendation-emails/*.pdf -- one example output per account, showing the end state "
                                   "this data is meant to produce."),
@@ -244,8 +280,9 @@ def main():
         ("Status", "100% synthetic / illustrative. No real company, account, or vendor data anywhere in this package."),
         ("Reporting period", REPORT_PERIOD),
         ("How to regenerate", "scripts/benchmarks.py holds every number all three outputs must agree on; "
-                               "scripts/generate_ads_data.py, scripts/generate_market_pdfs.py, and "
-                               "scripts/generate_emails.py all read from it (run in that order)."),
+                               "scripts/generate_ads_data.py, scripts/generate_granular_ads_data.py (reads "
+                               "campaigns.csv back in, must run after it), scripts/generate_market_pdfs.py, "
+                               "and scripts/generate_emails.py all read from it (run in that order)."),
         ("Watermark", WATERMARK),
     ]
     overview_df = pd.DataFrame(overview_rows, columns=["Field", "Value"])
@@ -265,6 +302,8 @@ def main():
 
     market_df = pd.DataFrame(MARKET_DICT, columns=["Vendor", "Field", "Type", "Description", "Maps to ads-data column"])
 
+    granular_df = pd.DataFrame(GRANULAR_DICT, columns=["File", "Column", "Type", "Description"])
+
     accounts_rows = []
     for acct_id, a in ACCOUNTS.items():
         accounts_rows.append({
@@ -282,11 +321,13 @@ def main():
         overview_df.to_excel(writer, sheet_name="Overview", index=False)
         accounts_df.to_excel(writer, sheet_name="Pilot Accounts", index=False)
         ads_df.to_excel(writer, sheet_name="Ads Data Dictionary", index=False)
+        granular_df.to_excel(writer, sheet_name="Granular Ads Data Dictionary", index=False)
         vendors_df.to_excel(writer, sheet_name="Market Vendors Overview", index=False)
         market_df.to_excel(writer, sheet_name="Market Data Dictionary", index=False)
 
         for sheet_name, df in [("Overview", overview_df), ("Pilot Accounts", accounts_df),
-                                ("Ads Data Dictionary", ads_df), ("Market Vendors Overview", vendors_df),
+                                ("Ads Data Dictionary", ads_df), ("Granular Ads Data Dictionary", granular_df),
+                                ("Market Vendors Overview", vendors_df),
                                 ("Market Data Dictionary", market_df)]:
             ws = writer.sheets[sheet_name]
             for i, col in enumerate(df.columns):
