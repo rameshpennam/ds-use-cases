@@ -259,7 +259,7 @@ GRANULAR_DICT = [
 def main():
     overview_rows = [
         ("Package", "Synthetic data package for the market-context-enriched seller outreach pilot."),
-        ("Scope", "3 pilot accounts (Insurance/Germany, Retail/United States, Travel/United Kingdom), campaign-level ads data, "
+        ("Scope", "3 pilot accounts (Insurance/Germany, Retail/Greece, Travel/United Kingdom), campaign-level ads data, "
                   "and 4 fictitious vendor-style market research reports."),
         ("Ads data file", "input/campaigndata-campaigns.csv -- one row per campaign, 143 columns, 22 rows "
                           "(5/7/10 campaigns across the 3 accounts -- deliberately uneven, matching how a "

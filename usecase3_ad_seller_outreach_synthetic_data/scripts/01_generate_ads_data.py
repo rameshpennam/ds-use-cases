@@ -38,11 +38,11 @@ CAMPAIGNS = {
         ("Audience Network - Retargeting", "Audience", "Retargeting", 0.06, 11, 0),
         ("Dynamic Search Ads - Long Tail", "Dynamic Search Ads", "Long-Tail", 0.03, 8, 0),
     ],
-    "US-RET-001": [
+    "GR-RET-001": [
         # Retail carries the most campaigns of the 3 -- realistic, since a
         # multi-category catalog naturally splits into more Shopping/PMax
         # campaigns than a single-product-line vertical does.
-        ("Brand Search - US", "Search", "Brand", 0.04, 60, 40),
+        ("Brand Search - GR", "Search", "Brand", 0.04, 60, 40),
         ("Shopping - Apparel", "Shopping", "Non-Brand", 0.18, 18, 82),
         ("Shopping - Electronics", "Shopping", "Non-Brand", 0.16, 17, 83),
         ("Shopping - Home & Garden", "Shopping", "Non-Brand", 0.12, 19, 81),
@@ -102,7 +102,7 @@ AOV = {"Insurance": 148.0, "Retail": 92.0, "Travel": 612.0}
 
 GEO_POOL = {
     "Germany": ["Bavaria", "North Rhine-Westphalia", "Baden-Wurttemberg", "Berlin", "Hesse"],
-    "United States": ["California", "Texas", "Florida", "New York", "Illinois"],
+    "Greece": ["Attica", "Central Macedonia", "Thessaly", "Crete", "Western Greece"],
     "United Kingdom": ["England - London", "England - South East", "Scotland", "England - North West", "Wales"],
 }
 AUDIENCE_POOL = {
@@ -115,7 +115,7 @@ SEARCH_TERMS = {
     "Retail": [("mens running shoes", 12.0), ("wireless headphones", 9.0), ("winter jacket sale", 8.5), ("kitchen appliances deals", 7.5)],
     "Travel": [("flights to spain", 13.0), ("all inclusive holidays", 10.0), ("cheap hotel deals", 9.0), ("weekend city breaks", 7.0)],
 }
-LANGUAGE = {"Germany": "German", "United States": "English", "United Kingdom": "English"}
+LANGUAGE = {"Germany": "German", "Greece": "Greek", "United Kingdom": "English"}
 
 
 def jitter(low, high):
@@ -384,7 +384,7 @@ SELLER_NOTES = {
     "DE-INS-001": "Seller flagged: strong auction eligibility but consistently outranked by "
                   "larger competitors on non-brand terms; customer has indicated openness to "
                   "revisiting bid strategy at this renewal.",
-    "US-RET-001": "Seller flagged: campaign exhausts its daily budget most days well before "
+    "GR-RET-001": "Seller flagged: campaign exhausts its daily budget most days well before "
                   "end-of-day; customer has asked about a mid-quarter budget increase.",
     "UK-TRV-001": "Seller flagged: booking volume up sharply this quarter; customer is "
                   "weighing expansion into adjacent destinations before competitors reprice.",

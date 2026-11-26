@@ -1,8 +1,8 @@
 account_id,negative_keyword,negative_match_type,blocked_keyword_text,blocked_campaign_name,estimated_blocked_impressions
 DE-INS-001,free,Broad,insurance quote calculator free,Dynamic Search Ads - Long Tail,3400
 DE-INS-001,jobs,Broad,insurance agent jobs near me insurance quote,Non-Brand Search - Auto Insurance,410
-US-RET-001,free,Broad,free shipping promo code,Non-Brand Search - Seasonal Promo,5200
-US-RET-001,DIY,Broad,kitchen appliances clearance DIY install,Non-Brand Search - Seasonal Promo,980
-US-RET-001,returns,Broad,winter jacket sale returns policy,Non-Brand Search - Seasonal Promo,760
+GR-RET-001,free,Broad,free shipping promo code,Non-Brand Search - Seasonal Promo,5200
+GR-RET-001,DIY,Broad,kitchen appliances clearance DIY install,Non-Brand Search - Seasonal Promo,980
+GR-RET-001,returns,Broad,winter jacket sale returns policy,Non-Brand Search - Seasonal Promo,760
 UK-TRV-001,jobs,Broad,flight attendant jobs cheap flights europe,Non-Brand Search - Flights,640
 UK-TRV-001,visa,Broad,weekend city breaks visa requirements,Non-Brand Search - Hotels & Packages,1150

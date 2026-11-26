@@ -65,8 +65,8 @@ KEYWORDS = {
         ("Dynamic Search Ads - Long Tail", "Auto-Target - Long Tail", "insurance quote calculator free", "Broad", 3.5, 21.0),
         ("Non-Brand Search - Life Insurance", "Generic - Life Insurance", "what is life insurance", "Broad", 4.5, 17.0),
     ],
-    "US-RET-001": [
-        ("Brand Search - US", "Brand Terms", "pilot account promo code", "Exact", 9.5, 58.0),
+    "GR-RET-001": [
+        ("Brand Search - GR", "Brand Terms", "pilot account promo code", "Exact", 9.5, 58.0),
         ("Non-Brand Search - Seasonal Promo", "Seasonal - Apparel", "winter jacket sale", "Phrase", 8.0, 21.0),
         ("Non-Brand Search - Seasonal Promo", "Seasonal - Electronics", "holiday electronics deals", "Broad", 7.5, 19.0),
         ("Non-Brand Search - Seasonal Promo", "Seasonal - Home", "kitchen appliances clearance", "Broad", 3.0, 26.0),
@@ -92,7 +92,7 @@ KEYWORDS = {
 # blanket rule.
 NON_BRAND_QUERIES = {
     "DE-INS-001": [("car insurance quote", 14.0, 0.045), ("home insurance cost", 9.5, 0.038), ("life insurance comparison", 7.0, 0.031), ("cheap auto insurance", 11.0, 0.041)],
-    "US-RET-001": [("mens running shoes", 12.0, 0.052), ("wireless headphones", 9.0, 0.047), ("winter jacket sale", 8.5, 0.055), ("kitchen appliances deals", 7.5, 0.033)],
+    "GR-RET-001": [("mens running shoes", 12.0, 0.052), ("wireless headphones", 9.0, 0.047), ("winter jacket sale", 8.5, 0.055), ("kitchen appliances deals", 7.5, 0.033)],
     "UK-TRV-001": [("flights to spain", 13.0, 0.061), ("all inclusive holidays", 10.0, 0.058), ("cheap hotel deals", 9.0, 0.049), ("weekend city breaks", 7.0, 0.044)],
 }
 
@@ -110,7 +110,7 @@ NEGATIVE_CONFLICTS = {
         ("free", "Broad", "insurance quote calculator free", "Dynamic Search Ads - Long Tail", 3400),
         ("jobs", "Broad", "insurance agent jobs near me insurance quote", "Non-Brand Search - Auto Insurance", 410),
     ],
-    "US-RET-001": [
+    "GR-RET-001": [
         ("free", "Broad", "free shipping promo code", "Non-Brand Search - Seasonal Promo", 5200),
         ("DIY", "Broad", "kitchen appliances clearance DIY install", "Non-Brand Search - Seasonal Promo", 980),
         ("returns", "Broad", "winter jacket sale returns policy", "Non-Brand Search - Seasonal Promo", 760),
@@ -125,7 +125,7 @@ NEGATIVE_CONFLICTS = {
 # ad-group names already used in KEYWORDS plus the account's Brand group).
 AD_GROUP_POOL = {
     "DE-INS-001": ["Generic - Auto Insurance", "Generic - Home Insurance", "Generic - Life Insurance", "Brand Terms"],
-    "US-RET-001": ["Brand Terms", "Seasonal - Apparel", "Seasonal - Electronics", "Seasonal - Home", "Seasonal - General"],
+    "GR-RET-001": ["Brand Terms", "Seasonal - Apparel", "Seasonal - Electronics", "Seasonal - Home", "Seasonal - General"],
     "UK-TRV-001": ["Generic - Flights", "Generic - Hotels", "Generic - Packages", "Brand Terms"],
 }
 

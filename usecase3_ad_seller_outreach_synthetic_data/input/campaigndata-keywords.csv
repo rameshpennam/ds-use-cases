@@ -7,12 +7,12 @@ DE-INS-001,DE-INS-001-C02,Non-Brand Search - Auto Insurance,Generic - Auto Insur
 DE-INS-001,DE-INS-001-C03,Non-Brand Search - Home Insurance,Generic - Home Insurance,home insurance claims process,Broad,Active,4.0,53240,10116,19.0,81.0,435,4.3,5.17,2248.95,9.2,244.45
 DE-INS-001,DE-INS-001-C07,Dynamic Search Ads - Long Tail,Auto-Target - Long Tail,insurance quote calculator free,Broad,Active,3.5,4829,1014,21.0,79.0,36,3.54,3.9,140.4,1.0,140.4
 DE-INS-001,DE-INS-001-C04,Non-Brand Search - Life Insurance,Generic - Life Insurance,what is life insurance,Broad,Active,4.5,24482,4162,17.0,83.0,137,3.29,6.27,858.99,1.4,613.56
-US-RET-001,US-RET-001-C01,Brand Search - US,Brand Terms,pilot account promo code,Exact,Active,9.5,3957,2295,58.0,42.0,158,6.9,0.81,127.98,17.0,7.53
-US-RET-001,US-RET-001-C06,Non-Brand Search - Seasonal Promo,Seasonal - Apparel,winter jacket sale,Phrase,Active,8.0,9828,2064,21.0,79.0,150,7.26,1.37,205.5,6.1,33.69
-US-RET-001,US-RET-001-C06,Non-Brand Search - Seasonal Promo,Seasonal - Electronics,holiday electronics deals,Broad,Active,7.5,14705,2794,19.0,81.0,171,6.14,1.67,285.57,3.5,81.59
-US-RET-001,US-RET-001-C06,Non-Brand Search - Seasonal Promo,Seasonal - Home,kitchen appliances clearance,Broad,Active,3.0,6361,1654,26.0,74.0,53,3.2,1.84,97.52,0.3,325.07
-US-RET-001,US-RET-001-C06,Non-Brand Search - Seasonal Promo,Seasonal - General,deals near me today,Broad,Active,2.5,10616,3079,29.0,71.0,82,2.66,1.86,152.52,0.2,762.6
-US-RET-001,US-RET-001-C06,Non-Brand Search - Seasonal Promo,Seasonal - General,free shipping promo code,Broad,Active,3.5,15317,3370,22.0,78.0,117,3.47,2.14,250.38,1.8,139.1
+GR-RET-001,GR-RET-001-C01,Brand Search - GR,Brand Terms,pilot account promo code,Exact,Active,9.5,895,519,58.0,42.0,36,6.9,0.35,12.6,3.9,3.23
+GR-RET-001,GR-RET-001-C06,Non-Brand Search - Seasonal Promo,Seasonal - Apparel,winter jacket sale,Phrase,Active,8.0,2222,467,21.0,79.0,34,7.26,0.59,20.06,1.4,14.33
+GR-RET-001,GR-RET-001-C06,Non-Brand Search - Seasonal Promo,Seasonal - Electronics,holiday electronics deals,Broad,Active,7.5,3325,632,19.0,81.0,39,6.14,0.73,28.47,0.8,35.59
+GR-RET-001,GR-RET-001-C06,Non-Brand Search - Seasonal Promo,Seasonal - Home,kitchen appliances clearance,Broad,Active,3.0,1438,374,26.0,74.0,12,3.2,0.8,9.6,0.1,96.0
+GR-RET-001,GR-RET-001-C06,Non-Brand Search - Seasonal Promo,Seasonal - General,deals near me today,Broad,Active,2.5,2400,696,29.0,71.0,19,2.66,0.81,15.39,0.0,
+GR-RET-001,GR-RET-001-C06,Non-Brand Search - Seasonal Promo,Seasonal - General,free shipping promo code,Broad,Active,3.5,3463,762,22.0,78.0,26,3.47,0.93,24.18,0.4,60.45
 UK-TRV-001,UK-TRV-001-C02,Non-Brand Search - Flights,Generic - Flights,flights to spain,Phrase,Active,8.5,21913,7450,34.0,66.0,537,7.21,2.55,1369.35,20.9,65.52
 UK-TRV-001,UK-TRV-001-C02,Non-Brand Search - Flights,Generic - Flights,cheap flights europe,Broad,Active,7.5,23633,7090,30.0,70.0,402,5.67,2.59,1041.18,11.1,93.8
 UK-TRV-001,UK-TRV-001-C03,Non-Brand Search - Hotels & Packages,Generic - Hotels,all inclusive holidays,Phrase,Active,8.0,17867,6432,36.0,64.0,462,7.18,2.08,960.96,20.3,47.34
