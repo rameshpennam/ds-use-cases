@@ -1,0 +1,435 @@
+{
+  "account_id": "UK-TRV-001",
+  "model": "gpt-5.2",
+  "eda": {
+    "note": "Exploratory statistics on a small per-account sample (5-10 campaigns) -- directional evidence, not a validated production model.",
+    "correlations_vs_missed_impressions": [
+      {
+        "feature": "impressions",
+        "pearson_r": 0.974,
+        "p_value": 0.0051
+      },
+      {
+        "feature": "avg_cpc",
+        "pearson_r": 0.959,
+        "p_value": 0.0101
+      },
+      {
+        "feature": "impression_share_lost_rank_pct",
+        "pearson_r": 0.843,
+        "p_value": 0.073
+      },
+      {
+        "feature": "spend",
+        "pearson_r": 0.711,
+        "p_value": 0.1782
+      },
+      {
+        "feature": "roas",
+        "pearson_r": -0.537,
+        "p_value": 0.3505
+      },
+      {
+        "feature": "conversions",
+        "pearson_r": -0.258,
+        "p_value": 0.6752
+      }
+    ],
+    "campaigns": [
+      {
+        "campaign_name": "Brand Search - UK",
+        "missed_impressions": 29400,
+        "cumulative_missed_share": 1.0,
+        "material": false,
+        "anomaly_score": -0.071,
+        "is_statistical_outlier": true,
+        "cluster_label": 0
+      },
+      {
+        "campaign_name": "Non-Brand Search - Flights",
+        "missed_impressions": 356440,
+        "cumulative_missed_share": 0.41,
+        "material": true,
+        "anomaly_score": 0.064,
+        "is_statistical_outlier": false,
+        "cluster_label": 1
+      },
+      {
+        "campaign_name": "Non-Brand Search - Hotels & Packages",
+        "missed_impressions": 300300,
+        "cumulative_missed_share": 0.755,
+        "material": true,
+        "anomaly_score": 0.043,
+        "is_statistical_outlier": false,
+        "cluster_label": 1
+      },
+      {
+        "campaign_name": "Performance Max - Destinations",
+        "missed_impressions": 130200,
+        "cumulative_missed_share": 0.904,
+        "material": false,
+        "anomaly_score": 0.094,
+        "is_statistical_outlier": false,
+        "cluster_label": 1
+      },
+      {
+        "campaign_name": "Audience Network - Retargeting",
+        "missed_impressions": 53900,
+        "cumulative_missed_share": 0.966,
+        "material": false,
+        "anomaly_score": 0.047,
+        "is_statistical_outlier": false,
+        "cluster_label": 1
+      }
+    ],
+    "in_scope_campaign_names": [
+      "Non-Brand Search - Flights",
+      "Non-Brand Search - Hotels & Packages"
+    ]
+  },
+  "market_evidence_ranked": {
+    "QueryScope Insights": [
+      {
+        "table": "Keyword | Q4 2025 | Q2 2026 | Q3 2026 | Growth",
+        "row": {
+          "Keyword": "flights to spain",
+          "Q4 2025": "100",
+          "Q2 2026": "118",
+          "Q3 2026": "151",
+          "Growth": "51%"
+        },
+        "source_page": 10,
+        "relevance_score": 0.073
+      },
+      {
+        "table": "Keyword | Q4 2025 | Q2 2026 | Q3 2026 | Growth",
+        "row": {
+          "Keyword": "budget airline flight deals",
+          "Q4 2025": "100",
+          "Q2 2026": "115",
+          "Q3 2026": "141",
+          "Growth": "41%"
+        },
+        "source_page": 11,
+        "relevance_score": 0.067
+      },
+      {
+        "table": "Keyword | Q4 2025 | Q2 2026 | Q3 2026 | Growth",
+        "row": {
+          "Keyword": "last minute flights europe",
+          "Q4 2025": "100",
+          "Q2 2026": "122",
+          "Q3 2026": "156",
+          "Growth": "56%"
+        },
+        "source_page": 10,
+        "relevance_score": 0.035
+      },
+      {
+        "table": "Keyword | Q4 2025 | Q2 2026 | Q3 2026 | Growth",
+        "row": {
+          "Keyword": "business class flights sale",
+          "Q4 2025": "100",
+          "Q2 2026": "113",
+          "Q3 2026": "137",
+          "Growth": "37%"
+        },
+        "source_page": 11,
+        "relevance_score": 0.034
+      },
+      {
+        "table": "Keyword | Q4 2025 | Q2 2026 | Q3 2026 | Growth",
+        "row": {
+          "Keyword": "solo travel packages",
+          "Q4 2025": "100",
+          "Q2 2026": "112",
+          "Q3 2026": "134",
+          "Growth": "34%"
+        },
+        "source_page": 11,
+        "relevance_score": 0.031
+      },
+      {
+        "table": "Keyword | Q4 2025 | Q2 2026 | Q3 2026 | Growth",
+        "row": {
+          "Keyword": "ski holiday packages",
+          "Q4 2025": "100",
+          "Q2 2026": "108",
+          "Q3 2026": "128",
+          "Growth": "28%"
+        },
+        "source_page": 11,
+        "relevance_score": 0.03
+      }
+    ],
+    "SignalWatch Competitive Intelligence": [
+      {
+        "table": "Competitor | Spend Share | Active Creatives | Channels",
+        "row": {
+          "Competitor": "Pilot Account (this report)",
+          "Spend Share": "14.0%",
+          "Active Creatives": "--",
+          "Channels": "Search (primary)"
+        },
+        "source_page": 10,
+        "relevance_score": 0.073
+      },
+      {
+        "table": "Competitor | Spend Share | Active Creatives | Channels",
+        "row": {
+          "Competitor": "Horizon Holidays",
+          "Spend Share": "16%",
+          "Active Creatives": "34",
+          "Channels": "Search, Social, Video"
+        },
+        "source_page": 10,
+        "relevance_score": 0.042
+      }
+    ],
+    "Ashcroft Research Partners": [
+      {
+        "table": "Market | Search Spend Growth QoQ | Vertical-Avg Impression Share",
+        "row": {
+          "Market": "United Kingdom (pilot account market)",
+          "Search Spend Growth QoQ": "22.0%",
+          "Vertical-Avg Impression Share": "40.0%"
+        },
+        "source_page": 13,
+        "relevance_score": 0.07
+      },
+      {
+        "table": "Market | Search Spend Growth QoQ | Vertical-Avg Impression Share",
+        "row": {
+          "Market": "Australia",
+          "Search Spend Growth QoQ": "14.0%",
+          "Vertical-Avg Impression Share": "38.0%"
+        },
+        "source_page": 14,
+        "relevance_score": 0.068
+      },
+      {
+        "table": "Market | Search Spend Growth QoQ | Vertical-Avg Impression Share",
+        "row": {
+          "Market": "France",
+          "Search Spend Growth QoQ": "19.5%",
+          "Vertical-Avg Impression Share": "35.5%"
+        },
+        "source_page": 14,
+        "relevance_score": 0.068
+      },
+      {
+        "table": "Market | Search Spend Growth QoQ | Vertical-Avg Impression Share",
+        "row": {
+          "Market": "Spain",
+          "Search Spend Growth QoQ": "25.0%",
+          "Vertical-Avg Impression Share": "33.0%"
+        },
+        "source_page": 14,
+        "relevance_score": 0.066
+      },
+      {
+        "table": "Market | Search Spend Growth QoQ | Vertical-Avg Impression Share",
+        "row": {
+          "Market": "Germany",
+          "Search Spend Growth QoQ": "12.5%",
+          "Vertical-Avg Impression Share": "34.0%"
+        },
+        "source_page": 14,
+        "relevance_score": 0.045
+      },
+      {
+        "table": "Market | Search Spend Growth QoQ | Vertical-Avg Impression Share",
+        "row": {
+          "Market": "Canada",
+          "Search Spend Growth QoQ": "15.5%",
+          "Vertical-Avg Impression Share": "37.0%"
+        },
+        "source_page": 14,
+        "relevance_score": 0.044
+      },
+      {
+        "table": "Market | Search Spend Growth QoQ | Vertical-Avg Impression Share",
+        "row": {
+          "Market": "Italy",
+          "Search Spend Growth QoQ": "21.0%",
+          "Vertical-Avg Impression Share": "32.0%"
+        },
+        "source_page": 14,
+        "relevance_score": 0.044
+      },
+      {
+        "table": "Market | Search Spend Growth QoQ | Vertical-Avg Impression Share",
+        "row": {
+          "Market": "United States",
+          "Search Spend Growth QoQ": "17.0%",
+          "Vertical-Avg Impression Share": "36.5%"
+        },
+        "source_page": 14,
+        "relevance_score": 0.043
+      },
+      {
+        "table": "Market | Search Spend Growth QoQ | Vertical-Avg Impression Share",
+        "row": {
+          "Market": "United Arab Emirates",
+          "Search Spend Growth QoQ": "23.5%",
+          "Vertical-Avg Impression Share": "30.0%"
+        },
+        "source_page": 14,
+        "relevance_score": 0.041
+      },
+      {
+        "table": "Vertical | Highlighted Market | Spend Growth QoQ | Query Demand Growth\nQoQ | Vertical-Avg Impression\nShare",
+        "row": {
+          "Vertical": "Retail",
+          "Highlighted Market": "United States",
+          "Spend Growth QoQ": "9.0%",
+          "Query Demand Growth\nQoQ": "6.0%",
+          "Vertical-Avg Impression\nShare": "35.0%"
+        },
+        "source_page": 5,
+        "relevance_score": 0.035
+      }
+    ],
+    "Vantage Media Metrics": [
+      {
+        "table": "Channel | Share | Measurement Confidence",
+        "row": {
+          "Channel": "Social",
+          "Share": "33%",
+          "Measurement Confidence": "Measured"
+        },
+        "source_page": 17,
+        "relevance_score": 0.039
+      },
+      {
+        "table": "Vertical | Ad Intensity Index | Reach % | Avg Frequency",
+        "row": {
+          "Vertical": "Insurance",
+          "Ad Intensity Index": "112",
+          "Reach %": "64%",
+          "Avg Frequency": "3.2"
+        },
+        "source_page": 5,
+        "relevance_score": 0.028
+      },
+      {
+        "table": "Channel | Share | Measurement Confidence",
+        "row": {
+          "Channel": "Other",
+          "Share": "7%",
+          "Measurement Confidence": "Measured (low-volume)"
+        },
+        "source_page": 17,
+        "relevance_score": 0.024
+      },
+      {
+        "table": "Channel | Share | Measurement Confidence",
+        "row": {
+          "Channel": "Other",
+          "Share": "5%",
+          "Measurement Confidence": "Measured (low-volume)"
+        },
+        "source_page": 17,
+        "relevance_score": 0.024
+      },
+      {
+        "table": "Channel | Share | Measurement Confidence",
+        "row": {
+          "Channel": "Display",
+          "Share": "12%",
+          "Measurement Confidence": "Measured (low-volume)"
+        },
+        "source_page": 17,
+        "relevance_score": 0.022
+      },
+      {
+        "table": "Channel | Share of Category Spend",
+        "row": {
+          "Channel": "Search",
+          "Share of Category Spend": "41%"
+        },
+        "source_page": 13,
+        "relevance_score": 0.021
+      }
+    ]
+  },
+  "ads_analysis": {
+    "account_level_diagnosis": "The account\u2019s biggest missed revenue opportunity is in Non-Brand search, where impression share is low (33\u201335%) primarily due to rank loss (51% lost to rank in both non-brand campaigns) rather than budget. Budgets are not being fully stressed (budget utilization ~61\u201364%) and lost-to-budget is materially smaller (14\u201316%), so increasing competitiveness (bids/efficiency/Quality Score) should unlock more auctions before budget becomes the bottleneck.",
+    "primary_constraint": "rank-constrained",
+    "confidence_0_to_1": 0.8,
+    "notable_patterns": [
+      "Non-brand campaigns hold only ~33\u201335% search impression share while losing 51% to rank, versus just 14\u201316% to budget\u2014pointing to ad rank as the dominant limiter.",
+      "Budgets don\u2019t look capped: budget utilization is 63.6% (Flights) and 61.4% (Hotels & Packages), consistent with rank limiting delivery before budgets are exhausted.",
+      "Quality Score is a differentiator within non-brand: Hotels & Packages has QS 5.1 (lowest in the account) with the same rank loss (51%) as Flights despite Flights having QS 7.7\u2014suggesting creative/LP relevance and auction competitiveness issues are suppressing non-brand scale.",
+      "The two in-scope non-brand campaigns account for the majority of missed impressions in the EDA (356,440 Flights; 300,300 Hotels & Packages), making them the only clearly material levers versus Brand/PMax/Retargeting at current levels."
+    ],
+    "campaign_findings": [
+      {
+        "campaign_name": "Non-Brand Search - Flights",
+        "diagnosis": "Delivery is constrained mainly by rank: search IS is 33% with 51% lost to rank versus 16% lost to budget, and budget utilization is only 63.6%, indicating you\u2019re not hitting daily limits so much as failing to win auctions.",
+        "primary_constraint": "rank",
+        "severity_0_to_1": 0.85,
+        "recommended_action": "Increase auction competitiveness while protecting efficiency: (1) segment top converting routes/destinations and apply higher bids/tROAS loosening on proven terms, (2) expand/refresh RSAs with query-matched headlines and stronger price/value props, (3) tighten keyword-to-ad-to-landing page alignment to sustain QS (already 7.7) and improve expected CTR, and (4) review auction insights for top outrankers and adjust bid strategy targets until lost-to-rank falls materially (e.g., from 51% toward <40%)."
+      },
+      {
+        "campaign_name": "Non-Brand Search - Hotels & Packages",
+        "diagnosis": "This is the clearest rank/quality issue: search IS is 35% with 51% lost to rank and only 14% lost to budget, while Quality Score is 5.1 (lowest), suggesting relevance/CTR/LP experience is suppressing Ad Rank and limiting scale even before budget is a constraint.",
+        "primary_constraint": "rank",
+        "severity_0_to_1": 0.9,
+        "recommended_action": "Prioritize Quality Score and Ad Rank fixes before adding budget: (1) restructure by intent (hotels vs packages vs city breaks) to tighten ad/LP relevance, (2) build new RSAs per intent cluster with stronger query coverage and promo messaging, (3) improve landing page speed/content-match for hotel/package queries, (4) add negatives to cut mismatched traffic that depresses CTR/QS, and (5) once rank loss improves, then consider incremental budget since current utilization is only 61.4% and lost-to-budget is secondary (14%)."
+      }
+    ]
+  },
+  "market_mapping": {
+    "why_now_summary": "Non-brand search demand and competitive spend in travel are rising right now, so staying rank-constrained (51% lost to rank with only ~33\u201335% IS) means you\u2019re systematically missing a growing pool of high-intent queries. Because the market\u2019s search spend is accelerating (e.g., +22% QoQ in the UK) while your budgets aren\u2019t fully utilized, the fastest way to capture incremental revenue is to improve Ad Rank/Quality Score and bidding competitiveness now\u2014before higher competitor pressure further raises the cost of winning auctions.",
+    "supporting_facts": [
+      {
+        "vendor": "Ashcroft Research Partners",
+        "fact": "United Kingdom (pilot account market): Search Spend Growth QoQ = 22.0% and Vertical-Avg Impression Share = 40.0% (source page 13).",
+        "relevance_to_recommendation": "A +22% QoQ rise in search spend signals intensifying auction competition right now. With your non-brand campaigns already losing 51% of impressions to rank, delaying Ad Rank/QS fixes risks even more rank loss as competitors push harder. The 40% vertical-average IS also contextualizes your current ~33\u201335% IS as behind the market\u2014suggesting headroom that can be captured by improving rank (not just adding budget)."
+      },
+      {
+        "vendor": "QueryScope Insights",
+        "fact": "Keyword demand index for \u201clast minute flights europe\u201d grew from 100 (Q4 2025) to 156 (Q3 2026), Growth = 56% (source page 10).",
+        "relevance_to_recommendation": "This is a concrete indicator that high-intent, non-brand flight demand is expanding sharply. When demand surges, the cost of not winning auctions increases\u2014so lowering lost-to-rank via bids/RSAs/landing-page relevance can translate quickly into incremental volume before budgets become limiting."
+      },
+      {
+        "vendor": "QueryScope Insights",
+        "fact": "Keyword demand index for \u201cflights to spain\u201d grew from 100 (Q4 2025) to 151 (Q3 2026), Growth = 51% (source page 10).",
+        "relevance_to_recommendation": "Rapid growth in a destination-flight query cluster means more auctions are available now. With low IS driven by rank loss, improving competitiveness lets you capture that incremental demand immediately rather than ceding it to outranking advertisers."
+      },
+      {
+        "vendor": "QueryScope Insights",
+        "fact": "Keyword demand index for \u201cbudget airline flight deals\u201d grew from 100 (Q4 2025) to 141 (Q3 2026), Growth = 41% (source page 11).",
+        "relevance_to_recommendation": "Price/value-oriented non-brand queries are rising\u2014exactly where stronger RSAs (deal/value props) and better QS can lift Ad Rank. Acting now helps you win more of these auctions without first needing major budget increases."
+      },
+      {
+        "vendor": "SignalWatch Competitive Intelligence",
+        "fact": "Horizon Holidays: Spend Share = 16% and Active Creatives = 34; Channels = Search, Social, Video (source page 10).",
+        "relevance_to_recommendation": "A competitor with sizable spend share and high creative throughput indicates active competitive pressure and message testing. If competitors are iterating creatives aggressively while you remain rank-limited (and one campaign has QS 5.1), improving ad relevance/CTR and landing-page alignment becomes time-sensitive to avoid being perpetually outranked."
+      },
+      {
+        "vendor": "Vantage Media Metrics",
+        "fact": "Search: Share of Category Spend = 41% (source page 13).",
+        "relevance_to_recommendation": "Search is a large share of category spend, so performance gains from fixing rank constraints in non-brand search can have outsized revenue impact. Given your budgets are not fully stressed, investing effort in Ad Rank/QS improvements is the most immediate lever to capture more of this spend-driven demand."
+      }
+    ],
+    "urgency_0_to_1": 0.83
+  },
+  "email_copy": {
+    "subject": "GBP 316,559 sitting behind 47.0% lost-to-rank in your non-brand search",
+    "hook": "Your paid search account isn\u2019t bumping into budget as much as it\u2019s simply not winning enough auctions: impression share is 37.84% while 47.0% is being lost to rank (vs 15.2% to budget). With a daily budget of GBP 6,200, there\u2019s room to scale\u2014if we raise Ad Rank first.",
+    "why_now_bullets": [
+      "UK travel search competition is heating up: Search spend is up <b>22.0%</b> QoQ, which typically makes rank losses worse for accounts already constrained by position.",
+      "High-intent non-brand demand is expanding fast: \u201clast minute flights europe\u201d demand index rose <b>56%</b> (100 \u2192 156), meaning more auctions are available right now\u2014if you can win them.",
+      "You\u2019re behind the vertical benchmark: travel\u2019s average impression share is <b>40.0%</b>, while your account is at <b>37.84%</b>\u2014headroom that\u2019s primarily unlocked by improving rank, not just adding budget."
+    ],
+    "stat_label": "REVENUE OPPORTUNITY THIS QUARTER",
+    "stat_sub": "Unlocked by reducing rank loss in non-brand search (before budgets become the bottleneck)",
+    "impact_line": "GBP 316,559 is the estimated upside available this quarter if we improve non-brand auction competitiveness\u2014specifically by reducing the 47.0% lost-to-rank through tighter query-to-ad-to-landing-page relevance and bid strategy adjustments that win more high-intent impressions without needing to max out spend first.",
+    "scope_intro": "I\u2019d focus the work where the missed impressions are concentrated: the two non-brand search campaigns driving the majority of rank-related leakage.",
+    "fix_title": "Quick rank-first plan (no budget increase required to start)",
+    "fix_body": "Can you do Tuesday 10:30 or Thursday 14:00 to walk through a rank-first action plan (ad/landing-page relevance + bid/target adjustments) and align on what \u201cgood\u201d looks like for impression share and lost-to-rank over the next 2\u20133 weeks? If neither works, just reply \u201ctimes\u201d and I\u2019ll send two alternatives.",
+    "ps": "If you\u2019re already planning creative or landing-page updates for peak travel periods, this is the ideal moment to align them to the highest-volume non-brand intent clusters so the Quality/Ad Rank lift shows up immediately in delivery."
+  }
+}
