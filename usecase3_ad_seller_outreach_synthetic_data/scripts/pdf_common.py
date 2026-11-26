@@ -171,6 +171,27 @@ def big_stat_callout(label, value_text, sublabel, styles, accent):
     return t
 
 
+def hero_banner(eyebrow, headline, styles, accent):
+    """The full-width banner a real account-deep-dive document opens
+    with -- a small all-caps eyebrow label over a bold, news-style
+    headline, so the single most important claim in the whole email is
+    the very first thing a reader's eye lands on, before the greeting."""
+    eyebrow_style = ParagraphStyle("HeroEyebrow", parent=styles["Normal"], fontSize=8.5, leading=11,
+                                    fontName="Helvetica-Bold", textColor=colors.HexColor("#D9D9D9"),
+                                    alignment=TA_CENTER, spaceAfter=4)
+    headline_style = ParagraphStyle("HeroHeadline", parent=styles["Normal"], fontSize=19, leading=23,
+                                     fontName="Helvetica-Bold", textColor=colors.white, alignment=TA_CENTER)
+    rows = [[Paragraph(eyebrow.upper(), eyebrow_style)], [Paragraph(headline, headline_style)]]
+    t = Table(rows, colWidths=[6.5 * inch])
+    t.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, -1), colors.HexColor(accent)),
+        ("TOPPADDING", (0, 0), (0, 0), 14), ("BOTTOMPADDING", (0, 0), (0, 0), 0),
+        ("TOPPADDING", (0, 1), (0, 1), 2), ("BOTTOMPADDING", (0, 1), (0, 1), 16),
+        ("LEFTPADDING", (0, 0), (-1, -1), 16), ("RIGHTPADDING", (0, 0), (-1, -1), 16),
+    ]))
+    return t
+
+
 def campaign_card(name, diagnosis, note_text, opportunity_text, styles, accent):
     """One clearly-bordered card per in-scope campaign -- deliberately a
     different visual weight than key_takeaways' solid-fill callout, so the
@@ -223,49 +244,70 @@ def chip_row(chips, styles):
     return t
 
 
-def recommendation_card(card, styles, accent):
-    """One prioritized recommendation, chips-first so a skimming reader
-    triages before reading prose -- title, the specific evidence behind it,
-    an optional external market-data corroboration (the step a human
-    paid-search analyst can't do alone, since they have no market-report
-    access), the concrete steps, and the one metric to watch."""
+def _section_label(text, accent):
+    label_style = ParagraphStyle(f"SectionLabel_{text}", fontSize=7.6, leading=10,
+                                  fontName="Helvetica-Bold", textColor=colors.HexColor(accent),
+                                  spaceBefore=6, spaceAfter=1)
+    return Paragraph(text.upper(), label_style)
+
+
+def recommendation_card(index, card, styles, accent, chart_path=None):
+    """One numbered, full recommendation section -- Analysis / Context /
+    Graph / Recommendation / What to watch, each clearly labeled so the
+    email reads like a sequence of distinct recommendations rather than a
+    wall of undifferentiated text. Chips stay for quick-scan triage;
+    everything else is now explicit, not implied by layout alone."""
     chips = [(card["priority"], PRIORITY_COLORS.get(card["priority"], accent)),
              (card["timeframe"], "#777777"),
              (AFFECTS_LABELS.get(card["affects"], card["affects"]), accent)]
-    title_style = ParagraphStyle("RecTitle", parent=styles["Normal"], fontSize=10.5, leading=13,
-                                  fontName="Helvetica-Bold", textColor=colors.HexColor("#222222"), spaceBefore=4)
+    number_style = ParagraphStyle("RecNumber", parent=styles["Normal"], fontSize=9, leading=11,
+                                   fontName="Helvetica-Bold", textColor=colors.HexColor(accent))
+    title_style = ParagraphStyle("RecTitle", parent=styles["Normal"], fontSize=12, leading=15,
+                                  fontName="Helvetica-Bold", textColor=colors.HexColor("#222222"), spaceBefore=2)
     market_style = ParagraphStyle("RecMarket", parent=styles["Body"], fontSize=9.5, leading=13,
                                    textColor=colors.HexColor(accent), fontName="Helvetica-Bold")
     market_source_style = ParagraphStyle("RecMarketSource", parent=styles["Caption"], fontSize=7.8, leading=10)
     steps_text = "".join(f"&bull;&nbsp;&nbsp;{s}<br/>" for s in card["recommended_steps"]).rstrip("<br/>")
+
     rows = [
+        [Paragraph(f"RECOMMENDATION {index}", number_style)],
         [chip_row(chips, styles)],
         [Paragraph(card["title"], title_style)],
+        [_section_label("Analysis", accent)],
         [Paragraph(card["what_data_shows"], styles["Body"])],
     ]
+    market_row_range = None
     market_support = card.get("market_support") or []
     if market_support:
         comparisons = "<br/>".join(f"&#9679;&nbsp;{f['account_vs_market']}" for f in market_support)
         sources = " &nbsp;|&nbsp; ".join(f"Source: {f['vendor']} -- {f['fact']}" for f in market_support)
-        rows.append([Paragraph(f"MARKET CHECK<br/>{comparisons}", market_style)])
+        rows.append([_section_label("Context -- what the market independently shows", accent)])
+        rows.append([Paragraph(comparisons, market_style)])
         rows.append([Paragraph(sources, market_source_style)])
+        market_row_range = (len(rows) - 3, len(rows) - 1)
+    if chart_path:
+        rows.append([_section_label("Graph", accent)])
+        rows.append([chart_image(chart_path, width=5.7 * inch)])
     rows += [
+        [_section_label("Recommendation", accent)],
         [Paragraph(steps_text, styles["Body"])],
         [Paragraph(f"<b>What to watch:</b> {card['what_to_watch']}", styles["Caption"])],
     ]
+
     t = Table(rows, colWidths=[6.3 * inch])
     style_cmds = [
         ("BOX", (0, 0), (-1, -1), 0.9, colors.HexColor(accent)),
         ("LINEBEFORE", (0, 0), (0, -1), 3, colors.HexColor(PRIORITY_COLORS.get(card["priority"], accent))),
         ("BACKGROUND", (0, 0), (-1, -1), colors.white),
         ("LEFTPADDING", (0, 0), (-1, -1), 12), ("RIGHTPADDING", (0, 0), (-1, -1), 12),
-        ("TOPPADDING", (0, 0), (-1, -1), 4), ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
+        ("TOPPADDING", (0, 0), (-1, -1), 2), ("BOTTOMPADDING", (0, 0), (-1, -1), 2),
         ("TOPPADDING", (0, 0), (0, 0), 10), ("BOTTOMPADDING", (0, -1), (0, -1), 10),
     ]
-    if market_support:
-        style_cmds.append(("BACKGROUND", (0, 3), (0, 4), colors.HexColor("#F2EFE7")))
-        style_cmds.append(("TOPPADDING", (0, 3), (0, 3), 7))
-        style_cmds.append(("BOTTOMPADDING", (0, 4), (0, 4), 7))
+    if market_row_range:
+        lo, hi = market_row_range
+        style_cmds.append(("BACKGROUND", (0, lo), (0, hi), colors.HexColor("#F2EFE7")))
+        style_cmds.append(("TOPPADDING", (0, lo), (0, lo), 7))
+        style_cmds.append(("BOTTOMPADDING", (0, hi), (0, hi), 7))
     t.setStyle(TableStyle(style_cmds))
     return t
 

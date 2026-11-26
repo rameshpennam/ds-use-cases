@@ -286,6 +286,7 @@ def compute_granular_eda(account_id, granular):
         "negative_keyword_level": negative_keyword_level,
         "ad_strength": ad_strength,
         "auction_insights": auction_insights,
+        "_raw_search_terms": st,  # kept for per-card chart building (step 10) -- real rows, not a summary
     }
 
 
@@ -425,6 +426,11 @@ class MarketMapping(BaseModel):
 
 
 class EmailCopy(BaseModel):
+    banner_headline: str = Field(description="A catchy, attention-grabbing headline for a bold banner at the very "
+                                              "top of the document, 'one number explains it' news-style -- short "
+                                              "(under 12 words), states the core insight as a fact, not a question "
+                                              "or a generic greeting. Different from subject -- this is a visual "
+                                              "headline, not an email subject line.")
     subject: str = Field(description="Lead with the account's specific number/gap, not a generic market stat")
     hook: str = Field(description="1-2 sentence personalized opening. The greeting 'Hi [Customer name],' is already "
                                    "rendered immediately before this text by the template -- do NOT repeat 'Hi' or "
@@ -941,7 +947,88 @@ def _demand_trend_chart(account_cfg, accent):
                         "Demand trend vs. seasonal norm (index)", "Index", accent)
 
 
-def render_email_pdf(account_id, account_cfg, email: EmailCopy, ads_analysis, market_mapping, opp_sizing, rollup, out_path, accent):
+def _card_evidence_chart(card, g, granular_eda, accent):
+    """A graph for the recommendation, built only from real numbers already
+    computed elsewhere in the pipeline (campaign dataframe / granular EDA)
+    -- never from anything the LLM wrote, so there is no risk of a chart
+    showing an invented figure. Returns None when this account's data
+    doesn't have a clean set of values for this category -- no graph beats
+    a forced, irrelevant one."""
+    affects = card["affects"]
+    text = (card["title"] + " " + card["what_data_shows"]).lower()
+
+    if affects == "budget_allocation":
+        capped = g[g["impression_share_lost_budget_pct"] > 0].nlargest(5, "impression_share_lost_budget_pct")
+        if capped.empty:
+            return None
+        return pc.fig_horizontal_bar(capped["campaign_name"].tolist(),
+                                      capped["impression_share_lost_budget_pct"].round(1).tolist(),
+                                      "Impression share lost to budget, by campaign", "% lost to budget", accent)
+
+    if affects in ("bid", "quality_score"):
+        # Two distinct keyword stories share these two affects values -- "bid"
+        # cards are about high-quality keywords still losing on rank/position
+        # (chart their impression share), "quality_score" cards are about
+        # genuinely low-quality keywords wasting spend (chart their cost per
+        # conversion) -- using the SAME subset for both would just repeat the
+        # same chart across two different recommendations.
+        kw = granular_eda["keyword_level"]
+        if affects == "bid":
+            rows = (kw.get("high_quality_low_impression_share") or [])[:6]
+            if not rows:
+                return None
+            return pc.fig_horizontal_bar([r["keyword_text"] for r in rows],
+                                          [r["impression_share_pct"] for r in rows],
+                                          "Impression share of high-quality keywords", "Impression share %", accent)
+        rows = (kw.get("low_quality_high_spend") or [])[:6]
+        if not rows:
+            return None
+        return pc.fig_horizontal_bar([r["keyword_text"] for r in rows],
+                                      [r["cost_per_conversion"] or 0 for r in rows],
+                                      "Cost per conversion of low-quality keywords", "Cost per conversion", accent)
+
+    if affects == "negative_keywords":
+        # "negative_keywords" covers two distinct issues (self-blocking
+        # conflicts vs. competitor-brand zero-click waste) -- pick the chart
+        # that actually matches what THIS card is about, not just whichever
+        # data happens to exist, or two different cards render the same graph.
+        # NOT "brand" alone -- that matches as a false positive inside
+        # "Non-Brand Search" campaign names, which appear in nearly every
+        # card regardless of topic. "competitor" / "zero-click" are the
+        # actual distinguishing signal.
+        is_zero_click_card = any(w in text for w in ("competitor", "zero-click", "zero click"))
+
+        conflicts = granular_eda["negative_keyword_level"]["conflicts"]
+        st = granular_eda["_raw_search_terms"]
+        zero_click = st[(st.is_competitor_brand_term) & (st.clicks == 0)].nlargest(5, "impressions")
+
+        def _conflicts_chart():
+            top = sorted(conflicts, key=lambda c: c["estimated_blocked_impressions"], reverse=True)[:5]
+            labels = [f"\"{c['negative_keyword']}\" blocks \"{c['blocked_keyword_text'][:28]}\"" for c in top]
+            return pc.fig_horizontal_bar(labels, [c["estimated_blocked_impressions"] for c in top],
+                                          "Blocked by the account's own negatives", "Blocked impressions", accent)
+
+        def _zero_click_chart():
+            return pc.fig_horizontal_bar(zero_click["search_term"].tolist(), zero_click["impressions"].tolist(),
+                                          "Zero-click competitor-brand terms", "Impressions", accent)
+
+        if is_zero_click_card and not zero_click.empty:
+            return _zero_click_chart()
+        if not is_zero_click_card and conflicts:
+            return _conflicts_chart()
+        # Neither preferred dataset matched this card's own topic -- fall
+        # back to whichever one actually has data, rather than no graph.
+        if conflicts:
+            return _conflicts_chart()
+        if not zero_click.empty:
+            return _zero_click_chart()
+        return None
+
+    return None
+
+
+def render_email_pdf(account_id, account_cfg, email: EmailCopy, ads_analysis, market_mapping, opp_sizing, rollup,
+                      g, granular_eda, out_path, accent):
     styles = pc.get_styles(accent)
     from reportlab.platypus import (BaseDocTemplate, PageTemplate, Frame, Paragraph,
                                      Spacer, Table, TableStyle, HRFlowable, KeepTogether)
@@ -957,7 +1044,9 @@ def render_email_pdf(account_id, account_cfg, email: EmailCopy, ads_analysis, ma
     t.setStyle(TableStyle([("FONTNAME", (0, 0), (0, -1), "Helvetica-Bold"),
                            ("FONTNAME", (1, 2), (1, 2), "Helvetica-Bold"),
                            ("FONTSIZE", (0, 0), (-1, -1), 10)]))
-    flow += [t, Spacer(1, 0.08 * inch), HRFlowable(width="100%", thickness=1, color=colors.HexColor(accent)),
+    flow += [t, Spacer(1, 0.1 * inch)]
+    flow.append(pc.hero_banner("Paid Search Account Review", email.banner_headline, styles, accent))
+    flow += [Spacer(1, 0.14 * inch), HRFlowable(width="100%", thickness=1, color=colors.HexColor(accent)),
              Spacer(1, 0.14 * inch), Paragraph("Hi [Customer name],", styles["Body"]),
              Paragraph(email.hook, styles["Body"]), Spacer(1, 0.08 * inch)]
     flow.append(KeepTogether([pc.key_takeaways("Why Now", email.why_now_bullets, styles, accent)]))
@@ -993,10 +1082,12 @@ def render_email_pdf(account_id, account_cfg, email: EmailCopy, ads_analysis, ma
     flow.append(Paragraph(email.cards_intro, styles["Caption"]))
     flow.append(Spacer(1, 0.05 * inch))
     market_support_by_title = {s.card_title: s.supporting_facts for s in market_mapping.card_market_support}
-    for card in ads_analysis.recommendation_cards:
+    for i, card in enumerate(ads_analysis.recommendation_cards, start=1):
         card_dict = card.model_dump()
         card_dict["market_support"] = [f.model_dump() for f in market_support_by_title.get(card.title, [])]
-        flow.append(KeepTogether([pc.recommendation_card(card_dict, styles, accent), Spacer(1, 0.08 * inch)]))
+        chart_path = _card_evidence_chart(card_dict, g, granular_eda, accent)
+        flow.append(KeepTogether([pc.recommendation_card(i, card_dict, styles, accent, chart_path),
+                                   Spacer(1, 0.1 * inch)]))
 
     # Already working -- reassurance that the fix list is short because the
     # rest is solid, not because it wasn't checked. Fixed green accent
@@ -1070,13 +1161,15 @@ def run_account(account_id, account_cfg, df, granular):
     accent = ACCENTS[account_cfg["vertical"]]
     slug = account_cfg["vertical"].lower() + "_" + account_cfg["country_code"].lower()
     render_email_pdf(account_id, account_cfg, email, ads_analysis, market_mapping, opp_sizing, rollup,   # STEP 10
-                      OUTPUT_DIR / f"recommendation_email_{slug}.pdf", accent)
+                      g, granular_eda, OUTPUT_DIR / f"recommendation_email_{slug}.pdf", accent)
 
     return {
         "account_id": account_id,
         "model": MODEL,
         "eda": eda_result,
-        "granular_eda": granular_eda,
+        # exclude _raw_search_terms: a DataFrame kept for step-10 chart
+        # building, not a JSON-serializable result field
+        "granular_eda": {k: v for k, v in granular_eda.items() if not k.startswith("_raw")},
         "opportunity_sizing": opp_sizing,
         "market_evidence_ranked": ranked_evidence,
         "ads_analysis": ads_analysis.model_dump(),
