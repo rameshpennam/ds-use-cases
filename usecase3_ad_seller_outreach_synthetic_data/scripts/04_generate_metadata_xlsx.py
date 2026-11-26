@@ -272,6 +272,11 @@ def main():
         ("Market data files", "input/marketdata-*.pdf -- one PDF per fictitious vendor, each covering all 3 verticals/accounts."),
         ("Recommendation emails", "output/recommendation_email_*.pdf -- one AI-drafted output per account, produced "
                                   "live by scripts/05_analyze_and_generate_emails.py from everything in input/."),
+        ("Per-account debug/inspection files", "output/{account_id}_full_result.json -- every pipeline stage's raw "
+                                                "structured output for one account (EDA stats, granular evidence, "
+                                                "the GenAI diagnosis, market mapping, email copy), so you can see "
+                                                "WHY the pipeline produced what it did without re-reading the PDF. "
+                                                "Not read by any downstream script -- the PDF is the actual deliverable."),
         ("Pipeline (why the data is shaped this way)",
          "Stage 1 -- analyze the ads data ALONE to detect the issue (rank-constrained vs. "
          "budget-constrained vs. healthy/demand-surge -- see impression_share_lost_budget_pct vs. "
