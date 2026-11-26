@@ -1,9 +1,10 @@
 """
-Generates ads-data/campaigns.csv (campaign grain, ~130 cols) and
-ads-data/accounts.csv (account grain, rolled up from campaigns.csv --
-never hand-typed, so the two files can never disagree with each other).
+Generates input/campaigndata-campaigns.csv (campaign grain, ~130 cols).
+The account-level rollup is computed in-memory below purely to verify the
+campaign mix lands on the intended per-account story -- it is not written
+to disk, since the campaign-grain file is the actual deliverable.
 
-Run:  python generate_ads_data.py
+Run:  python 01_generate_ads_data.py
 """
 import random
 import numpy as np
@@ -12,7 +13,7 @@ from pathlib import Path
 
 from benchmarks import ACCOUNTS, REPORT_PERIOD, PRIOR_PERIOD, PERIOD_START, PERIOD_END, DATA_AS_OF
 
-OUT_DIR = Path(__file__).resolve().parent.parent / "ads-data"
+OUT_DIR = Path(__file__).resolve().parent.parent / "input"
 DAYS_IN_PERIOD = 92
 
 rng = np.random.default_rng(20260930)
@@ -410,7 +411,7 @@ def main():
         campaigns_df.loc[needy, "seller_note_text"] = SELLER_NOTES[account_id]
 
     OUT_DIR.mkdir(parents=True, exist_ok=True)
-    campaigns_df.to_csv(OUT_DIR / "campaigns.csv", index=False)
+    campaigns_df.to_csv(OUT_DIR / "campaigndata-campaigns.csv", index=False)
 
     # ---- rollup is computed here ONLY to verify the campaign mix lands on
     # the intended account-level story; it is not written as its own file
@@ -464,7 +465,7 @@ def main():
 
     accounts_df = pd.DataFrame(account_rows)
 
-    print(f"campaigns.csv: {campaigns_df.shape[0]} rows x {campaigns_df.shape[1]} cols")
+    print(f"campaigndata-campaigns.csv: {campaigns_df.shape[0]} rows x {campaigns_df.shape[1]} cols")
     print("(account-level rollup computed in-memory for verification only, not written to disk)")
     print()
     for _, r in accounts_df.iterrows():

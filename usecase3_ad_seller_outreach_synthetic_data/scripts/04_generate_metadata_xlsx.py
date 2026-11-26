@@ -1,16 +1,18 @@
 """
-Builds metadata.xlsx: one workbook, four tabs, describing both datasets
-(campaign-level ads data + the 4 vendor research reports) so a developer
-picking this package up has full context without reading every file.
+Builds misc/metadata.xlsx: one workbook describing every input dataset
+(campaign-grain ads data, the keyword/search-term/negative-keyword/
+ad-strength/auction-insight grain, and the 4 vendor research reports) so a
+developer picking this package up has full context without reading every file.
 
-Run after generate_ads_data.py.
+Run after 01_generate_ads_data.py and 02_generate_granular_ads_data.py.
 """
 from pathlib import Path
 import pandas as pd
 
 from benchmarks import VENDORS, ACCOUNTS, REPORT_PERIOD, WATERMARK
 
-OUT_DIR = Path(__file__).resolve().parent.parent
+OUT_DIR = Path(__file__).resolve().parent.parent / "misc"
+OUT_DIR.mkdir(parents=True, exist_ok=True)
 ADS_DICT = [
     # (column, category, type, description)
     ("account_id", "Identity", "string", "Unique pilot account identifier, e.g. DE-INS-001"),
@@ -259,30 +261,34 @@ def main():
         ("Package", "Synthetic data package for the market-context-enriched seller outreach pilot."),
         ("Scope", "3 pilot accounts (Insurance/Germany, Retail/United States, Travel/United Kingdom), campaign-level ads data, "
                   "and 4 fictitious vendor-style market research reports."),
-        ("Ads data file", "ads-data/campaigns.csv -- one row per campaign, 143 columns, 22 rows "
+        ("Ads data file", "input/campaigndata-campaigns.csv -- one row per campaign, 143 columns, 22 rows "
                           "(5/7/10 campaigns across the 3 accounts -- deliberately uneven, matching how a "
                           "single-product-line vertical vs. a multi-category catalog actually differ in campaign count)."),
-        ("Granular ads data files", "ads-data/keywords.csv, search_terms.csv, negative_keyword_conflicts.csv, "
-                                    "ads.csv, auction_insights.csv -- the keyword/query/negative-keyword/ad-copy/"
+        ("Granular ads data files", "input/campaigndata-keywords.csv, campaigndata-search_terms.csv, "
+                                    "campaigndata-negative_keyword_conflicts.csv, campaigndata-ads.csv, "
+                                    "campaigndata-auction_insights.csv -- the keyword/query/negative-keyword/ad-copy/"
                                     "competitive-position grain a real analyst actually digs through, which "
                                     "campaign-level aggregates alone cannot show (see Granular Ads Data Dictionary tab)."),
-        ("Market data files", "market-reports/*.pdf -- one PDF per fictitious vendor, each covering all 3 verticals/accounts."),
-        ("Recommendation emails", "recommendation-emails/*.pdf -- one example output per account, showing the end state "
-                                  "this data is meant to produce."),
-        ("Intended pipeline (why the data is shaped this way)",
-         "Stage 1 -- analyze campaigns.csv ALONE to detect the issue (rank-constrained vs. "
+        ("Market data files", "input/marketdata-*.pdf -- one PDF per fictitious vendor, each covering all 3 verticals/accounts."),
+        ("Recommendation emails", "output/recommendation_email_llm_*.pdf -- one AI-drafted output per account, produced "
+                                  "live by scripts/05_analyze_and_generate_emails.py from everything in input/."),
+        ("Pipeline (why the data is shaped this way)",
+         "Stage 1 -- analyze the ads data ALONE to detect the issue (rank-constrained vs. "
          "budget-constrained vs. healthy/demand-surge -- see impression_share_lost_budget_pct vs. "
-         "impression_share_lost_rank_pct, and the spend_m1/m2/m3 trend columns). "
+         "impression_share_lost_rank_pct, the spend_m1/m2/m3 trend columns, and the keyword/search-term/"
+         "negative-keyword/ad-strength/auction-insight grain). "
          "Stage 2 -- join in the matching vertical/country/period section of the 4 market reports for "
          "external evidence and timing ('why now'). "
          "Stage 3 -- GenAI drafts the seller email from stage-1's diagnosis + stage-2's evidence. "
-         "The ads data must be sufficient for stage 1 on its own, without the market data."),
+         "The ads data must be sufficient for stage 1 on its own, without the market data. "
+         "See misc/approach.html for the full step-by-step flow."),
         ("Status", "100% synthetic / illustrative. No real company, account, or vendor data anywhere in this package."),
         ("Reporting period", REPORT_PERIOD),
-        ("How to regenerate", "scripts/benchmarks.py holds every number all three outputs must agree on; "
-                               "scripts/generate_ads_data.py, scripts/generate_granular_ads_data.py (reads "
-                               "campaigns.csv back in, must run after it), scripts/generate_market_pdfs.py, "
-                               "and scripts/generate_emails.py all read from it (run in that order)."),
+        ("How to regenerate", "scripts/benchmarks.py holds every number every output must agree on; run in order: "
+                               "01_generate_ads_data.py, 02_generate_granular_ads_data.py (reads "
+                               "campaigndata-campaigns.csv back in, must run after 01), 03_generate_market_pdfs.py, "
+                               "04_generate_metadata_xlsx.py (this script), then 05_analyze_and_generate_emails.py "
+                               "to produce the recommendation emails in output/."),
         ("Watermark", WATERMARK),
     ]
     overview_df = pd.DataFrame(overview_rows, columns=["Field", "Value"])

@@ -1,0 +1,706 @@
+{
+  "account_id": "US-RET-001",
+  "model": "gpt-5.2",
+  "eda": {
+    "note": "Exploratory statistics on a small per-account sample (5-10 campaigns) -- directional evidence, not a validated production model.",
+    "correlations_vs_missed_impressions": [
+      {
+        "feature": "avg_cpc",
+        "pearson_r": 0.809,
+        "p_value": 0.0046
+      },
+      {
+        "feature": "impressions",
+        "pearson_r": 0.799,
+        "p_value": 0.0056
+      },
+      {
+        "feature": "impression_share_lost_budget_pct",
+        "pearson_r": 0.618,
+        "p_value": 0.0567
+      },
+      {
+        "feature": "spend",
+        "pearson_r": 0.511,
+        "p_value": 0.1313
+      },
+      {
+        "feature": "budget_utilization_pct",
+        "pearson_r": 0.494,
+        "p_value": 0.1469
+      },
+      {
+        "feature": "roas",
+        "pearson_r": -0.49,
+        "p_value": 0.1505
+      }
+    ],
+    "campaigns": [
+      {
+        "campaign_name": "Brand Search - US",
+        "missed_impressions": 36800,
+        "cumulative_missed_share": 1.0,
+        "material": false,
+        "anomaly_score": -0.195,
+        "is_statistical_outlier": true,
+        "cluster_label": 0
+      },
+      {
+        "campaign_name": "Shopping - Apparel",
+        "missed_impressions": 339480,
+        "cumulative_missed_share": 0.188,
+        "material": true,
+        "anomaly_score": 0.025,
+        "is_statistical_outlier": false,
+        "cluster_label": 1
+      },
+      {
+        "campaign_name": "Shopping - Electronics",
+        "missed_impressions": 305440,
+        "cumulative_missed_share": 0.356,
+        "material": true,
+        "anomaly_score": 0.048,
+        "is_statistical_outlier": false,
+        "cluster_label": 1
+      },
+      {
+        "campaign_name": "Shopping - Home & Garden",
+        "missed_impressions": 223560,
+        "cumulative_missed_share": 0.754,
+        "material": true,
+        "anomaly_score": 0.101,
+        "is_statistical_outlier": false,
+        "cluster_label": 1
+      },
+      {
+        "campaign_name": "Shopping - Beauty",
+        "missed_impressions": 184000,
+        "cumulative_missed_share": 0.856,
+        "material": false,
+        "anomaly_score": 0.075,
+        "is_statistical_outlier": false,
+        "cluster_label": 1
+      },
+      {
+        "campaign_name": "Non-Brand Search - Seasonal Promo",
+        "missed_impressions": 254380,
+        "cumulative_missed_share": 0.497,
+        "material": true,
+        "anomaly_score": 0.017,
+        "is_statistical_outlier": false,
+        "cluster_label": 1
+      },
+      {
+        "campaign_name": "Performance Max - Full Catalog",
+        "missed_impressions": 242190,
+        "cumulative_missed_share": 0.631,
+        "material": true,
+        "anomaly_score": 0.068,
+        "is_statistical_outlier": false,
+        "cluster_label": 1
+      },
+      {
+        "campaign_name": "Audience Network - Cart Abandonment",
+        "missed_impressions": 100740,
+        "cumulative_missed_share": 0.911,
+        "material": false,
+        "anomaly_score": 0.001,
+        "is_statistical_outlier": false,
+        "cluster_label": 1
+      },
+      {
+        "campaign_name": "Audience Network - Lookalike Prospecting",
+        "missed_impressions": 69920,
+        "cumulative_missed_share": 0.95,
+        "material": false,
+        "anomaly_score": 0.016,
+        "is_statistical_outlier": false,
+        "cluster_label": 1
+      },
+      {
+        "campaign_name": "Dynamic Search Ads - Catalog",
+        "missed_impressions": 53820,
+        "cumulative_missed_share": 0.98,
+        "material": false,
+        "anomaly_score": 0.034,
+        "is_statistical_outlier": false,
+        "cluster_label": 1
+      }
+    ],
+    "in_scope_campaign_names": [
+      "Non-Brand Search - Seasonal Promo",
+      "Performance Max - Full Catalog",
+      "Shopping - Apparel",
+      "Shopping - Electronics",
+      "Shopping - Home & Garden"
+    ]
+  },
+  "granular_eda": {
+    "keyword_level": {
+      "note": "Top keywords by story relevance, not an exhaustive export of every live keyword.",
+      "correlation_quality_score_vs_impression_share": {
+        "pearson_r": 0.443,
+        "p_value": 0.3785
+      },
+      "correlation_quality_score_vs_cost_per_conversion": {
+        "pearson_r": -0.771,
+        "p_value": 0.0729
+      },
+      "high_quality_low_impression_share": [
+        {
+          "keyword_text": "holiday electronics deals",
+          "quality_score": 7.5,
+          "impression_share_pct": 19.0,
+          "impression_share_lost_rank_pct": 81.0
+        },
+        {
+          "keyword_text": "winter jacket sale",
+          "quality_score": 8.0,
+          "impression_share_pct": 21.0,
+          "impression_share_lost_rank_pct": 79.0
+        },
+        {
+          "keyword_text": "pilot account promo code",
+          "quality_score": 9.5,
+          "impression_share_pct": 58.0,
+          "impression_share_lost_rank_pct": 42.0
+        }
+      ],
+      "low_quality_high_spend": [
+        {
+          "keyword_text": "free shipping promo code",
+          "quality_score": 3.5,
+          "spend": 250.38,
+          "cost_per_conversion": 139.1
+        },
+        {
+          "keyword_text": "deals near me today",
+          "quality_score": 2.5,
+          "spend": 152.52,
+          "cost_per_conversion": 762.6
+        },
+        {
+          "keyword_text": "kitchen appliances clearance",
+          "quality_score": 3.0,
+          "spend": 97.52,
+          "cost_per_conversion": 325.07
+        }
+      ]
+    },
+    "search_term_level": {
+      "competitor_brand_zero_click_impressions": 8280,
+      "competitor_brand_zero_click_terms": [
+        "metro retail co",
+        "northfield mercantile",
+        "union square goods"
+      ],
+      "competitor_brand_terms_that_convert": [
+        {
+          "search_term": "fairmont retail quote",
+          "conversions": 0.2
+        }
+      ],
+      "pct_of_search_term_impressions_from_zero_click_competitor_terms": 51.0
+    },
+    "negative_keyword_level": {
+      "conflict_count": 3,
+      "estimated_total_blocked_impressions": 6940,
+      "conflicts": [
+        {
+          "negative_keyword": "free",
+          "blocked_keyword_text": "free shipping promo code",
+          "blocked_campaign_name": "Non-Brand Search - Seasonal Promo",
+          "estimated_blocked_impressions": 5200
+        },
+        {
+          "negative_keyword": "DIY",
+          "blocked_keyword_text": "kitchen appliances clearance DIY install",
+          "blocked_campaign_name": "Non-Brand Search - Seasonal Promo",
+          "estimated_blocked_impressions": 980
+        },
+        {
+          "negative_keyword": "returns",
+          "blocked_keyword_text": "winter jacket sale returns policy",
+          "blocked_campaign_name": "Non-Brand Search - Seasonal Promo",
+          "estimated_blocked_impressions": 760
+        }
+      ]
+    },
+    "ad_strength": {
+      "total_ads": 8,
+      "pct_excellent_or_good": 100.0,
+      "rating_counts": {
+        "Excellent": 4,
+        "Good": 4
+      }
+    },
+    "auction_insights": {
+      "avg_position_above_rate_pct": 50.8,
+      "avg_top_of_page_rate_pct_self": 49.6,
+      "avg_top_of_page_rate_pct_competitor": 42.4,
+      "avg_outranking_share_pct_self": 52.9,
+      "by_competitor": [
+        {
+          "competitor_name": "Metro Retail Co",
+          "position_above_rate_pct": 54.1,
+          "top_of_page_rate_pct_self": 47.0,
+          "top_of_page_rate_pct_competitor": 41.4
+        },
+        {
+          "competitor_name": "Northfield Mercantile",
+          "position_above_rate_pct": 51.9,
+          "top_of_page_rate_pct_self": 53.5,
+          "top_of_page_rate_pct_competitor": 43.2
+        },
+        {
+          "competitor_name": "Union Square Goods",
+          "position_above_rate_pct": 49.8,
+          "top_of_page_rate_pct_self": 46.3,
+          "top_of_page_rate_pct_competitor": 43.8
+        },
+        {
+          "competitor_name": "Fairmont Outfitters",
+          "position_above_rate_pct": 47.2,
+          "top_of_page_rate_pct_self": 51.4,
+          "top_of_page_rate_pct_competitor": 41.1
+        }
+      ]
+    }
+  },
+  "opportunity_sizing": {
+    "current_impression_share_pct": 21.29,
+    "target_impression_share_pct": 35.0,
+    "additional_impressions_estimate": 315330,
+    "additional_clicks_estimate": 12320,
+    "basis": "Projected at today's click rate of 3.91% -- deliberately the cautious version, since click rate should improve once the quality fixes land."
+  },
+  "market_evidence_ranked": {
+    "SignalWatch Competitive Intelligence": [
+      {
+        "table": "Competitor | Spend Share | Active Creatives | Channels",
+        "row": {
+          "Competitor": "Northfield Mercantile",
+          "Spend Share": "21%",
+          "Active Creatives": "51",
+          "Channels": "Search, Social"
+        },
+        "source_page": 8,
+        "relevance_score": 0.071
+      },
+      {
+        "table": "Competitor | Spend Share | Active Creatives | Channels",
+        "row": {
+          "Competitor": "Briarwood Supply Co",
+          "Spend Share": "5%",
+          "Active Creatives": "24",
+          "Channels": "Shopping, Search"
+        },
+        "source_page": 8,
+        "relevance_score": 0.066
+      },
+      {
+        "table": "Competitor | Spend Share | Active Creatives | Channels",
+        "row": {
+          "Competitor": "Pilot Account (this report)",
+          "Spend Share": "9.0%",
+          "Active Creatives": "--",
+          "Channels": "Search (primary)"
+        },
+        "source_page": 8,
+        "relevance_score": 0.055
+      },
+      {
+        "table": "Competitor | Spend Share | Active Creatives | Channels",
+        "row": {
+          "Competitor": "Ledger Street Goods",
+          "Spend Share": "4%",
+          "Active Creatives": "19",
+          "Channels": "Social"
+        },
+        "source_page": 8,
+        "relevance_score": 0.052
+      },
+      {
+        "table": "Competitor | Spend Share | Active Creatives | Channels",
+        "row": {
+          "Competitor": "Union Square Goods",
+          "Spend Share": "17%",
+          "Active Creatives": "40",
+          "Channels": "Social, Display"
+        },
+        "source_page": 8,
+        "relevance_score": 0.045
+      },
+      {
+        "table": "Competitor | Spend Share | Active Creatives | Channels",
+        "row": {
+          "Competitor": "Hartline Mercantile",
+          "Spend Share": "3%",
+          "Active Creatives": "15",
+          "Channels": "Search, Display"
+        },
+        "source_page": 8,
+        "relevance_score": 0.04
+      },
+      {
+        "table": "Competitor | Spend Share | Active Creatives | Channels",
+        "row": {
+          "Competitor": "Fairmont Outfitters",
+          "Spend Share": "13%",
+          "Active Creatives": "33",
+          "Channels": "Search, Video"
+        },
+        "source_page": 8,
+        "relevance_score": 0.038
+      },
+      {
+        "table": "Competitor | Spend Share | Active Creatives | Channels",
+        "row": {
+          "Competitor": "Metro Retail Co",
+          "Spend Share": "28%",
+          "Active Creatives": "64",
+          "Channels": "Search, Social, Video"
+        },
+        "source_page": 8,
+        "relevance_score": 0.038
+      },
+      {
+        "table": "Competitor | Spend Share | Active Creatives | Channels",
+        "row": {
+          "Competitor": "Oakmoor Retail Co",
+          "Spend Share": "3%",
+          "Active Creatives": "12",
+          "Channels": "Video"
+        },
+        "source_page": 8,
+        "relevance_score": 0.033
+      }
+    ],
+    "Ashcroft Research Partners": [
+      {
+        "table": "Market | Search Spend Growth QoQ | Vertical-Avg Impression Share",
+        "row": {
+          "Market": "United States (pilot account market)",
+          "Search Spend Growth QoQ": "9.0%",
+          "Vertical-Avg Impression Share": "35.0%"
+        },
+        "source_page": 10,
+        "relevance_score": 0.059
+      },
+      {
+        "table": "Market | Search Spend Growth QoQ | Vertical-Avg Impression Share",
+        "row": {
+          "Market": "Australia",
+          "Search Spend Growth QoQ": "10.5%",
+          "Vertical-Avg Impression Share": "29.0%"
+        },
+        "source_page": 11,
+        "relevance_score": 0.058
+      },
+      {
+        "table": "Vertical | Highlighted Market | Spend Growth QoQ | Query Demand Growth\nQoQ | Vertical-Avg Impression\nShare",
+        "row": {
+          "Vertical": "Travel",
+          "Highlighted Market": "United Kingdom",
+          "Spend Growth QoQ": "22.0%",
+          "Query Demand Growth\nQoQ": "19.0%",
+          "Vertical-Avg Impression\nShare": "40.0%"
+        },
+        "source_page": 5,
+        "relevance_score": 0.055
+      },
+      {
+        "table": "Market | Search Spend Growth QoQ | Vertical-Avg Impression Share",
+        "row": {
+          "Market": "Germany",
+          "Search Spend Growth QoQ": "6.0%",
+          "Vertical-Avg Impression Share": "30.5%"
+        },
+        "source_page": 11,
+        "relevance_score": 0.053
+      },
+      {
+        "table": "Market | Search Spend Growth QoQ | Vertical-Avg Impression Share",
+        "row": {
+          "Market": "Canada",
+          "Search Spend Growth QoQ": "9.0%",
+          "Vertical-Avg Impression Share": "28.0%"
+        },
+        "source_page": 11,
+        "relevance_score": 0.053
+      },
+      {
+        "table": "Market | Search Spend Growth QoQ | Vertical-Avg Impression Share",
+        "row": {
+          "Market": "Japan",
+          "Search Spend Growth QoQ": "5.0%",
+          "Vertical-Avg Impression Share": "36.0%"
+        },
+        "source_page": 11,
+        "relevance_score": 0.052
+      },
+      {
+        "table": "Market | Search Spend Growth QoQ | Vertical-Avg Impression Share",
+        "row": {
+          "Market": "France",
+          "Search Spend Growth QoQ": "8.0%",
+          "Vertical-Avg Impression Share": "31.5%"
+        },
+        "source_page": 11,
+        "relevance_score": 0.052
+      },
+      {
+        "table": "Market | Search Spend Growth QoQ | Vertical-Avg Impression Share",
+        "row": {
+          "Market": "Netherlands",
+          "Search Spend Growth QoQ": "6.5%",
+          "Vertical-Avg Impression Share": "34.0%"
+        },
+        "source_page": 11,
+        "relevance_score": 0.052
+      },
+      {
+        "table": "Market | Search Spend Growth QoQ | Vertical-Avg Impression Share",
+        "row": {
+          "Market": "United Kingdom",
+          "Search Spend Growth QoQ": "7.5%",
+          "Vertical-Avg Impression Share": "33.0%"
+        },
+        "source_page": 11,
+        "relevance_score": 0.052
+      },
+      {
+        "table": "Vertical | Highlighted Market | Spend Growth QoQ | Query Demand Growth\nQoQ | Vertical-Avg Impression\nShare",
+        "row": {
+          "Vertical": "Insurance",
+          "Highlighted Market": "Germany",
+          "Spend Growth QoQ": "18.0%",
+          "Query Demand Growth\nQoQ": "12.0%",
+          "Vertical-Avg Impression\nShare": "21.0%"
+        },
+        "source_page": 5,
+        "relevance_score": 0.051
+      },
+      {
+        "table": "Market | Search Spend Growth QoQ | Vertical-Avg Impression Share",
+        "row": {
+          "Market": "Brazil",
+          "Search Spend Growth QoQ": "13.5%",
+          "Vertical-Avg Impression Share": "24.5%"
+        },
+        "source_page": 11,
+        "relevance_score": 0.051
+      },
+      {
+        "table": "Vertical | Highlighted Market | Spend Growth QoQ | Query Demand Growth\nQoQ | Vertical-Avg Impression\nShare",
+        "row": {
+          "Vertical": "Retail",
+          "Highlighted Market": "United States",
+          "Spend Growth QoQ": "9.0%",
+          "Query Demand Growth\nQoQ": "6.0%",
+          "Vertical-Avg Impression\nShare": "35.0%"
+        },
+        "source_page": 5,
+        "relevance_score": 0.038
+      }
+    ],
+    "QueryScope Insights": [
+      {
+        "table": "Keyword | Q4 2025 Index | Q2 2026 Index | Q3 2026 Index",
+        "row": {
+          "Keyword": "critical illness cover cost",
+          "Q4 2025 Index": "100",
+          "Q2 2026 Index": "99",
+          "Q3 2026 Index": "108"
+        },
+        "source_page": 13,
+        "relevance_score": 0.041
+      },
+      {
+        "table": "Keyword | Q4 2025 | Q2 2026 | Q3 2026 | Growth",
+        "row": {
+          "Keyword": "winter jacket sale",
+          "Q4 2025": "100",
+          "Q2 2026": "98",
+          "Q3 2026": "121",
+          "Growth": "21%"
+        },
+        "source_page": 8,
+        "relevance_score": 0.039
+      }
+    ],
+    "Vantage Media Metrics": [
+      {
+        "table": "Channel | Share of Category Spend",
+        "row": {
+          "Channel": "Search",
+          "Share of Category Spend": "30%"
+        },
+        "source_page": 10,
+        "relevance_score": 0.032
+      }
+    ]
+  },
+  "ads_analysis": {
+    "account_level_diagnosis": "This account is predominantly budget-constrained across the revenue-driving parts of the portfolio: most in-scope campaigns are at ~99.9% budget utilization with very high impression share lost to budget (79\u201383%) and 0% lost to rank at the campaign level, indicating demand is available but the account is capped before it can serve. A smaller, secondary issue is rank on a handful of high-quality keywords showing very high lost-to-rank (79\u201381%), suggesting those specific terms need bid/rank intervention once incremental budget is available.",
+    "primary_constraint": "budget-constrained",
+    "confidence_0_to_1": 0.86,
+    "notable_patterns": [
+      "Five campaigns flagged in-scope each show extreme budget loss and near-full spend-through: Shopping - Apparel IS 18% with 82% lost to budget and 99.9% budget utilization; Shopping - Electronics IS 17% with 83% lost to budget and 99.9% utilization; Shopping - Home & Garden IS 19% with 81% lost to budget and 99.9% utilization; Non-Brand Search - Seasonal Promo IS 21% with 79% lost to budget and 99.9% utilization; Performance Max - Full Catalog IS 19% with 81% lost to budget and 99.9% utilization.",
+      "Brand Search - US is the exception: 60% impression share but 40% lost to budget with only 75.4% budget utilization (suggesting pacing/limited eligibility rather than a hard daily cap), yet it produces 536 conversions and 10.51 ROAS on $5,047.88 spend\u2014incremental volume here is likely highly profitable if delivery can be stabilized.",
+      "Keyword evidence shows a secondary rank bottleneck on specific strong terms: \u201choliday electronics deals\u201d (QS 7.5) has only 19% impression share with 81% lost to rank; \u201cwinter jacket sale\u201d (QS 8.0) has 21% IS with 79% lost to rank\u2014these are not budget-lost patterns and point to ad rank/bid/coverage limits at the query level.",
+      "Waste/leakage signals exist but are not the main constraint: competitor-brand zero-click queries make up 51% of search-term impressions (8,280 competitor-brand zero-click impressions), and there are 6,940 estimated blocked impressions from negative conflicts (e.g., negative \u201cfree\u201d blocking \u201cfree shipping promo code\u201d for ~5,200 impressions)."
+    ],
+    "campaign_findings": [
+      {
+        "campaign_name": "Shopping - Apparel",
+        "diagnosis": "Extremely constrained by budget: only 18% impression share with 82% lost to budget and 99.9% budget utilization, indicating substantial unmet demand. Current efficiency is weak (ROAS 1.45 on $5,491.96), so scaling requires budget plus feed/targeting tightening to avoid scaling low-margin queries.",
+        "primary_constraint": "budget",
+        "severity_0_to_1": 0.9,
+        "recommended_action": "Reallocate/raise budget only alongside tighter product/priority segmentation (or equivalent control) to push spend toward best-margin SKUs and reduce low-return inventory traffic before expanding."
+      },
+      {
+        "campaign_name": "Shopping - Electronics",
+        "diagnosis": "Budget is the binding constraint: 17% impression share with 83% lost to budget and 99.9% utilization. ROAS is also low (1.42 on $3,550.60), so incremental budget should be coupled with product-level bid/target controls rather than broad scaling.",
+        "primary_constraint": "budget",
+        "severity_0_to_1": 0.9,
+        "recommended_action": "Fund incremental budget in controlled tiers (top sellers/high margin first) and reduce exposure to low-return products until ROAS stabilizes above current 1.42."
+      },
+      {
+        "campaign_name": "Shopping - Home & Garden",
+        "diagnosis": "Large missed volume due to budget (19% IS; 81% lost to budget; 99.9% utilization) with comparatively better ROAS (1.88 on $3,896.20) than other Shopping campaigns, making it a stronger candidate for incremental budget first.",
+        "primary_constraint": "budget",
+        "severity_0_to_1": 0.8,
+        "recommended_action": "Prioritize budget increases here ahead of lower-ROAS Shopping lines, and monitor whether ROAS holds while impression share rises."
+      },
+      {
+        "campaign_name": "Non-Brand Search - Seasonal Promo",
+        "diagnosis": "Budget-capped with strong efficiency potential: 21% impression share, 79% lost to budget, and 99.9% utilization while maintaining QS 8.8 and ROAS 1.68 on $4,205.84. Separate from budget, it also has measurable self-blocking via negative conflicts (estimated 6,940 blocked impressions).",
+        "primary_constraint": "budget",
+        "severity_0_to_1": 0.85,
+        "recommended_action": "Increase budget (or reallocate from weaker areas) after fixing negative-keyword conflicts so the extra spend can access intended high-intent promo traffic."
+      },
+      {
+        "campaign_name": "Performance Max - Full Catalog",
+        "diagnosis": "Severely budget-limited reach (19% IS; 81% lost to budget; 99.9% utilization) with mid efficiency (ROAS 2.15 on $994.03). Scaling is plausible, but only after ensuring it isn\u2019t absorbing competitor-brand/low-intent search demand that produces zero-click behavior.",
+        "primary_constraint": "budget",
+        "severity_0_to_1": 0.7,
+        "recommended_action": "Increase budget in small steps while adding/strengthening query exclusions/brand controls to reduce competitor-term exposure and protect ROAS."
+      }
+    ],
+    "recommendation_cards": [
+      {
+        "title": "Increase budgets where IS lost to budget is 79\u201383% (then prioritize dollars to the best-returning line)",
+        "affects": "budget_allocation",
+        "priority": "high",
+        "timeframe": "Now",
+        "what_data_shows": "The in-scope campaigns are overwhelmingly capped: Shopping - Apparel (IS 18%, lost to budget 82%, budget utilization 99.9%), Shopping - Electronics (IS 17%, lost to budget 83%, 99.9% utilization), Shopping - Home & Garden (IS 19%, lost to budget 81%, 99.9% utilization), Non-Brand Seasonal Promo (IS 21%, lost to budget 79%, 99.9% utilization), and Performance Max (IS 19%, lost to budget 81%, 99.9% utilization). Campaign-level lost-to-rank is 0% across these, so budget\u2014not rank\u2014is the portfolio limiter.",
+        "recommended_steps": [
+          "Reallocate incremental budget first into the highest-return scalable area among the capped set (Shopping - Home & Garden at 1.88 ROAS; Performance Max at 2.15 ROAS on smaller spend) before adding meaningfully to Shopping - Apparel (1.45) and Shopping - Electronics (1.42).",
+          "Increase budgets in controlled steps (e.g., +10\u201320% every few days) while watching efficiency, rather than a single large jump, since these campaigns are currently constrained at ~99.9% utilization.",
+          "If total budget cannot increase, reduce budgets in the weakest-return capped campaigns (Shopping - Electronics 1.42; Shopping - Apparel 1.45) to fund Home & Garden / Performance Max / best-performing promo search segments. "
+        ],
+        "what_to_watch": "Search impression share rising from the teens/low-20s toward 25\u201335%+ in the funded campaigns while holding ROAS at or above current baselines (Home & Garden \u22651.88; Performance Max \u22652.15)."
+      },
+      {
+        "title": "Fix negative-keyword conflicts blocking your own promo demand (recover ~6,940 impressions)",
+        "affects": "negative_keywords",
+        "priority": "high",
+        "timeframe": "0-3 days",
+        "what_data_shows": "The negative-keyword conflicts report shows 3 conflicts causing an estimated 6,940 blocked impressions in Non-Brand Search - Seasonal Promo: negative \u201cfree\u201d blocks \u201cfree shipping promo code\u201d (~5,200 blocked impressions), negative \u201cDIY\u201d blocks \u201ckitchen appliances clearance DIY install\u201d (~980), and negative \u201creturns\u201d blocks \u201cwinter jacket sale returns policy\u201d (~760). This is material in a campaign already losing 79% of impression share to budget\u2014unblocking improves the quality of any incremental budget.",
+        "recommended_steps": [
+          "Edit the negative \u201cfree\u201d so it no longer blocks the intended keyword/query class (e.g., narrow match type/scope, or move it to a level that doesn\u2019t apply to the promo code ad group/segment).",
+          "Split \u2018policy\u2019/\u2018returns\u2019 intent into its own segment with tailored ad/landing coverage rather than blocking it globally; remove or narrow the \u201creturns\u201d negative where it is preventing high-intent \u2018sale + returns policy\u2019 searches.",
+          "Re-run the conflicts report after changes and confirm blocked impressions drop from ~6,940 to near zero without reintroducing truly irrelevant traffic."
+        ],
+        "what_to_watch": "Blocked impressions in the conflicts report trending from 6,940 toward <500, and conversions from the affected promo segments increasing without CPC spikes."
+      },
+      {
+        "title": "Reduce competitor-brand zero-click leakage (51% of search-term impressions) with tighter query controls",
+        "affects": "negative_keywords",
+        "priority": "medium",
+        "timeframe": "0-3 days",
+        "what_data_shows": "Competitor-brand zero-click behavior is large: 8,280 competitor-brand zero-click impressions and 51% of search-term impressions coming from zero-click competitor terms (e.g., \u201cmetro retail co\u201d, \u201cnorthfield mercantile\u201d, \u201cunion square goods\u201d). Only one competitor-flavored term is shown converting at all (\u201cfairmont retail quote\u201d with 0.2 conversions), implying most of this exposure is low value.",
+        "recommended_steps": [
+          "Add competitor brand names (\u201cmetro retail co\u201d, \u201cnorthfield mercantile\u201d, \u201cunion square goods\u201d) as negatives in non-brand/search-expansion entry points where they are appearing, unless you explicitly want conquesting.",
+          "If conquesting is a goal, isolate it into a dedicated campaign/segment with capped spend so it can\u2019t consume budget from high-intent non-brand and shopping demand.",
+          "After exclusions, review the search-term mix and confirm branded competitor impressions fall materially while overall conversions hold or improve."
+        ],
+        "what_to_watch": "Share of impressions from competitor-brand zero-click terms falling from 51% toward <15\u201320%, with non-brand conversion volume stable or up."
+      },
+      {
+        "title": "Address rank loss on a few high-QS seasonal terms (79\u201381% lost to rank) once budget headroom is created",
+        "affects": "bid",
+        "priority": "medium",
+        "timeframe": "2 weeks",
+        "what_data_shows": "Despite good quality scores, some keywords show very high lost-to-rank: \u201choliday electronics deals\u201d (QS 7.5) has 19% impression share with 81% lost to rank; \u201cwinter jacket sale\u201d (QS 8.0) has 21% IS with 79% lost to rank. This is distinct from the campaign-level pattern (0% lost to rank) and suggests specific ad-rank gaps at the query level.",
+        "recommended_steps": [
+          "Increase bids (or relax bid constraints) for these specific seasonal keywords/ad groups, prioritizing the ones with strong commercial intent and adequate conversion history.",
+          "Ensure the landing page/ad copy alignment is as tight as possible for \u2018deals\u2019/\u2018sale\u2019 seasonal queries to protect QS while bidding up.",
+          "Re-check auction position/top-of-page for those terms after 7\u201310 days and roll back if CPA/ROAS degrades."
+        ],
+        "what_to_watch": "Impression share for \u201choliday electronics deals\u201d moving above 30% and \u201cwinter jacket sale\u201d above 30%, while cost per conversion stays within acceptable guardrails for the promo period."
+      }
+    ],
+    "already_working": [
+      "Ad creation is not a bottleneck: 100% of ads are rated Excellent/Good (4 Excellent, 4 Good).",
+      "Auction position vs competitors is generally competitive: avg outranking share is 52.9% and self top-of-page rate is 49.6% vs competitor 42.4%, so this is not an account-wide rank collapse.",
+      "Brand Search - US is highly efficient (10.51 ROAS on $5,047.88 with 536 conversions); it should be protected while you scale other campaigns, not \u2018fixed\u2019 for creative quality."
+    ]
+  },
+  "market_mapping": {
+    "why_now_summary": "The account is already hitting hard budget caps while the broader Retail search market is actively growing\u2014meaning the cost of staying capped is rising right now (missed incremental demand and share), not later. External benchmarks show typical Retail impression share is materially higher than this account\u2019s teens/low-20% levels, and competitors are visibly active and taking spend share across Search/Shopping. In addition, seasonal demand for at least one of the account\u2019s identified rank-bottleneck terms is up sharply, increasing the penalty for waiting to create budget headroom and then fixing rank on those terms.",
+    "supporting_facts": [
+      {
+        "vendor": "Ashcroft Research Partners",
+        "fact": "Retail (United States) shows Search Spend Growth QoQ of 9.0% and Query Demand Growth QoQ of 6.0%, with Vertical-Avg Impression Share at 35.0%. (Table: \u201cVertical | Highlighted Market | Spend Growth QoQ | Query Demand Growth QoQ | Vertical-Avg Impression Share\u201d, p.5)",
+        "relevance_to_recommendation": "If the market\u2019s search spend and demand are both rising (9.0% / 6.0% QoQ), remaining budget-capped (79\u201383% IS lost to budget) means the account will miss an expanding pool of high-intent queries. The 35.0% vertical-average impression share also underscores how far below \u2018normal\u2019 the account\u2019s teens/low-20% IS currently is\u2014supporting urgency to fund and capture available demand."
+      },
+      {
+        "vendor": "Ashcroft Research Partners",
+        "fact": "United States (pilot account market): Search Spend Growth QoQ is 9.0% and Vertical-Avg Impression Share is 35.0%. (Table: \u201cMarket | Search Spend Growth QoQ | Vertical-Avg Impression Share\u201d, p.10)",
+        "relevance_to_recommendation": "This directly supports the \u2018demand is there\u2019 diagnosis: the market is increasing spend (competition pressure) and typical visibility is ~35% IS, while the account is constrained at ~17\u201321% IS in key campaigns due to budget\u2014making immediate budget action time-sensitive."
+      },
+      {
+        "vendor": "QueryScope Insights",
+        "fact": "The keyword \u201cwinter jacket sale\u201d grew 21% (Q4 2025=100 to Q3 2026=121). (Table: \u201cKeyword | Q4 2025 | Q2 2026 | Q3 2026 | Growth\u201d, p.8)",
+        "relevance_to_recommendation": "This aligns with the account\u2019s identified rank bottleneck on \u201cwinter jacket sale\u201d (79% lost to rank). With category interest up 21%, delaying budget headroom + bid/rank fixes risks missing a currently expanding seasonal demand pocket."
+      },
+      {
+        "vendor": "SignalWatch Competitive Intelligence",
+        "fact": "Metro Retail Co holds 28% Spend Share and is active on \u201cSearch, Social, Video\u201d with 64 Active Creatives. (Table: \u201cCompetitor | Spend Share | Active Creatives | Channels\u201d, p.8)",
+        "relevance_to_recommendation": "A competitor with 28% spend share and heavy creative activity across Search indicates an aggressive auction environment. When your campaigns are losing 79\u201383% of impression share to budget, competitors like this are positioned to absorb the impressions you can\u2019t buy\u2014strengthening the \u2018act now\u2019 case for budget increases (with controls to protect ROAS)."
+      },
+      {
+        "vendor": "SignalWatch Competitive Intelligence",
+        "fact": "Northfield Mercantile holds 21% Spend Share with 51 Active Creatives and runs on \u201cSearch, Social\u201d. (Table: \u201cCompetitor | Spend Share | Active Creatives | Channels\u201d, p.8)",
+        "relevance_to_recommendation": "Supports urgency on share protection: multiple well-funded competitors are actively investing in Search while this account is capped. With budget\u2014not rank\u2014limiting most campaigns, the fastest path to prevent further share loss is to relieve budget constraints."
+      },
+      {
+        "vendor": "Vantage Media Metrics",
+        "fact": "Search represents 30% Share of Category Spend. (Table: \u201cChannel | Share of Category Spend\u201d, p.10)",
+        "relevance_to_recommendation": "Since Search is a major spend channel (30% of category spend), staying budget-constrained in Search/Shopping effectively concedes a large portion of category-level demand capture to competitors\u2014supporting immediate budget reallocation/increase where IS lost to budget is extreme."
+      }
+    ],
+    "urgency_0_to_1": 0.84
+  },
+  "email_copy": {
+    "subject": "USD 54,575 sitting behind a budget cap in your paid search account",
+    "hook": "Your paid search account isn\u2019t losing because of weak ads or poor positioning\u2014it\u2019s mostly just not getting a chance to show. The core revenue-driving campaigns are spending through at ~99.9% while demand keeps coming in.",
+    "why_now_bullets": [
+      "You\u2019re visible for only <b>21.29%</b> of available impressions, while <b>78.7%</b> is being lost to budget (with <b>0.0%</b> lost to rank) \u2014 that\u2019s a clean signal the market wants to buy, but your account is capped before it can serve.",
+      "Your daily budget is <b>USD 9,400</b>, yet multiple priority campaigns are effectively hitting the ceiling every day \u2014 so competitors are picking up the impressions you can\u2019t buy.",
+      "One seasonal pocket is heating up: \u201cwinter jacket sale\u201d demand is up <b>21%</b>, and you\u2019re currently losing <b>79%</b> of impressions to rank on that term\u2014meaning timing matters once budget headroom is created. "
+    ],
+    "stat_label": "HEADLINE OPPORTUNITY (THIS QUARTER)",
+    "stat_sub": "Revenue currently being left on the table due to capped delivery + a few fixable leaks",
+    "impact_line": "We sized a near-term opportunity of USD 54,575 this quarter by looking at where you\u2019re getting cut off (budget) versus where you\u2019re genuinely uncompetitive (rank). The encouraging part: the portfolio-wide limiter is budget availability\u2014not ad quality\u2014so the fastest wins come from funding the right places and removing the self-inflicted blockers first.",
+    "scope_intro": "Below is how that USD 54,575 breaks down across the campaigns that are both volume-constrained and closest to incremental scale right now.",
+    "cards_intro": "Here\u2019s the short, prioritized game plan to turn \u201cwe\u2019re capped\u201d into \u201cwe\u2019re capturing demand\u201d\u2014starting with budget where rank isn\u2019t the issue, then cleaning up the leaks that make extra spend less efficient.",
+    "working_intro": "Also, a quick reassurance: the fundamentals are solid already, so this is more about unlocking scale than rebuilding the account.",
+    "opportunity_intro": "If you lift impression share from 21.29% toward 35.0% while keeping today\u2019s 3.91% click rate as the baseline, you\u2019re looking at 315330 additional impressions and 12320 additional clicks\u2014i.e., the volume that maps back to the USD 54,575 we flagged.",
+    "fix_title": "Want me to map the first 14 days of changes to your current budget rules?",
+    "fix_body": "Reply with either \u201cOption A\u201d (keep spend flat and reallocate to unlock the quickest gains) or \u201cOption B\u201d (add budget in controlled steps and protect ROAS with guardrails). If easiest, just reply \u201cA\u201d or \u201cB.\u201d",
+    "ps": "P.S. Because Brand Search - US is already at 10.51 ROAS on $5,047.88 with 536 conversions, the plan explicitly protects it while we expand the capped non-brand and shopping coverage."
+  }
+}

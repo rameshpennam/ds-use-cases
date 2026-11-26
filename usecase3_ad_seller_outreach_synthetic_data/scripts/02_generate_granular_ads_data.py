@@ -1,35 +1,40 @@
 """
 Generates the keyword/search-term/negative-keyword/ad-strength/auction-insight
 granularity that a real paid-search analyst actually digs through before
-writing a recommendation -- campaigns.csv alone only gives account/campaign-
-level aggregates (and a few summary counts like keyword_count), not the
-row-level evidence a human analyst cites ("'insurance agencies' scores 10/10
-on quality but only gets 5% impression share").
+writing a recommendation -- campaigndata-campaigns.csv alone only gives
+account/campaign-level aggregates (and a few summary counts like
+keyword_count), not the row-level evidence a human analyst cites
+("'insurance agencies' scores 10/10 on quality but only gets 5% impression
+share").
 
-Five new files land in ads-data/, each keyed back to the account_id and
-campaign_id already in campaigns.csv (read back in here, same pattern as
-generate_emails.py, so this can never drift from the campaign-level numbers):
+Five new files land in input/, each keyed back to the account_id and
+campaign_id already in campaigndata-campaigns.csv (read back in here, so
+this can never drift from the campaign-level numbers):
 
-  keywords.csv                 -- per-keyword quality score / impression share
-                                   / spend, for Search & Dynamic-Search-Ads
-                                   campaigns only (Shopping/PMax/Audience are
-                                   not keyword-targeted, same as the real
+  campaigndata-keywords.csv                 -- per-keyword quality score /
+                                   impression share / spend, for Search &
+                                   Dynamic-Search-Ads campaigns only
+                                   (Shopping/PMax/Audience are not
+                                   keyword-targeted, same as the real
                                    platforms this mirrors)
-  search_terms.csv              -- actual queries that triggered an ad,
-                                   including zero-click competitor-brand
+  campaigndata-search_terms.csv              -- actual queries that triggered
+                                   an ad, including zero-click competitor-brand
                                    leakage (fictitious competitor names only)
-  negative_keyword_conflicts.csv -- generic negatives that are accidentally
-                                   blocking the advertiser's own keywords
-  ads.csv                       -- ad-copy strength ratings per ad group
-  auction_insights.csv          -- this account's position vs. its own
-                                   fictitious named competitors (list already
-                                   defined in benchmarks.py ACCOUNTS[...]["competitors"])
+  campaigndata-negative_keyword_conflicts.csv -- generic negatives that are
+                                   accidentally blocking the advertiser's own
+                                   keywords
+  campaigndata-ads.csv                       -- ad-copy strength ratings per
+                                   ad group
+  campaigndata-auction_insights.csv          -- this account's position vs.
+                                   its own fictitious named competitors (list
+                                   already defined in benchmarks.py
+                                   ACCOUNTS[...]["competitors"])
 
 These are the "top N by volume" entries, same as a real analyst report would
 show (it never lists literally every keyword or search term either) -- NOT
 an exhaustive export. Said explicitly in metadata.xlsx, not implied.
 
-Run after generate_ads_data.py:  python generate_granular_ads_data.py
+Run after 01_generate_ads_data.py:  python 02_generate_granular_ads_data.py
 """
 import numpy as np
 import pandas as pd
@@ -37,7 +42,7 @@ from pathlib import Path
 
 from benchmarks import ACCOUNTS
 
-OUT_DIR = Path(__file__).resolve().parent.parent / "ads-data"
+OUT_DIR = Path(__file__).resolve().parent.parent / "input"
 rng = np.random.default_rng(20261126)
 
 # ---------------------------------------------------------------------------
@@ -287,7 +292,7 @@ def build_auction_insights_df():
 
 
 def main():
-    campaigns_df = pd.read_csv(OUT_DIR / "campaigns.csv")
+    campaigns_df = pd.read_csv(OUT_DIR / "campaigndata-campaigns.csv")
 
     keywords_df = build_keywords_df(campaigns_df)
     search_terms_df = build_search_terms_df(campaigns_df)
@@ -295,18 +300,18 @@ def main():
     ads_df = build_ads_df(campaigns_df)
     auction_df = build_auction_insights_df()
 
-    keywords_df.to_csv(OUT_DIR / "keywords.csv", index=False)
-    search_terms_df.to_csv(OUT_DIR / "search_terms.csv", index=False)
-    negatives_df.to_csv(OUT_DIR / "negative_keyword_conflicts.csv", index=False)
-    ads_df.to_csv(OUT_DIR / "ads.csv", index=False)
-    auction_df.to_csv(OUT_DIR / "auction_insights.csv", index=False)
+    keywords_df.to_csv(OUT_DIR / "campaigndata-keywords.csv", index=False)
+    search_terms_df.to_csv(OUT_DIR / "campaigndata-search_terms.csv", index=False)
+    negatives_df.to_csv(OUT_DIR / "campaigndata-negative_keyword_conflicts.csv", index=False)
+    ads_df.to_csv(OUT_DIR / "campaigndata-ads.csv", index=False)
+    auction_df.to_csv(OUT_DIR / "campaigndata-auction_insights.csv", index=False)
 
-    print(f"keywords.csv: {len(keywords_df)} rows")
-    print(f"search_terms.csv: {len(search_terms_df)} rows ({search_terms_df.is_competitor_brand_term.sum()} competitor-brand)")
-    print(f"negative_keyword_conflicts.csv: {len(negatives_df)} rows")
-    print(f"ads.csv: {len(ads_df)} rows "
+    print(f"campaigndata-keywords.csv: {len(keywords_df)} rows")
+    print(f"campaigndata-search_terms.csv: {len(search_terms_df)} rows ({search_terms_df.is_competitor_brand_term.sum()} competitor-brand)")
+    print(f"campaigndata-negative_keyword_conflicts.csv: {len(negatives_df)} rows")
+    print(f"campaigndata-ads.csv: {len(ads_df)} rows "
           f"({(ads_df.ad_strength_rating == 'Excellent').sum()} Excellent)")
-    print(f"auction_insights.csv: {len(auction_df)} rows")
+    print(f"campaigndata-auction_insights.csv: {len(auction_df)} rows")
 
 
 if __name__ == "__main__":

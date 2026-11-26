@@ -1,12 +1,13 @@
 """
-Builds the 4 fictitious vendor-style market research PDFs in market-reports/.
-Every figure for the pilot's 3 verticals comes from benchmarks.py, so these
-numbers can never drift from ads-data/campaigns.csv or the recommendation
-emails. Everything outside those 3 verticals (extra comparison markets,
-competitor names, keyword lists) is invented purely to give each report the
-breadth a real quarterly vendor report has -- clearly labeled illustrative.
+Builds the 4 fictitious vendor-style market research PDFs as
+input/marketdata-*.pdf. Every figure for the pilot's 3 verticals comes from
+benchmarks.py, so these numbers can never drift from
+input/campaigndata-campaigns.csv or the recommendation emails. Everything
+outside those 3 verticals (extra comparison markets, competitor names,
+keyword lists) is invented purely to give each report the breadth a real
+quarterly vendor report has -- clearly labeled illustrative.
 
-Run after generate_ads_data.py.
+Run after 01_generate_ads_data.py.
 """
 from pathlib import Path
 import numpy as np
@@ -20,7 +21,7 @@ from benchmarks import ACCOUNTS, VENDORS, REPORT_PERIOD, PRIOR_PERIOD
 _hist_rng = np.random.default_rng(730104)
 HIST_QUARTERS = ["Q4 2024", "Q1 2025", "Q2 2025", "Q3 2025", "Q4 2025", "Q1 2026", "Q2 2026", "Q3 2026"]
 
-OUT_DIR = Path(__file__).resolve().parent.parent / "market-reports"
+OUT_DIR = Path(__file__).resolve().parent.parent / "input"
 OUT_DIR.mkdir(parents=True, exist_ok=True)
 
 QUARTERS = ["Q4 2025", "Q1 2026", "Q2 2026", "Q3 2026"]
@@ -880,12 +881,12 @@ def main():
     ]
     for key, builder, accent in jobs:
         v = VENDORS[key]
-        out_path = str(OUT_DIR / f"{v['report_code']}.pdf")
+        out_path = str(OUT_DIR / f"marketdata-{v['report_code']}.pdf")
         flow = builder()
         pc.build_pdf(out_path, accent, f"{v['name']} -- {v['report_title']} ({REPORT_PERIOD})", flow,
                      header_left=v["short"], header_right=f"{v['report_title']} | {REPORT_PERIOD}")
         pages = pc.page_count(out_path)
-        print(f"{v['report_code']}.pdf: {pages} pages")
+        print(f"marketdata-{v['report_code']}.pdf: {pages} pages")
 
 
 if __name__ == "__main__":

@@ -1,7 +1,7 @@
 # ML + NLP + GenAI Pipeline -- Validation Report
 
-Run started: 2026-11-26 09:53:35
-Elapsed: 223.3s
+Run started: 2026-11-26 12:07:53
+Elapsed: 175.2s
 Model: gpt-5.2
 
 ## Schema compliance
@@ -17,8 +17,8 @@ Every GenAI call is validated against its Pydantic schema by the OpenAI SDK at r
 ```
 {
   "num_calls": 9,
-  "total_input_tokens": 38717,
-  "total_output_tokens": 12053,
+  "total_input_tokens": 37914,
+  "total_output_tokens": 11643,
   "cost_by_model_usd": {
     "gpt-5.2": null
   }
@@ -27,6 +27,6 @@ Every GenAI call is validated against its Pydantic schema by the OpenAI SDK at r
 
 ## Per-account result
 
-- **DE-INS-001**: constraint = rank-constrained, confidence = 0.86, campaign findings = 3, recommendation cards = 4, already working = 3, opportunity = +610,980 impressions
-- **US-RET-001**: constraint = budget-constrained, confidence = 0.84, campaign findings = 5, recommendation cards = 5, already working = 3, opportunity = +315,330 impressions
+- **DE-INS-001**: constraint = rank-constrained, confidence = 0.9, campaign findings = 3, recommendation cards = 4, already working = 3, opportunity = +610,980 impressions
+- **US-RET-001**: constraint = budget-constrained, confidence = 0.86, campaign findings = 5, recommendation cards = 4, already working = 3, opportunity = +315,330 impressions
 - **UK-TRV-001**: constraint = rank-constrained, confidence = 0.78, campaign findings = 2, recommendation cards = 4, already working = 3, opportunity = +30,240 impressions

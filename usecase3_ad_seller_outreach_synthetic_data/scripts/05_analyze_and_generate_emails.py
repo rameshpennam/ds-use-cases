@@ -5,7 +5,7 @@
 
 What this does, in order (search for "STEP N" to jump to any stage):
 
-  STEP 1  Read input data           -- load ads-data/campaigns.csv
+  STEP 1  Read input data           -- load input/campaigndata-campaigns.csv
   STEP 2  Pre-processing            -- per-account slicing, derived columns
   STEP 3  EDA / ML analysis         -- correlations, anomaly detection, clustering,
                                        materiality ranking, PLUS keyword/search-term/
@@ -29,9 +29,9 @@ What this does, in order (search for "STEP N" to jump to any stage):
                                        stage-6 diagnosis ("why now")
   STEP 9  GenAI: email copy         -- drafts the customer-facing email
   STEP 10 Render PDFs               -- build the email as a real PDF, reusing the
-                                       existing reportlab layout helpers in ../scripts/
+                                       existing reportlab layout helpers in pdf_common.py
   STEP 11 Validation report         -- schema-compliance checks, token totals, timing,
-                                       written to output/validation_report.md
+                                       written to ../output/validation_report.md
 
 Three distinct tech stacks, each doing a job the others don't:
   - ML (STEP 3, scikit-learn)   -- Pearson correlation, IsolationForest anomaly
@@ -64,18 +64,22 @@ than being told which facts matter.
 
 What stays deterministic on purpose: the revenue-opportunity numbers (the
 headline figure and each campaign's share of it) are computed in Python from
-campaigns.csv, not invented by the LLM -- models are handed these exact
-figures as facts to write copy around, never asked to do the arithmetic
-themselves. Every dollar amount in the final email traces to the CSV.
+campaigndata-campaigns.csv, not invented by the LLM -- models are handed
+these exact figures as facts to write copy around, never asked to do the
+arithmetic themselves. Every dollar amount in the final email traces to the CSV.
 
-Run:  python run_pipeline.py
+Folder layout this script expects (see ../README.md and ../misc/approach.html):
+  ../input/    -- campaigndata-*.csv (6 files) and marketdata-*.pdf (4 files)
+  ../output/   -- where this script writes everything it produces
+  benchmarks.py, pdf_common.py -- shared modules, same folder as this script
+
+Run:  python 05_analyze_and_generate_emails.py
 Needs: OPENAI_API_KEY only -- deliberately single-provider (see the call-layer
        section below for why). Swap the key and nothing else needs to change.
 """
 import json
 import os
 import re
-import sys
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -95,13 +99,12 @@ from sklearn.preprocessing import StandardScaler
 import openai
 
 ROOT = Path(__file__).resolve().parent.parent
-SCRIPTS_DIR = ROOT / "scripts"
-OUTPUT_DIR = Path(__file__).resolve().parent / "output"
+INPUT_DIR = ROOT / "input"
+OUTPUT_DIR = ROOT / "output"
 OUTPUT_DIR.mkdir(exist_ok=True)
-sys.path.insert(0, str(SCRIPTS_DIR))
 
-import pdf_common as pc  # noqa: E402 -- the existing reportlab layout helpers (charts, cards, callouts)
-from benchmarks import ACCOUNTS, REPORT_PERIOD, PRIOR_PERIOD, WATERMARK  # noqa: E402 -- market-side constants only; no cheating by reading account-diagnosis numbers from here
+import pdf_common as pc  # the existing reportlab layout helpers (charts, cards, callouts) -- same folder, no sys.path needed
+from benchmarks import ACCOUNTS, REPORT_PERIOD, PRIOR_PERIOD, WATERMARK  # market-side constants only; no cheating by reading account-diagnosis numbers from here
 
 RUN_STARTED = time.strftime("%Y-%m-%d %H:%M:%S")
 MATERIALITY_CUTOFF = 0.70
@@ -112,7 +115,7 @@ MATERIALITY_CUTOFF = 0.70
 # ============================================================================
 
 def load_campaigns():
-    return pd.read_csv(ROOT / "ads-data" / "campaigns.csv")
+    return pd.read_csv(INPUT_DIR / "campaigndata-campaigns.csv")
 
 
 GRANULAR_FILES = ["keywords", "search_terms", "negative_keyword_conflicts", "ads", "auction_insights"]
@@ -120,9 +123,9 @@ GRANULAR_FILES = ["keywords", "search_terms", "negative_keyword_conflicts", "ads
 
 def load_granular_data():
     """The keyword / search-term / negative-keyword / ad-strength / auction-
-    insight grain a real analyst actually digs through -- campaigns.csv alone
-    only has account/campaign-level aggregates. Returns {name: DataFrame}."""
-    return {name: pd.read_csv(ROOT / "ads-data" / f"{name}.csv") for name in GRANULAR_FILES}
+    insight grain a real analyst actually digs through -- campaigndata-campaigns.csv
+    alone only has account/campaign-level aggregates. Returns {name: DataFrame}."""
+    return {name: pd.read_csv(INPUT_DIR / f"campaigndata-{name}.csv") for name in GRANULAR_FILES}
 
 
 # ============================================================================
@@ -287,12 +290,11 @@ def compute_granular_eda(account_id, granular):
 # not a read of benchmarks.py -- a production pipeline only has the PDFs)
 # ============================================================================
 
-MARKET_REPORTS_DIR = ROOT / "market-reports"
 VENDOR_FILES = {
-    "Ashcroft Research Partners": "ashcroft_vertical_ad_trends_2026q3.pdf",
-    "Vantage Media Metrics": "vantage_media_mix_2026q3.pdf",
-    "SignalWatch Competitive Intelligence": "signalwatch_competitive_spend_2026q3.pdf",
-    "QueryScope Insights": "queryscope_search_demand_2026q3.pdf",
+    "Ashcroft Research Partners": "marketdata-ashcroft_vertical_ad_trends_2026q3.pdf",
+    "Vantage Media Metrics": "marketdata-vantage_media_mix_2026q3.pdf",
+    "SignalWatch Competitive Intelligence": "marketdata-signalwatch_competitive_spend_2026q3.pdf",
+    "QueryScope Insights": "marketdata-queryscope_search_demand_2026q3.pdf",
 }
 SKIP_IF_PAGE_CONTAINS = ("Glossary", "Disclaimer", "Table of Contents")
 MAX_ROWS_PER_VENDOR = 18
@@ -317,7 +319,7 @@ def _extract_pdf_tables(path):
 def extract_market_evidence(vertical):
     evidence = {}
     for vendor, fname in VENDOR_FILES.items():
-        path = MARKET_REPORTS_DIR / fname
+        path = INPUT_DIR / fname
         rows_out, seen = [], set()
         for t in _extract_pdf_tables(path):
             if vertical.lower() not in t["page_text"].lower():
@@ -581,7 +583,7 @@ def structured_call(label, model, system, user_content, output_model, max_tokens
 # ============================================================================
 # Deterministic numbers (NOT GenAI) that stage 8 must use verbatim -- the
 # revenue math is Python, not model arithmetic, so every dollar figure in
-# the final email traces to campaigns.csv.
+# the final email traces to campaigndata-campaigns.csv.
 # ============================================================================
 
 def account_rollup(g, account_cfg):
@@ -613,7 +615,7 @@ def account_rollup(g, account_cfg):
 def opportunity_sizing(g, rollup):
     """How big the fix is worth, in the account's own current terms -- not a
     model guess. Target impression share is the account's own vertical
-    benchmark (already in campaigns.csv), additional clicks are projected at
+    benchmark (already in campaigndata-campaigns.csv), additional clicks are projected at
     TODAY's click rate (deliberately the cautious version, same as a real
     analyst would quote -- click rate should improve once the quality fixes
     land, but this number doesn't assume that yet)."""
@@ -844,7 +846,7 @@ def run_stage9(account_id, account_cfg, ads_analysis, market_mapping, rollup, op
 
 # ============================================================================
 # STEP 10 -- Render the email as a real PDF, reusing the existing
-# reportlab layout helpers in ../scripts/pdf_common.py (charts, campaign
+# reportlab layout helpers in pdf_common.py (charts, campaign
 # cards, the big-stat callout) -- no second rendering engine.
 # ============================================================================
 

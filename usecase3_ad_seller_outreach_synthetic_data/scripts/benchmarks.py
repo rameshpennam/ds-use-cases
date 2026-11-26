@@ -1,8 +1,8 @@
 """
 Single source of truth for every number that must agree across:
-  - ads-data/accounts.csv + campaigns.csv
-  - the 4 research-vendor PDFs in market-reports/
-  - the 3 per-account recommendation emails
+  - input/campaigndata-campaigns.csv (and the 5 granular campaigndata-*.csv files)
+  - the 4 research-vendor PDFs, input/marketdata-*.pdf
+  - the 3 per-account recommendation emails in output/
 
 This mirrors the "one scoring module, everything else reads from it" pattern
 used elsewhere in this repo (see backend/app/uc7/scoring.py) so the synthetic

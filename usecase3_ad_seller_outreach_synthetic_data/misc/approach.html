@@ -66,7 +66,7 @@
 <div class="wrap">
 
   <h1>ML + NLP + GenAI Recommendation Pipeline</h1>
-  <p class="sub">One script (<code>run_pipeline.py</code>) — reads campaign + market data, analyzes it with three
+  <p class="sub">One script (<code>scripts/05_analyze_and_generate_emails.py</code>) — reads campaign + market data, analyzes it with three
     distinct tech stacks, and drafts a response-optimized customer email.</p>
   <span class="badge">SYNTHETIC DATA — ILLUSTRATIVE ONLY</span>
 
@@ -74,9 +74,9 @@
     <div class="card">
       <h3>Inputs</h3>
       <ul>
-        <li><code>ads-data/campaigns.csv</code> — 22 campaigns across 3 pilot accounts</li>
-        <li><code>ads-data/keywords.csv, search_terms.csv, negative_keyword_conflicts.csv, ads.csv, auction_insights.csv</code> — keyword / query / ad-strength / competitive-position grain</li>
-        <li><code>market-reports/*.pdf</code> — 4 fictitious vendor research reports</li>
+        <li><code>input/campaigndata-campaigns.csv</code> — 22 campaigns across 3 pilot accounts</li>
+        <li><code>input/campaigndata-keywords.csv, search_terms.csv, negative_keyword_conflicts.csv, ads.csv, auction_insights.csv</code> — keyword / query / ad-strength / competitive-position grain</li>
+        <li><code>input/marketdata-*.pdf</code> — 4 fictitious vendor research reports</li>
       </ul>
     </div>
     <div class="card">
@@ -99,7 +99,7 @@
 
   <div class="flow">
     <div class="step"><div class="num" style="background:var(--det)">1</div>
-      <h4>Read input data</h4><p>Load <code>campaigns.csv</code>.</p></div>
+      <h4>Read input data</h4><p>Load <code>input/campaigndata-campaigns.csv</code>.</p></div>
 
     <div class="step"><div class="num" style="background:var(--det)">2</div>
       <h4>Pre-processing</h4><p>Slice to one account, derive the missed-impressions column.</p></div>
