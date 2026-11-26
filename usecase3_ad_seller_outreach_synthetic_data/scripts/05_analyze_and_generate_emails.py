@@ -647,17 +647,17 @@ def account_rollup(g, account_cfg):
     }
 
 
-def opportunity_sizing(g, rollup):
+def opportunity_sizing(g, rollup, account_cfg):
     """How big the fix is worth, in the account's own current terms -- not a
     model guess. Target impression share is the account's own vertical
-    benchmark (already in campaigndata-campaigns.csv), additional clicks are projected at
-    TODAY's click rate (deliberately the cautious version, same as a real
-    analyst would quote -- click rate should improve once the quality fixes
-    land, but this number doesn't assume that yet)."""
+    benchmark (benchmarks.py -- the one source every stage reads this from,
+    not a duplicate copy baked into campaigndata-campaigns.csv), additional
+    clicks are projected at TODAY's click rate (deliberately the cautious
+    version, same as a real analyst would quote -- click rate should
+    improve once the quality fixes land, but this number doesn't assume
+    that yet)."""
     current_is_pct = rollup["is_pct"]
-    target_is_pct = float((g["vertical_benchmark_impression_share_pct"] * g["eligible_impressions"]).sum()
-                           / g["eligible_impressions"].sum())
-    target_is_pct = max(target_is_pct, current_is_pct)
+    target_is_pct = max(account_cfg["benchmark_impression_share_pct"], current_is_pct)
 
     total_eligible = g["eligible_impressions"].sum()
     additional_impressions = round(total_eligible * (target_is_pct - current_is_pct) / 100)
@@ -1148,7 +1148,7 @@ def run_account(account_id, account_cfg, df, granular):
     granular_eda = compute_granular_eda(account_id, granular)                 # STEP 3 (ML, deeper grain)
     market_evidence = extract_market_evidence(account_cfg["vertical"])        # STEP 4
     rollup = account_rollup(g, account_cfg)                                   # deterministic revenue math
-    opp_sizing = opportunity_sizing(g, rollup)                                # deterministic opportunity sizing
+    opp_sizing = opportunity_sizing(g, rollup, account_cfg)                   # deterministic opportunity sizing
 
     ads_analysis = run_stage6(account_id, account_cfg, g, eda_result, granular_eda)  # STEP 6 (GenAI)
 

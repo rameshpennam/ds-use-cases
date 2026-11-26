@@ -79,13 +79,6 @@ ADS_DICT = [
     ("expected_ctr_rating", "Quality & Competitiveness", "string", "Below Average / Average / Above Average"),
     ("ad_relevance_rating", "Quality & Competitiveness", "string", "Below Average / Average / Above Average"),
     ("landing_page_experience_rating", "Quality & Competitiveness", "string", "Below Average / Average / Above Average"),
-    ("vertical_benchmark_impression_share_pct", "Quality & Competitiveness", "float",
-     "Vertical peer-average impression share -- SNAPSHOT of the matching field in the Ashcroft research report, joined by vertical+country+period"),
-    ("vertical_benchmark_avg_cpc", "Quality & Competitiveness", "float",
-     "Vertical peer-average CPC -- snapshot of QueryScope's keyword_cpc_benchmark field"),
-    ("vertical_benchmark_ctr_pct", "Quality & Competitiveness", "float", "Vertical peer-average CTR"),
-    ("competitive_density_index", "Quality & Competitiveness", "integer",
-     "Our own measure of how crowded the auction is -- directionally comparable to QueryScope's serp_competitive_density_index, not identical methodology"),
 
     ("conversions", "Conversions & Revenue", "float", "Conversions in the period"),
     ("conversions_prior_period", "Conversions & Revenue", "float", "Conversions in the prior period"),
@@ -113,29 +106,9 @@ ADS_DICT = [
     ("conversions_m1", "Monthly Trend (stage-1 signal)", "float", "Conversions in month 1 -- sums exactly to `conversions`"),
     ("conversions_m2", "Monthly Trend (stage-1 signal)", "float", "Conversions in month 2"),
     ("conversions_m3", "Monthly Trend (stage-1 signal)", "float", "Conversions in month 3"),
-    ("spend_prior_year", "Monthly Trend (stage-1 signal)", "float", "Same-quarter spend one year earlier -- lets a model compare the account's own YoY trend to the market's (demand_index_*_prior_year)"),
+    ("spend_prior_year", "Monthly Trend (stage-1 signal)", "float", "Same-quarter spend one year earlier -- lets a model compare the account's own YoY trend to the market's demand trend (see Ashcroft's demand_index in the Market Data Dictionary tab)"),
     ("impressions_prior_year", "Monthly Trend (stage-1 signal)", "integer", "Same-quarter impressions one year earlier"),
     ("conversions_prior_year", "Monthly Trend (stage-1 signal)", "float", "Same-quarter conversions one year earlier"),
-
-    ("primary_constraint_hint", "Validation Label", "string",
-     "Ground-truth diagnosis this synthetic account was built to represent (rank-constrained / "
-     "budget-constrained / healthy-demand-surge). Use to VALIDATE a stage-1 issue-detection "
-     "model's output against a known answer -- do not feed it in as a model input, that would "
-     "be label leakage."),
-    ("seller_note_text", "Qualitative / GenAI Grounding", "string",
-     "Free-text note from the account seller, populated only on the 2 campaigns per account "
-     "most worth acting on (seller_notes_flag = Y). This is the kind of qualitative detail a "
-     "GenAI drafting step should quote or paraphrase directly -- it is NOT derivable from the "
-     "numeric columns."),
-
-    ("demand_index_q4_2025_current", "Demand Trend", "integer", "Indexed search demand, Q4 2025, this year (base 100)"),
-    ("demand_index_q4_2025_prior_year", "Demand Trend", "integer", "Indexed search demand, Q4 2024 (same quarter, prior year)"),
-    ("demand_index_q1_2026_current", "Demand Trend", "integer", "Indexed search demand, Q1 2026"),
-    ("demand_index_q1_2026_prior_year", "Demand Trend", "integer", "Indexed search demand, Q1 2025"),
-    ("demand_index_q2_2026_current", "Demand Trend", "integer", "Indexed search demand, Q2 2026"),
-    ("demand_index_q2_2026_prior_year", "Demand Trend", "integer", "Indexed search demand, Q2 2025"),
-    ("demand_index_q3_2026_current", "Demand Trend", "integer", "Indexed search demand, Q3 2026 (current reporting quarter)"),
-    ("demand_index_q3_2026_prior_year", "Demand Trend", "integer", "Indexed search demand, Q3 2025"),
 
     ("impressions_mobile_pct", "Device Split", "float", "% of impressions on mobile"),
     ("impressions_desktop_pct", "Device Split", "float", "% of impressions on desktop"),
@@ -177,12 +150,9 @@ ADS_DICT = [
     ("top_search_term_2_share_pct", "Keywords & Creative Ops", "float", "Share of clicks/impressions from that term"),
     ("policy_issues_count", "Keywords & Creative Ops", "integer", "Open policy/compliance issues on this campaign"),
 
-    ("last_optimization_date", "Account Health & Ops", "date", "Date a seller/optimizer last changed this campaign's settings"),
-    ("days_since_last_optimization", "Account Health & Ops", "integer", "Days since last_optimization_date"),
     ("active_campaign_count_account", "Account Health & Ops", "integer", "Active campaign count for the whole account (repeated per row)"),
     ("paused_campaign_count_account", "Account Health & Ops", "integer", "Paused campaign count for the whole account (repeated per row)"),
     ("account_tenure_months", "Account Health & Ops", "integer", "How long this account has been advertising on the platform"),
-    ("seller_notes_flag", "Account Health & Ops", "string", "Y/N -- whether the account seller has manually flagged this campaign for review"),
 ]
 
 MARKET_DICT = [
@@ -191,10 +161,10 @@ MARKET_DICT = [
     ("Ashcroft", "country", "string", "Country this report section covers", "country"),
     ("Ashcroft", "report_period", "string", "Quarter the figures describe", "report_period"),
     ("Ashcroft", "search_spend_growth_qoq_pct", "float", "Category-wide paid search spend growth, QoQ", "spend_qoq_change_pct (account rollup)"),
-    ("Ashcroft", "query_demand_growth_qoq_pct", "float", "Category-wide query volume growth, QoQ", "impressions growth / demand_index_* series"),
+    ("Ashcroft", "query_demand_growth_qoq_pct", "float", "Category-wide query volume growth, QoQ", "impressions growth (account rollup)"),
     ("Ashcroft", "cpc_growth_qoq_pct", "float", "Category-wide average CPC growth, QoQ", "avg_cpc_qoq_change_pct"),
-    ("Ashcroft", "demand_index (4 quarters, current + prior-year)", "integer series", "Indexed demand trend, base 100", "demand_index_q*_current / demand_index_q*_prior_year"),
-    ("Ashcroft", "vertical_benchmark_impression_share_pct", "float", "Peer-average impression share for the vertical", "vertical_benchmark_impression_share_pct"),
+    ("Ashcroft", "demand_index (4 quarters, current + prior-year)", "integer series", "Indexed demand trend, base 100", "no ads-data equivalent -- this is the sole source for market demand timing, read live from the PDF by the pipeline (benchmarks.py), never duplicated into campaigndata-campaigns.csv"),
+    ("Ashcroft", "vertical_benchmark_impression_share_pct", "float", "Peer-average impression share for the vertical", "compare against search_impression_share_pct (account rollup) -- the sole source for this benchmark, not duplicated into campaigndata-campaigns.csv"),
     ("Ashcroft", "vertical_benchmark_lost_rank_pct", "float", "Peer-average share of auctions lost to rank", "impression_share_lost_rank_pct (compare against)"),
     ("Ashcroft", "maturity_stage_rating", "string (qualitative)", "Analyst's view of category maturity: Emerging/Growth/Mature", "no direct ads-data mapping -- qualitative context only"),
     ("Ashcroft", "forecast_next_quarter_spend_growth_pct", "float", "Forward-looking spend growth forecast", "no direct ads-data mapping -- forward-looking only"),
@@ -204,7 +174,7 @@ MARKET_DICT = [
     ("Vantage", "channel_mix_pct (Search/Social/Display/Video/Other)", "float x5", "Category spend share by channel", "no ads-data equivalent -- ads data is search-platform-only, this is the cross-channel context"),
     ("Vantage", "reach_pct", "float", "% of the addressable audience reached in-period", "no direct ads-data mapping"),
     ("Vantage", "frequency", "float", "Average exposures per reached person", "no direct ads-data mapping"),
-    ("Vantage", "ad_intensity_index", "integer", "Composite category ad-pressure index, base 100", "directionally comparable to competitive_density_index, not the same methodology"),
+    ("Vantage", "ad_intensity_index", "integer", "Composite category ad-pressure index, base 100", "no direct ads-data mapping"),
 
     ("SignalWatch", "vertical", "string", "Vertical this tracking covers", "vertical"),
     ("SignalWatch", "country", "string", "Country this tracking covers", "country"),
@@ -217,10 +187,10 @@ MARKET_DICT = [
     ("QueryScope", "vertical", "string", "Vertical this keyword data covers", "vertical"),
     ("QueryScope", "country", "string", "Country this keyword data covers", "country"),
     ("QueryScope", "keyword", "string", "Specific keyword/query being benchmarked", "compare against top_search_term_1 / top_search_term_2"),
-    ("QueryScope", "query_volume_index", "integer", "Indexed query volume for that keyword, base 100", "finer-grain version of demand_index_* (keyword vs. account level)"),
-    ("QueryScope", "keyword_cpc_benchmark", "float", "Peer-average CPC for that keyword", "vertical_benchmark_avg_cpc"),
+    ("QueryScope", "query_volume_index", "integer", "Indexed query volume for that keyword, base 100", "finer-grain version of Ashcroft's demand_index (keyword vs. account level)"),
+    ("QueryScope", "keyword_cpc_benchmark", "float", "Peer-average CPC for that keyword", "compare against avg_cpc -- no direct ads-data column, not duplicated into campaigndata-campaigns.csv"),
     ("QueryScope", "keyword_cpc_growth_qoq_pct", "float", "QoQ CPC growth for that keyword", "avg_cpc_qoq_change_pct"),
-    ("QueryScope", "serp_competitive_density_index", "integer", "How crowded the results page is for that keyword, base 100", "competitive_density_index"),
+    ("QueryScope", "serp_competitive_density_index", "integer", "How crowded the results page is for that keyword, base 100", "no direct ads-data mapping"),
 ]
 
 GRANULAR_DICT = [
@@ -261,9 +231,13 @@ def main():
         ("Package", "Synthetic data package for the market-context-enriched seller outreach pilot."),
         ("Scope", "3 pilot accounts (Insurance/Germany, Retail/Greece, Travel/United Kingdom), campaign-level ads data, "
                   "and 4 fictitious vendor-style market research reports."),
-        ("Ads data file", "input/campaigndata-campaigns.csv -- one row per campaign, 143 columns, 22 rows "
+        ("Ads data file", "input/campaigndata-campaigns.csv -- one row per campaign, 126 columns, 22 rows "
                           "(5/7/10 campaigns across the 3 accounts -- deliberately uneven, matching how a "
-                          "single-product-line vertical vs. a multi-category catalog actually differ in campaign count)."),
+                          "single-product-line vertical vs. a multi-category catalog actually differ in campaign count). "
+                          "Every column here is either a genuine Microsoft Advertising reporting field or a plausible "
+                          "derived/segmented view of one -- no external benchmark or market-research figures are baked "
+                          "in (those live only in input/marketdata-*.pdf, joined in by the pipeline, never duplicated "
+                          "into this file)."),
         ("Granular ads data files", "input/campaigndata-keywords.csv, campaigndata-search_terms.csv, "
                                     "campaigndata-negative_keyword_conflicts.csv, campaigndata-ads.csv, "
                                     "campaigndata-auction_insights.csv -- the keyword/query/negative-keyword/ad-copy/"

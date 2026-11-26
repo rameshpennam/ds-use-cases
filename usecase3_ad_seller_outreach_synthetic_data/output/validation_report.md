@@ -1,7 +1,7 @@
 # ML + NLP + GenAI Pipeline -- Validation Report
 
-Run started: 2026-11-26 13:59:16
-Elapsed: 203.2s
+Run started: 2026-11-26 14:54:59
+Elapsed: 221.0s
 Model: gpt-5.2
 
 ## Schema compliance
@@ -17,8 +17,8 @@ Every GenAI call is validated against its Pydantic schema by the OpenAI SDK at r
 ```
 {
   "num_calls": 9,
-  "total_input_tokens": 43076,
-  "total_output_tokens": 11980,
+  "total_input_tokens": 42625,
+  "total_output_tokens": 12250,
   "cost_by_model_usd": {
     "gpt-5.2": null
   }

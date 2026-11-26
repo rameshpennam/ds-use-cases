@@ -222,8 +222,6 @@ def build_campaign_row(account_id, acct, idx, name, ctype, subtype, weight, is_p
     disapproved_ad_count = int(rng.integers(0, 3))
     policy_issues_count = int(rng.integers(0, 2))
 
-    days_since_opt = int(rng.integers(1, 45))
-
     row = {
         "account_id": account_id,
         "account_name": acct["account_name"],
@@ -289,10 +287,6 @@ def build_campaign_row(account_id, acct, idx, name, ctype, subtype, weight, is_p
         "expected_ctr_rating": pyrand.choices(rating_pool, weights=rating_weights)[0],
         "ad_relevance_rating": pyrand.choices(rating_pool, weights=rating_weights)[0],
         "landing_page_experience_rating": pyrand.choices(rating_pool, weights=rating_weights)[0],
-        "vertical_benchmark_impression_share_pct": acct["benchmark_impression_share_pct"],
-        "vertical_benchmark_avg_cpc": acct["keyword_cpc_benchmark"],
-        "vertical_benchmark_ctr_pct": round(ctr * 100 * jitter(1.1, 1.6), 2),
-        "competitive_density_index": acct["serp_competitive_density_index"],
 
         "conversions": conversions,
         "conversions_prior_period": conversions_prior,
@@ -317,15 +311,6 @@ def build_campaign_row(account_id, acct, idx, name, ctype, subtype, weight, is_p
         "spend_prior_year": spend_prior_year,
         "impressions_prior_year": impressions_prior_year,
         "conversions_prior_year": conversions_prior_year,
-
-        "demand_index_q4_2025_current": acct["demand_index"]["Q4 2025"]["current"],
-        "demand_index_q4_2025_prior_year": acct["demand_index"]["Q4 2025"]["prior_year"],
-        "demand_index_q1_2026_current": acct["demand_index"]["Q1 2026"]["current"],
-        "demand_index_q1_2026_prior_year": acct["demand_index"]["Q1 2026"]["prior_year"],
-        "demand_index_q2_2026_current": acct["demand_index"]["Q2 2026"]["current"],
-        "demand_index_q2_2026_prior_year": acct["demand_index"]["Q2 2026"]["prior_year"],
-        "demand_index_q3_2026_current": acct["demand_index"]["Q3 2026"]["current"],
-        "demand_index_q3_2026_prior_year": acct["demand_index"]["Q3 2026"]["prior_year"],
 
         "impressions_mobile_pct": mobile_pct,
         "impressions_desktop_pct": desktop_pct,
@@ -364,31 +349,12 @@ def build_campaign_row(account_id, acct, idx, name, ctype, subtype, weight, is_p
         "top_search_term_2_share_pct": term2[1] * jitter(0.6, 0.85),
         "policy_issues_count": policy_issues_count,
 
-        "last_optimization_date": "2026-09-" + str(30 - min(days_since_opt, 29)).zfill(2),
-        "days_since_last_optimization": days_since_opt,
         "active_campaign_count_account": len(CAMPAIGNS[account_id]),
         "paused_campaign_count_account": 0,
         "account_tenure_months": acct.get("account_tenure_months", int(rng.integers(14, 58))),
-        # seller_notes_flag / seller_note_text / primary_constraint_hint are
-        # filled in after all campaigns for the account are built, so the
-        # "flag the 2 neediest campaigns" logic can look across the full set.
-        "seller_notes_flag": "N",
-        "seller_note_text": None,
-        "primary_constraint_hint": acct["narrative"],
     }
     row["gender_female_share_pct"] = round(100 - row["gender_male_share_pct"], 1)
     return row
-
-
-SELLER_NOTES = {
-    "DE-INS-001": "Seller flagged: strong auction eligibility but consistently outranked by "
-                  "larger competitors on non-brand terms; customer has indicated openness to "
-                  "revisiting bid strategy at this renewal.",
-    "GR-RET-001": "Seller flagged: campaign exhausts its daily budget most days well before "
-                  "end-of-day; customer has asked about a mid-quarter budget increase.",
-    "UK-TRV-001": "Seller flagged: booking volume up sharply this quarter; customer is "
-                  "weighing expansion into adjacent destinations before competitors reprice.",
-}
 
 
 def main():
@@ -398,17 +364,6 @@ def main():
             all_rows.append(build_campaign_row(account_id, acct, idx, name, ctype, subtype, weight, is_pct, lost_budget_pct))
 
     campaigns_df = pd.DataFrame(all_rows)
-
-    # Flag the 2 campaigns per account with the largest combined share lost
-    # (to rank + to budget) -- i.e. the ones a seller would actually act on
-    # first -- and attach a short grounding note a GenAI drafting step can
-    # quote or paraphrase directly.
-    campaigns_df["seller_notes_flag"] = "N"
-    campaigns_df["seller_note_text"] = None
-    for account_id, grp in campaigns_df.groupby("account_id"):
-        needy = (grp["impression_share_lost_budget_pct"] + grp["impression_share_lost_rank_pct"]).nlargest(2).index
-        campaigns_df.loc[needy, "seller_notes_flag"] = "Y"
-        campaigns_df.loc[needy, "seller_note_text"] = SELLER_NOTES[account_id]
 
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     campaigns_df.to_csv(OUT_DIR / "campaigndata-campaigns.csv", index=False)
@@ -429,12 +384,7 @@ def main():
         "account_id", "account_name", "vertical", "country", "country_code",
         "currency", "account_status", "pilot_flag", "report_period",
         "period_start_date", "period_end_date", "prior_period", "data_as_of_date",
-        "days_in_period", "demand_index_q4_2025_current", "demand_index_q4_2025_prior_year",
-        "demand_index_q1_2026_current", "demand_index_q1_2026_prior_year",
-        "demand_index_q2_2026_current", "demand_index_q2_2026_prior_year",
-        "demand_index_q3_2026_current", "demand_index_q3_2026_prior_year",
-        "vertical_benchmark_impression_share_pct", "vertical_benchmark_avg_cpc",
-        "competitive_density_index", "active_campaign_count_account",
+        "days_in_period", "active_campaign_count_account",
         "paused_campaign_count_account", "account_tenure_months",
     ]
     weighted_avg = [
