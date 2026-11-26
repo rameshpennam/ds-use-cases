@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ML + NLP + GenAI Recommendation Pipeline — Approach</title>
+<style>
+  :root {
+    --bg: #ffffff; --panel: #f7f6f2; --border: #e3e0d8; --text: #222222;
+    --muted: #666666; --accent: #2E4057;
+    --ml: #2E4057; --nlp: #7A5C9E; --genai: #3F7D54; --det: #8A7A5C;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #15171a; --panel: #1d2024; --border: #2c3036; --text: #e8e8e8; --muted: #9aa0a6; }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font-family: -apple-system, Segoe UI, Helvetica, Arial, sans-serif;
+    line-height: 1.5;
+  }
+  .wrap { max-width: 860px; margin: 0 auto; padding: 2.5rem 1.5rem 4rem; }
+  h1 { font-size: 1.6rem; margin-bottom: 0.2rem; }
+  .sub { color: var(--muted); font-size: 0.95rem; margin-bottom: 1rem; }
+  .badge {
+    display: inline-block; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.03em;
+    padding: 0.2rem 0.55rem; border-radius: 999px; color: #fff; background: #B0413E;
+    margin-bottom: 1.5rem;
+  }
+  .cards { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 2.2rem; }
+  @media (max-width: 640px) { .cards { grid-template-columns: 1fr; } }
+  .card {
+    background: var(--panel); border: 1px solid var(--border); border-radius: 10px;
+    padding: 1rem 1.2rem;
+  }
+  .card h3 { margin: 0 0 0.5rem; font-size: 0.95rem; }
+  .card ul { margin: 0; padding-left: 1.1rem; font-size: 0.88rem; color: var(--muted); }
+  .card li { margin-bottom: 0.3rem; }
+  h2 { font-size: 1.15rem; margin: 2rem 0 1rem; }
+  .legend { display: flex; flex-wrap: wrap; gap: 0.8rem; margin-bottom: 1.6rem; font-size: 0.82rem; }
+  .legend span { display: flex; align-items: center; gap: 0.4rem; color: var(--muted); }
+  .dot { width: 0.7rem; height: 0.7rem; border-radius: 50%; display: inline-block; }
+  .flow { position: relative; padding-left: 2.2rem; }
+  .flow::before {
+    content: ""; position: absolute; left: 0.62rem; top: 0.4rem; bottom: 0.4rem;
+    width: 2px; background: var(--border);
+  }
+  .step { position: relative; padding-bottom: 1.3rem; }
+  .step:last-child { padding-bottom: 0; }
+  .num {
+    position: absolute; left: -2.2rem; top: 0; width: 1.5rem; height: 1.5rem;
+    border-radius: 50%; color: #fff; font-size: 0.78rem; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .step h4 { margin: 0 0 0.15rem; font-size: 0.95rem; }
+  .step p { margin: 0; font-size: 0.86rem; color: var(--muted); }
+  .tag {
+    font-size: 0.65rem; font-weight: 700; letter-spacing: 0.03em; color: #fff;
+    padding: 0.08rem 0.4rem; border-radius: 4px; margin-left: 0.4rem; vertical-align: middle;
+  }
+  footer { margin-top: 2.5rem; font-size: 0.8rem; color: var(--muted); border-top: 1px solid var(--border); padding-top: 1rem; }
+  code { background: var(--panel); border: 1px solid var(--border); border-radius: 4px; padding: 0.05rem 0.3rem; font-size: 0.85em; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>ML + NLP + GenAI Recommendation Pipeline</h1>
+  <p class="sub">One script (<code>run_pipeline.py</code>) — reads campaign + market data, analyzes it with three
+    distinct tech stacks, and drafts a response-optimized customer email.</p>
+  <span class="badge">SYNTHETIC DATA — ILLUSTRATIVE ONLY</span>
+
+  <div class="cards">
+    <div class="card">
+      <h3>Inputs</h3>
+      <ul>
+        <li><code>ads-data/campaigns.csv</code> — 22 campaigns across 3 pilot accounts</li>
+        <li><code>ads-data/keywords.csv, search_terms.csv, negative_keyword_conflicts.csv, ads.csv, auction_insights.csv</code> — keyword / query / ad-strength / competitive-position grain</li>
+        <li><code>market-reports/*.pdf</code> — 4 fictitious vendor research reports</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Outputs (per account)</h3>
+      <ul>
+        <li><code>output/{account}_full_result.json</code> — every stage's structured result</li>
+        <li><code>output/recommendation_email_llm_*.pdf</code> — the finished customer email</li>
+        <li><code>output/validation_report.md</code> — token usage + per-account summary</li>
+      </ul>
+    </div>
+  </div>
+
+  <h2>The flow</h2>
+  <div class="legend">
+    <span><i class="dot" style="background:var(--ml)"></i>ML (scikit-learn / scipy)</span>
+    <span><i class="dot" style="background:var(--nlp)"></i>NLP (TF-IDF + cosine similarity)</span>
+    <span><i class="dot" style="background:var(--genai)"></i>GenAI (OpenAI, structured output)</span>
+    <span><i class="dot" style="background:var(--det)"></i>Deterministic Python</span>
+  </div>
+
+  <div class="flow">
+    <div class="step"><div class="num" style="background:var(--det)">1</div>
+      <h4>Read input data</h4><p>Load <code>campaigns.csv</code>.</p></div>
+
+    <div class="step"><div class="num" style="background:var(--det)">2</div>
+      <h4>Pre-processing</h4><p>Slice to one account, derive the missed-impressions column.</p></div>
+
+    <div class="step"><div class="num" style="background:var(--ml)">3</div>
+      <h4>EDA / ML analysis <span class="tag" style="background:var(--ml)">ML</span></h4>
+      <p>Pearson correlations, IsolationForest anomaly scores, KMeans clusters, materiality ranking —
+      plus keyword/search-term/negative-keyword/ad-strength/auction-insight evidence, the deeper grain
+      a real analyst digs through.</p></div>
+
+    <div class="step"><div class="num" style="background:var(--det)">4</div>
+      <h4>Parse market PDFs</h4><p>Real <code>pdfplumber</code> table extraction from the 4 vendor PDFs.</p></div>
+
+    <div class="step"><div class="num" style="background:var(--det)">5</div>
+      <h4>Pydantic schemas</h4><p>Structured-JSON contract for every GenAI call.</p></div>
+
+    <div class="step"><div class="num" style="background:var(--genai)">6</div>
+      <h4>GenAI: ads-data analysis <span class="tag" style="background:var(--genai)">GenAI</span></h4>
+      <p>One OpenAI call forms its own diagnosis from the raw data + all of step 3's evidence —
+      produces prioritized recommendation cards and an "already working" list, not just a paragraph.</p></div>
+
+    <div class="step"><div class="num" style="background:var(--nlp)">7</div>
+      <h4>NLP: relevance ranking <span class="tag" style="background:var(--nlp)">NLP</span></h4>
+      <p>TF-IDF + cosine similarity scores every extracted market fact against this account's
+      diagnosis text; only the closest matches move on.</p></div>
+
+    <div class="step"><div class="num" style="background:var(--genai)">8</div>
+      <h4>GenAI: market mapping <span class="tag" style="background:var(--genai)">GenAI</span></h4>
+      <p>One OpenAI call builds the "why now" case from the NLP-shortlisted facts.</p></div>
+
+    <div class="step"><div class="num" style="background:var(--genai)">9</div>
+      <h4>GenAI: email copy <span class="tag" style="background:var(--genai)">GenAI</span></h4>
+      <p>One OpenAI call drafts the persuasive copy (hook, bullets, CTA) — the deeper evidence from
+      step 6 renders directly, this call writes the connective tissue around it.</p></div>
+
+    <div class="step"><div class="num" style="background:var(--det)">10</div>
+      <h4>Render PDF</h4><p>Build the email as a real PDF, reusing existing reportlab layout helpers.</p></div>
+
+    <div class="step"><div class="num" style="background:var(--det)">11</div>
+      <h4>Validation report</h4><p>Token/cost totals + a per-account summary.</p></div>
+  </div>
+
+  <footer>
+    Model: one OpenAI model constant for every GenAI stage (single-provider by design —
+    a future model/provider swap is a one-line change). Deterministic revenue and
+    opportunity-sizing numbers are computed in Python, never invented by the LLM.
+    Everything in this pipeline's output is synthetic / illustrative.
+  </footer>
+
+</div>
+</body>
+</html>
