@@ -226,29 +226,47 @@ def chip_row(chips, styles):
 def recommendation_card(card, styles, accent):
     """One prioritized recommendation, chips-first so a skimming reader
     triages before reading prose -- title, the specific evidence behind it,
-    the concrete steps, and the one metric to watch."""
+    an optional external market-data corroboration (the step a human
+    paid-search analyst can't do alone, since they have no market-report
+    access), the concrete steps, and the one metric to watch."""
     chips = [(card["priority"], PRIORITY_COLORS.get(card["priority"], accent)),
              (card["timeframe"], "#777777"),
              (AFFECTS_LABELS.get(card["affects"], card["affects"]), accent)]
     title_style = ParagraphStyle("RecTitle", parent=styles["Normal"], fontSize=10.5, leading=13,
                                   fontName="Helvetica-Bold", textColor=colors.HexColor("#222222"), spaceBefore=4)
+    market_style = ParagraphStyle("RecMarket", parent=styles["Body"], fontSize=9.5, leading=13,
+                                   textColor=colors.HexColor(accent), fontName="Helvetica-Bold")
+    market_source_style = ParagraphStyle("RecMarketSource", parent=styles["Caption"], fontSize=7.8, leading=10)
     steps_text = "".join(f"&bull;&nbsp;&nbsp;{s}<br/>" for s in card["recommended_steps"]).rstrip("<br/>")
     rows = [
         [chip_row(chips, styles)],
         [Paragraph(card["title"], title_style)],
         [Paragraph(card["what_data_shows"], styles["Body"])],
+    ]
+    market_support = card.get("market_support") or []
+    if market_support:
+        comparisons = "<br/>".join(f"&#9679;&nbsp;{f['account_vs_market']}" for f in market_support)
+        sources = " &nbsp;|&nbsp; ".join(f"Source: {f['vendor']} -- {f['fact']}" for f in market_support)
+        rows.append([Paragraph(f"MARKET CHECK<br/>{comparisons}", market_style)])
+        rows.append([Paragraph(sources, market_source_style)])
+    rows += [
         [Paragraph(steps_text, styles["Body"])],
         [Paragraph(f"<b>What to watch:</b> {card['what_to_watch']}", styles["Caption"])],
     ]
     t = Table(rows, colWidths=[6.3 * inch])
-    t.setStyle(TableStyle([
+    style_cmds = [
         ("BOX", (0, 0), (-1, -1), 0.9, colors.HexColor(accent)),
         ("LINEBEFORE", (0, 0), (0, -1), 3, colors.HexColor(PRIORITY_COLORS.get(card["priority"], accent))),
         ("BACKGROUND", (0, 0), (-1, -1), colors.white),
         ("LEFTPADDING", (0, 0), (-1, -1), 12), ("RIGHTPADDING", (0, 0), (-1, -1), 12),
         ("TOPPADDING", (0, 0), (-1, -1), 4), ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
         ("TOPPADDING", (0, 0), (0, 0), 10), ("BOTTOMPADDING", (0, -1), (0, -1), 10),
-    ]))
+    ]
+    if market_support:
+        style_cmds.append(("BACKGROUND", (0, 3), (0, 4), colors.HexColor("#F2EFE7")))
+        style_cmds.append(("TOPPADDING", (0, 3), (0, 3), 7))
+        style_cmds.append(("BOTTOMPADDING", (0, 4), (0, 4), 7))
+    t.setStyle(TableStyle(style_cmds))
     return t
 
 

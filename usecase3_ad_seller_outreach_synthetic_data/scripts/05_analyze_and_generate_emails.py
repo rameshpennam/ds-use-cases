@@ -26,7 +26,11 @@ What this does, in order (search for "STEP N" to jump to any stage):
                                        stage-6 diagnosis text; only the closest
                                        matches are passed on (see note below)
   STEP 8  GenAI: market mapping     -- matches the NLP-ranked market facts onto the
-                                       stage-6 diagnosis ("why now")
+                                       stage-6 diagnosis ("why now"), AND independently
+                                       onto each individual recommendation card
+                                       (card_market_support) -- the 360-degree step a
+                                       human analyst can't do alone, since they have
+                                       no external market-report access at all
   STEP 9  GenAI: email copy         -- drafts the customer-facing email
   STEP 10 Render PDFs               -- build the email as a real PDF, reusing the
                                        existing reportlab layout helpers in pdf_common.py
@@ -390,12 +394,34 @@ class MarketFact(BaseModel):
     vendor: str
     fact: str = Field(description="A specific fact from the extracted table data, including the actual number")
     relevance_to_recommendation: str
+    account_vs_market: str = Field(description="An explicit head-to-head comparison sentence, the account's own "
+                                                "number directly against this external number -- e.g. 'Your "
+                                                "account: 21.3% impression share vs the vertical benchmark: "
+                                                "35.0%.' Pull the account's own figure from the diagnosis/rollup "
+                                                "data given, never invent it. This is the single most important "
+                                                "field on this object -- a market fact without the account's own "
+                                                "number next to it is not yet a comparison.")
+
+
+class CardMarketSupport(BaseModel):
+    """Ties external market evidence to ONE specific recommendation card --
+    not just the account overall. This is the actual 360-degree step: a
+    human analyst's recommendation is backed only by the account's own
+    data; ours additionally shows, per fix, that the market independently
+    corroborates it. Correct to return an empty supporting_facts list for a
+    card when nothing in the evidence genuinely speaks to it -- a forced,
+    generic citation is worse than no citation."""
+    card_title: str = Field(description="Must exactly match one of the recommendation_cards titles given")
+    supporting_facts: list[MarketFact] = Field(description="0-2 facts that specifically strengthen THIS card's "
+                                                            "urgency -- empty list if none genuinely apply")
 
 
 class MarketMapping(BaseModel):
     why_now_summary: str
     supporting_facts: list[MarketFact]
     urgency_0_to_1: float
+    card_market_support: list[CardMarketSupport] = Field(description="One entry per recommendation card given, "
+                                                                      "in the same order")
 
 
 class EmailCopy(BaseModel):
@@ -403,8 +429,11 @@ class EmailCopy(BaseModel):
     hook: str = Field(description="1-2 sentence personalized opening. The greeting 'Hi [Customer name],' is already "
                                    "rendered immediately before this text by the template -- do NOT repeat 'Hi' or "
                                    "any other greeting here, start directly with the substance.")
-    why_now_bullets: list[str] = Field(description="2-3 bullets of market evidence citing a specific number each; "
-                                                     "bold the key figure with <b></b> tags")
+    why_now_bullets: list[str] = Field(description="2-3 bullets, each pairing a market number against the account's "
+                                                     "own number for the same metric (use the account_vs_market "
+                                                     "field on the market context's supporting_facts directly -- "
+                                                     "'market is at X, your account is at Y' is the pattern, not a "
+                                                     "market stat alone); bold both figures with <b></b> tags")
     stat_label: str = Field(description="All-caps label above the headline number")
     stat_sub: str
     impact_line: str = Field(description="A full 1-2 sentence explanation of what's behind the headline number -- "
@@ -740,29 +769,60 @@ def rank_evidence_by_relevance(market_evidence, diagnosis_text, top_n=24):
 
 STAGE7_SYSTEM = (
     "You are a market-research analyst. You will be given (1) a diagnosis of one "
-    "advertiser account's paid-search performance and (2) real data tables extracted "
-    "from 4 third-party market research reports (parsed from PDFs -- the field names "
-    "and rows are exactly as extracted, not curated for you). Your job is to find the "
-    "facts in that extracted data that best support an urgent 'why act now' case for "
-    "the account's specific diagnosis -- cite the vendor and the actual number for each "
-    "fact you use. Do not invent facts not present in the extracted data."
+    "advertiser account's paid-search performance, including its specific prioritized "
+    "recommendation list, and (2) real data tables extracted from 4 third-party market "
+    "research reports (parsed from PDFs -- the field names and rows are exactly as "
+    "extracted, not curated for you). You have two jobs, and the second is what makes "
+    "this analysis go beyond what a human paid-search analyst produces alone (they have "
+    "no access to external market data at all):\n"
+    "1. Build the account-level 'why act now' case (why_now_summary, supporting_facts, "
+    "urgency_0_to_1) -- the overall narrative.\n"
+    "2. For EACH recommendation card given, independently decide whether any extracted "
+    "fact specifically strengthens THAT fix's urgency (card_market_support). A fact "
+    "about rising competitive spend only supports a bid/rank card if the card's own "
+    "issue is rank, not budget -- judge genuine relevance per card, do not default to "
+    "attaching the same top fact everywhere. Returning an empty list for a card is the "
+    "correct answer when nothing in the evidence actually speaks to its specific issue; "
+    "a forced generic citation would be worse than no citation and would undercut the "
+    "credibility this step is meant to add.\n"
+    "Cite the vendor and the actual number for every fact you use. Do not invent facts "
+    "not present in the extracted data. EVERY MarketFact's account_vs_market field must "
+    "state the account's own number (from the EXACT account figures given) directly "
+    "against the external number -- never cite an external number alone."
 )
 
 
-def run_stage8(account_id, account_cfg, ads_analysis: AdsAnalysis, ranked_market_evidence):
+def run_stage8(account_id, account_cfg, ads_analysis: AdsAnalysis, ranked_market_evidence, rollup):
+    cards_summary = [{"title": c.title, "affects": c.affects, "what_data_shows": c.what_data_shows}
+                      for c in ads_analysis.recommendation_cards]
+    account_figures = {
+        "impression_share_pct": round(rollup["is_pct"], 2),
+        "lost_to_budget_pct": round(rollup["lost_budget_pct"], 1),
+        "lost_to_rank_pct": round(rollup["lost_rank_pct"], 1),
+        "daily_budget": f"{account_cfg['currency_symbol']} {rollup['daily_budget']:,.0f}",
+        "vertical_benchmark_impression_share_pct": account_cfg["benchmark_impression_share_pct"],
+    }
     user = (
         f"Account diagnosis (from the ads-data analysis stage):\n"
         f"{ads_analysis.model_dump_json()}\n\n"
+        f"EXACT account figures to use verbatim whenever you state 'your account' in an "
+        f"account_vs_market comparison (do not recompute, do not pull a different number "
+        f"from the diagnosis prose):\n{json.dumps(account_figures)}\n\n"
+        f"The account's recommendation cards, which you must map market support onto "
+        f"individually (card_market_support needs exactly one entry per card below, "
+        f"same order, title matched exactly):\n"
+        f"{json.dumps(cards_summary)}\n\n"
         f"Market-report facts for this vertical ({account_cfg['vertical']}), extracted from "
         f"4 vendor PDFs and pre-ranked by an NLP relevance score (0-1, higher = closer to "
         f"this account's diagnosis -- already filtered down from the full extraction, "
         f"this is the shortlist):\n"
         f"{json.dumps(ranked_market_evidence)}\n\n"
-        "Build the 'why now' case: which of these ranked facts most strengthen urgency for "
-        "this specific diagnosis? The relevance score is a hint, not a ranking you must "
-        "preserve -- use your own judgment about which facts actually support the case."
+        "Build the account-level 'why now' case first, then go card by card deciding "
+        "what, if anything, from this evidence specifically strengthens each one. The "
+        "relevance score is a hint, not a ranking you must preserve -- use your own "
+        "judgment about which facts actually support which case."
     )
-    return structured_call(f"stage8:{account_id}", MODEL, STAGE7_SYSTEM, user, MarketMapping, max_tokens=4000)
+    return structured_call(f"stage8:{account_id}", MODEL, STAGE7_SYSTEM, user, MarketMapping, max_tokens=5500)
 
 
 # ============================================================================
@@ -850,7 +910,38 @@ def run_stage9(account_id, account_cfg, ads_analysis, market_mapping, rollup, op
 # cards, the big-stat callout) -- no second rendering engine.
 # ============================================================================
 
-def render_email_pdf(account_id, account_cfg, email: EmailCopy, ads_analysis, opp_sizing, rollup, out_path, accent):
+def _account_vs_benchmark_chart(account_cfg, rollup, accent):
+    """The account's own numbers plotted directly against the vertical
+    benchmark for the same two metrics -- a reader should not have to hold
+    two numbers in their head to see the gap; the chart does it instead.
+    Picks lost-to-rank or lost-to-budget as the second metric depending on
+    which one this account's own benchmark data actually tracks."""
+    if "benchmark_lost_rank_pct" in account_cfg:
+        constraint_label, your_second, benchmark_second = (
+            "Lost to rank %", rollup["lost_rank_pct"], account_cfg["benchmark_lost_rank_pct"])
+    else:
+        constraint_label, your_second, benchmark_second = (
+            "Lost to budget %", rollup["lost_budget_pct"], account_cfg["benchmark_lost_budget_pct"])
+    categories = ["Impression share %", constraint_label]
+    series = {
+        "Your account": [round(rollup["is_pct"], 1), round(your_second, 1)],
+        "Vertical benchmark": [account_cfg["benchmark_impression_share_pct"], benchmark_second],
+    }
+    return pc.fig_grouped_bar(categories, series, "Your account vs. vertical benchmark", "%", accent)
+
+
+def _demand_trend_chart(account_cfg, accent):
+    """This account's own vertical/country demand index, current year vs.
+    the prior-year pattern -- the same market-timing evidence a real
+    analyst would only get from a paid vendor subscription, made visual."""
+    quarters = list(account_cfg["demand_index"].keys())
+    current = [account_cfg["demand_index"][q]["current"] for q in quarters]
+    prior = [account_cfg["demand_index"][q]["prior_year"] for q in quarters]
+    return pc.fig_line(quarters, {"Current year": current, "Prior-year pattern": prior},
+                        "Demand trend vs. seasonal norm (index)", "Index", accent)
+
+
+def render_email_pdf(account_id, account_cfg, email: EmailCopy, ads_analysis, market_mapping, opp_sizing, rollup, out_path, accent):
     styles = pc.get_styles(accent)
     from reportlab.platypus import (BaseDocTemplate, PageTemplate, Frame, Paragraph,
                                      Spacer, Table, TableStyle, HRFlowable, KeepTogether)
@@ -870,7 +961,17 @@ def render_email_pdf(account_id, account_cfg, email: EmailCopy, ads_analysis, op
              Spacer(1, 0.14 * inch), Paragraph("Hi [Customer name],", styles["Body"]),
              Paragraph(email.hook, styles["Body"]), Spacer(1, 0.08 * inch)]
     flow.append(KeepTogether([pc.key_takeaways("Why Now", email.why_now_bullets, styles, accent)]))
-    flow.append(Spacer(1, 0.14 * inch))
+    flow.append(Spacer(1, 0.12 * inch))
+
+    # Charts give the "Your account vs vertical benchmark" and "market demand
+    # timing" claims above visual weight instead of asking the reader to
+    # hold two numbers in their head -- real data (rollup + account_cfg),
+    # not an LLM-described chart.
+    chart1 = pc.chart_image(_account_vs_benchmark_chart(account_cfg, rollup, accent), width=6.3 * inch)
+    chart2 = pc.chart_image(_demand_trend_chart(account_cfg, accent), width=6.3 * inch)
+    flow.append(KeepTogether([chart1, Spacer(1, 0.08 * inch)]))
+    flow.append(KeepTogether([chart2, Spacer(1, 0.14 * inch)]))
+
     stat_value = f"{account_cfg['currency_symbol']} {rollup['inc_revenue']:,.0f}"
     flow.append(pc.big_stat_callout(email.stat_label, stat_value, email.stat_sub, styles, accent))
     flow += [Spacer(1, 0.1 * inch), Paragraph(email.impact_line, styles["Body"]), Spacer(1, 0.14 * inch),
@@ -891,8 +992,11 @@ def render_email_pdf(account_id, account_cfg, email: EmailCopy, ads_analysis, op
     flow.append(Paragraph("<b>What's holding you back</b>", styles["Body"]))
     flow.append(Paragraph(email.cards_intro, styles["Caption"]))
     flow.append(Spacer(1, 0.05 * inch))
+    market_support_by_title = {s.card_title: s.supporting_facts for s in market_mapping.card_market_support}
     for card in ads_analysis.recommendation_cards:
-        flow.append(KeepTogether([pc.recommendation_card(card.model_dump(), styles, accent), Spacer(1, 0.08 * inch)]))
+        card_dict = card.model_dump()
+        card_dict["market_support"] = [f.model_dump() for f in market_support_by_title.get(card.title, [])]
+        flow.append(KeepTogether([pc.recommendation_card(card_dict, styles, accent), Spacer(1, 0.08 * inch)]))
 
     # Already working -- reassurance that the fix list is short because the
     # rest is solid, not because it wasn't checked. Fixed green accent
@@ -960,12 +1064,12 @@ def run_account(account_id, account_cfg, df, granular):
     diagnosis_text = ads_analysis.account_level_diagnosis + " " + " ".join(ads_analysis.notable_patterns)
     ranked_evidence = rank_evidence_by_relevance(market_evidence, diagnosis_text)  # STEP 7 (NLP)
 
-    market_mapping = run_stage8(account_id, account_cfg, ads_analysis, ranked_evidence)  # STEP 8 (GenAI)
+    market_mapping = run_stage8(account_id, account_cfg, ads_analysis, ranked_evidence, rollup)  # STEP 8 (GenAI)
     email = run_stage9(account_id, account_cfg, ads_analysis, market_mapping, rollup, opp_sizing)  # STEP 9 (GenAI)
 
     accent = ACCENTS[account_cfg["vertical"]]
     slug = account_cfg["vertical"].lower() + "_" + account_cfg["country_code"].lower()
-    render_email_pdf(account_id, account_cfg, email, ads_analysis, opp_sizing, rollup,   # STEP 10
+    render_email_pdf(account_id, account_cfg, email, ads_analysis, market_mapping, opp_sizing, rollup,   # STEP 10
                       OUTPUT_DIR / f"recommendation_email_{slug}.pdf", accent)
 
     return {

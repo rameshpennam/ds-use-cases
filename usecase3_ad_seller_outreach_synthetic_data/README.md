@@ -77,15 +77,24 @@ misc/     -- metadata.xlsx and the approach.html flow diagram
   similarity, and drafts the recommendation email with structured OpenAI
   calls -- built as real customer-facing sales copy rather than an
   analyst-style bullet list: a personalized hook, an explicit "Why Now"
-  market-evidence box, a single pulled-out revenue-opportunity number,
-  prioritized recommendation cards synthesized from the keyword/search-term/
-  negative-keyword/ad-strength/auction-insight evidence, a clearly segregated
-  card per campaign that actually has material opportunity
-  (`materiality_ranking()` -- the smallest set of campaigns, ranked by
-  missed-impression volume, covering ~70% of the account's gap; NOT every
-  campaign), an opportunity-sizing payoff, and a single consolidated "Fix"
-  callout with a low-friction binary-choice ask. Every number -- including
-  each campaign card's revenue slice, which sums exactly back to the
+  market-evidence box with each bullet pairing the account's own number
+  directly against the external market number (never a market stat alone),
+  two real charts (your account vs. vertical benchmark; demand trend vs.
+  seasonal norm -- see `_account_vs_benchmark_chart()` / `_demand_trend_chart()`),
+  a single pulled-out revenue-opportunity number, prioritized recommendation
+  cards synthesized from the keyword/search-term/negative-keyword/
+  ad-strength/auction-insight evidence -- **each one independently checked
+  against the market evidence for a specific supporting fact** (a "Market
+  Check" strip showing the account's own number next to the market number,
+  not just a generic account-level narrative bolted on top -- the step a
+  human paid-search analyst cannot do alone, since they have no market-report
+  access at all), a clearly segregated card per campaign that actually has
+  material opportunity (`materiality_ranking()` -- the smallest set of
+  campaigns, ranked by missed-impression volume, covering ~70% of the
+  account's gap; NOT every campaign), an opportunity-sizing payoff, and a
+  single consolidated "Fix" callout with a low-friction binary-choice ask.
+  Every number -- including each campaign card's revenue slice, which sums
+  exactly back to the
   headline figure -- is recomputed from `campaigndata-campaigns.csv` (not
   hand-typed), so the email always matches the dataset.
 
